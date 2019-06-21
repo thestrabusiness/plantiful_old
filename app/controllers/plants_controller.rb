@@ -8,7 +8,7 @@ class PlantsController < ApplicationController
 
   def create
     Plant.create(plant_params)
-    flash[:notice] = 'plant created!'
+    flash[:success] = 'plant created!'
     redirect_to plants_path
   end
 

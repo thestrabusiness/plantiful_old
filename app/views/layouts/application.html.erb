@@ -11,7 +11,7 @@
 
   <body>
     <% flash.each do |key, value| %>
-      <div class="alert alert-<%= key %>"><%= value %></div>
+      <div class="flash-<%= key %>"><%= value %></div>
     <% end %>
     <div class="container">
       <div class="main">
