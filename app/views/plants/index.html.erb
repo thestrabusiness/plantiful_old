@@ -1,5 +1,7 @@
-<% @plants.each do |plant| %>  
-  <%= plant.name %>
-<% end %>
-<%= link_to "New Plant", new_plant_path %>
+<ul>
+  <% @plants.each do |plant| %>  
+    <li><%= plant.name %></li>
+  <% end %>
+</ul>
 
+<%= link_to "New Plant", new_plant_path %>
