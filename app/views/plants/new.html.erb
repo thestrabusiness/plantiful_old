@@ -1,6 +1,6 @@
-<%= form_for :plant, url: { action: :create } do |form| %>
-  <%= form.text_field :name %>
-  <%= form.text_field :botanical_name %>
+<%= simple_form_for :plant, url: { action: :create } do |form| %>
+  <%= form.input :name %>
+  <%= form.input :botanical_name %>
   <%= form.button :submit %>
 <% end %>
 
