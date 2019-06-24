@@ -18,10 +18,7 @@ body {
   margin: 0;
 }
 
-.container {
-  @include grid-container;
+.main {
+  margin: 20px 20px 0 20px;
 }
 
-.main {
-  @include grid-column(12)
-}

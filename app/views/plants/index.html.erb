@@ -1,7 +1,17 @@
-<ul>
+<div class="cards">
   <% @plants.each do |plant| %>  
-    <li><%= plant.name %></li>
+    <div class="card">
+      <div class="card-image">
+        <img src="https://raw.githubusercontent.com/thoughtbot/refills/master/source/images/mountains.png" alt="">
+      </div>
+      <div class="card-header">
+        <%= plant.name %>
+      </div>
+      <div class="card-copy">
+        <%= plant.botanical_name %>
+      </div>
+    </div>
   <% end %>
-</ul>
+</div>
 
 <%= link_to "New Plant", new_plant_path %>
