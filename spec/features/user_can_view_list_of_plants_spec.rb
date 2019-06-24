@@ -8,4 +8,13 @@ RSpec.feature "UserCanViewListOfPlants", type: :feature do
     expect(page).to have_content plant1.name
     expect(page).to have_content plant2.name
   end
+
+  it 'user can see when a plant was last watered' do
+    plant = Plant.create(name: 'name')
+    plant.waterings.create
+
+    visit plants_path
+
+    expect(page).to have_content plant.last_watering_date
+  end
 end

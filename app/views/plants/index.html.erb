@@ -8,6 +8,8 @@
         <%= plant.name %>
       </div>
       <div class="card-copy">
+        Last watered: <%= plant.last_watering_date %>
+        <%= link_to 'Water', plant_waterings_path(plant), method: :post %>
         <%= plant.botanical_name %>
       </div>
     </div>
