@@ -1,9 +1,6 @@
 class Plant < ApplicationRecord
   has_many :waterings
-
-  def last_watering
-    waterings.order(watered_at: :desc).take
-  end
+  has_one :last_watering, -> { order(watered_at: :desc) }, class_name: 'Watering'
 
   def last_watering_date
     last_watering&.watered_at_date
