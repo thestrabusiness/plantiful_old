@@ -1,0 +1,14 @@
+.cards
+  - @plants.each do |plant|
+    .card
+      .card-image
+        = image_tag "https://raw.githubusercontent.com/thoughtbot/refills/master/source/images/mountains.png"
+      .card-header
+        = plant.name
+      .card-copy
+        Last watered on:
+        = plant.last_watering_date
+        = link_to "Water", plant_waterings_path(plant), method: :post
+        = plant.botanical_name
+
+= link_to "New Plant", new_plant_path
