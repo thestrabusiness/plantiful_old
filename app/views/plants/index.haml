@@ -6,9 +6,13 @@
       .card-header
         = plant.name
       .card-copy
-        Last watered on:
-        = plant.last_watering_date
-        = link_to "Water", plant_waterings_path(plant), method: :post
-        = plant.botanical_name
+        %ul
+          %li
+            = plant.botanical_name
+          %li 
+            Last watered on:
+            = plant.last_watering_date
+          %li 
+            = button_to "Water", plant_waterings_path(plant)
 
 = link_to "New Plant", new_plant_path
