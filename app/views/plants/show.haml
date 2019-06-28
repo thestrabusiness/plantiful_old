@@ -1,0 +1,9 @@
+%p 
+  = @plant.name
+%p 
+  = @plant.botanical_name
+%p
+  %ul
+    - @plant.waterings.limit(5).each do |watering|
+      %li.watering
+        = watering.watered_at_date

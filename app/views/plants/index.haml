@@ -1,10 +1,11 @@
 .cards
   - @plants.each do |plant|
     .card
-      .card-image
-        = image_tag "https://raw.githubusercontent.com/thoughtbot/refills/master/source/images/mountains.png"
-      .card-header
-        = plant.name
+      = link_to plant_path(plant) do
+        .card-image
+          = image_tag "https://raw.githubusercontent.com/thoughtbot/refills/master/source/images/mountains.png"
+        .card-header
+          = plant.name
       .card-copy
         %ul
           %li
