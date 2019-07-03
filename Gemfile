@@ -3,12 +3,12 @@ git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
 ruby '2.6.3'
 
+gem 'active_model_serializers'
 gem 'bitters'
 gem 'bootsnap', '>= 1.1.0', require: false
 gem 'bourbon'
-gem 'coffee-rails', '~> 4.2'
+gem 'foreman'
 gem 'haml'
-gem 'jbuilder', '~> 2.5'
 gem 'neat'
 gem 'pg', '>= 0.18', '< 2.0'
 gem 'puma', '~> 3.11'
@@ -20,7 +20,6 @@ gem 'uglifier', '>= 1.3.0'
 gem 'webpacker', '~> 4.x'
 
 group :development, :test do
-  gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
   gem 'capybara'
   gem 'pry'
   gem 'rspec'
