@@ -17,6 +17,7 @@
 /storage/*
 !/storage/.keep
 
+/elm-stuff
 /node_modules
 /yarn-error.log
 
@@ -28,6 +29,7 @@
 
 /public/packs
 /public/packs-test
+/elm-stuff
 /node_modules
 /yarn-error.log
 yarn-debug.log*
