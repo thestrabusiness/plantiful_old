@@ -1,11 +1,11 @@
-module Main exposing (Model, Msg(..), Page(..), currentPage, init, main, subscriptions, update, view)
+module Main exposing (Model, Msg(..), Page(..), currentPage, init, loadCurrentPage, main, nav, subscriptions, update, view)
 
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
-import Pages.List as PlantList
+import Pages.PlantList as PlantList
 import Plant
 import Routes exposing (Route)
 import Url
