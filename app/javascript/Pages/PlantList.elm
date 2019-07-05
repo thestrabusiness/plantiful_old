@@ -1,7 +1,8 @@
-module Pages.PlantList exposing (Model, Msg(..), card, getPlants, init, lastWateringDateText, update, view, viewPlantList)
+module Pages.PlantList exposing (Model, Msg(..), card, cardImageUrl, getPlants, init, update, updatePlantsList, view, viewPlantList)
 
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
 import Http
 import Plant
 import Routes
@@ -13,6 +14,8 @@ type alias Model =
 
 type Msg
     = NewPlants (Result Http.Error (List Plant.Plant))
+    | WaterPlant Plant.Plant
+    | UpdatePlant (Result Http.Error Plant.Plant)
 
 
 init : ( Model, Cmd Msg )
@@ -33,6 +36,36 @@ update msg model =
             in
             ( model, Cmd.none )
 
+        UpdatePlant (Ok updatedPlant) ->
+            let
+                newPlantsList =
+                    updatePlantsList model.plants updatedPlant
+            in
+            ( { model | plants = newPlantsList }, Cmd.none )
+
+        UpdatePlant (Err error) ->
+            let
+                _ =
+                    Debug.log "Whoops!" error
+            in
+            ( model, Cmd.none )
+
+        WaterPlant plant ->
+            ( model, waterPlant plant )
+
+
+updatePlantsList : List Plant.Plant -> Plant.Plant -> List Plant.Plant
+updatePlantsList currentPlantList updatedPlant =
+    let
+        updatePlant plant =
+            if plant.id == updatedPlant.id then
+                { plant | lastWateringDate = updatedPlant.lastWateringDate }
+
+            else
+                plant
+    in
+    List.map updatePlant currentPlantList
+
 
 
 -- VIEW
@@ -43,7 +76,7 @@ view model =
     viewPlantList model.plants
 
 
-viewPlantList : List Plant.Plant -> Html msg
+viewPlantList : List Plant.Plant -> Html Msg
 viewPlantList plants =
     let
         listOfPlants =
@@ -52,22 +85,12 @@ viewPlantList plants =
     div [ class "cards" ] listOfPlants
 
 
-lastWateringDateText : Maybe String -> Html msg
-lastWateringDateText lastWateringDate =
-    case lastWateringDate of
-        Just dateString ->
-            text dateString
-
-        Nothing ->
-            text "Not yet watered"
-
-
 cardImageUrl : String
 cardImageUrl =
     "https://raw.githubusercontent.com/thoughtbot/refills/master/source/images/mountains.png"
 
 
-card : Plant.Plant -> Html msg
+card : Plant.Plant -> Html Msg
 card plant =
     div [ class "card" ]
         [ div [ class "card-image" ]
@@ -76,8 +99,11 @@ card plant =
         , div [ class "card-copy" ]
             [ ul []
                 [ li [] [ text "Botanical Name" ]
-                , li [] [ lastWateringDateText plant.lastWateringDate ]
-                , li [] [ text "Placeholder Text" ]
+                , li [] [ text plant.lastWateringDate ]
+                , li []
+                    [ button [ onClick (WaterPlant plant) ]
+                        [ text "Water" ]
+                    ]
                 ]
             ]
         ]
@@ -90,3 +116,8 @@ card plant =
 getPlants : Cmd Msg
 getPlants =
     Plant.getPlants NewPlants
+
+
+waterPlant : Plant.Plant -> Cmd Msg
+waterPlant plant =
+    Plant.waterPlant UpdatePlant plant

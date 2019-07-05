@@ -1,14 +1,15 @@
-module Plant exposing (Plant, getPlants, plantDecoder, plantListDecoder)
+module Plant exposing (Plant, getPlants, plantDecoder, plantListDecoder, waterPlant)
 
 import Http
 import HttpBuilder
-import Json.Decode as Decode exposing (Decoder, field, succeed)
+import Json.Decode exposing (Decoder, float, int, nullable, string, succeed)
+import Json.Decode.Pipeline exposing (hardcoded, optional, required)
 
 
 type alias Plant =
     { id : Int
     , name : String
-    , lastWateringDate : Maybe String
+    , lastWateringDate : String
     }
 
 
@@ -25,14 +26,25 @@ getPlants msg =
         |> HttpBuilder.request
 
 
+waterPlant : (Result Http.Error Plant -> msg) -> Plant -> Cmd msg
+waterPlant msg plant =
+    let
+        wateringPath =
+            "api/plants/" ++ String.fromInt plant.id ++ "/waterings"
+    in
+    HttpBuilder.post wateringPath
+        |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
+        |> HttpBuilder.request
+
+
 plantListDecoder : Decoder (List Plant)
 plantListDecoder =
-    Decode.list plantDecoder
+    Json.Decode.list plantDecoder
 
 
 plantDecoder : Decoder Plant
 plantDecoder =
-    Decode.map3 Plant
-        (field "id" Decode.int)
-        (field "name" Decode.string)
-        (Decode.maybe (field "last_watering_date" Decode.string))
+    succeed Plant
+        |> required "id" int
+        |> required "name" string
+        |> optional "last_watering_date" string "Not Yet Watered"
