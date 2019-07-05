@@ -1,20 +1,14 @@
-module Main exposing (Model, Msg(..), init, main, subscriptions, update, view)
+module Main exposing (Model, Msg(..), Page(..), currentPage, init, main, subscriptions, update, view)
 
 import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Http
-import HttpBuilder
-import Json.Decode as Decode exposing (Decoder, field, succeed)
+import Pages.List as PlantList
+import Plant
+import Routes exposing (Route)
 import Url
-
-
-type alias Plant =
-    { id : Int
-    , name : String
-    , last_watering_date : Maybe String
-    }
 
 
 
@@ -23,8 +17,8 @@ type alias Plant =
 
 type alias Model =
     { key : Nav.Key
-    , url : Url.Url
-    , plants : List Plant
+    , page : Page
+    , route : Route
     }
 
 
@@ -34,7 +28,85 @@ type alias Model =
 
 init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
-    ( Model key url [], getPlants )
+    let
+        model =
+            { key = key
+            , page = PageNone
+            , route = Routes.extractRoute url
+            }
+    in
+    ( model, Cmd.none )
+        |> loadCurrentPage
+
+
+
+-- UPDATE
+
+
+type Msg
+    = LinkClicked Browser.UrlRequest
+    | UrlChanged Url.Url
+    | ListMsg PlantList.Msg
+
+
+type Page
+    = PageNone
+    | PageList PlantList.Model
+
+
+update : Msg -> Model -> ( Model, Cmd Msg )
+update msg model =
+    case ( msg, model.page ) of
+        ( LinkClicked urlRequest, _ ) ->
+            case urlRequest of
+                Browser.Internal url ->
+                    ( model
+                    , Nav.pushUrl model.key (Url.toString url)
+                    )
+
+                Browser.External url ->
+                    ( model, Nav.load url )
+
+        ( UrlChanged url, _ ) ->
+            let
+                newRoute =
+                    Routes.extractRoute url
+            in
+            ( { model | route = newRoute }, Cmd.none )
+                |> loadCurrentPage
+
+        ( ListMsg subMsg, PageList pageModel ) ->
+            let
+                ( newPageModel, newCmd ) =
+                    PlantList.update subMsg pageModel
+            in
+            ( { model | page = PageList newPageModel }
+            , Cmd.map ListMsg newCmd
+            )
+
+        ( ListMsg subMsg, _ ) ->
+            ( model, Cmd.none )
+
+
+loadCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+loadCurrentPage ( model, cmd ) =
+    let
+        ( page, newCmd ) =
+            case model.route of
+                Routes.HomeRoute ->
+                    ( PageNone, Cmd.none )
+
+                Routes.ViewPlantsRoute ->
+                    let
+                        ( pageModel, pageCmd ) =
+                            PlantList.init
+                    in
+                    ( PageList pageModel, Cmd.map ListMsg pageCmd )
+
+                Routes.NotFoundRoute ->
+                    ( PageNone, Cmd.none )
+    in
+    ( { model | page = page }, Cmd.batch [ cmd, newCmd ] )
 
 
 
@@ -46,93 +118,49 @@ view model =
     { title = "Plantiful"
     , body =
         [ h2 [] [ text "Welcome to Plantiful" ]
-        , viewPlantList model.plants
+        , currentPage model
         ]
     }
 
 
-viewPlant : Plant -> Html msg
-viewPlant plant =
-    li [] [ text plant.name ]
-
-
-viewPlantList : List Plant -> Html msg
-viewPlantList plants =
+currentPage : Model -> Html Msg
+currentPage model =
     let
-        listOfPlants =
-            List.map viewPlant plants
+        page =
+            case model.page of
+                PageList pageModel ->
+                    PlantList.view pageModel
+                        |> Html.map ListMsg
+
+                PageNone ->
+                    text "Home Page"
     in
-    ul [] listOfPlants
+    section []
+        [ nav model
+        , page
+        ]
 
 
+nav : Model -> Html Msg
+nav model =
+    let
+        links =
+            case model.route of
+                Routes.HomeRoute ->
+                    [ linkToPlants ]
 
--- UPDATE
+                Routes.ViewPlantsRoute ->
+                    [ text "Here are some plants" ]
 
+                Routes.NotFoundRoute ->
+                    [ linkToPlants ]
 
-type Msg
-    = NewPlants (Result Http.Error (List Plant))
-    | LinkClicked Browser.UrlRequest
-    | UrlChanged Url.Url
-
-
-update : Msg -> Model -> ( Model, Cmd Msg )
-update msg model =
-    case msg of
-        NewPlants (Ok newPlants) ->
-            ( { model | plants = newPlants }, Cmd.none )
-
-        NewPlants (Err error) ->
-            let
-                _ =
-                    Debug.log "Whoops!" error
-            in
-            ( model, Cmd.none )
-
-        LinkClicked urlRequest ->
-            case urlRequest of
-                Browser.Internal url ->
-                    ( model
-                    , Nav.pushUrl model.key
-                        (Url.toString url)
-                    )
-
-                Browser.External href ->
-                    ( model, Nav.load href )
-
-        UrlChanged url ->
-            ( { model | url = url }
-            , Cmd.none
-            )
-
-
-
--- API
-
-
-plantListDecoder : Decoder (List Plant)
-plantListDecoder =
-    Decode.list plantDecoder
-
-
-plantDecoder : Decoder Plant
-plantDecoder =
-    Decode.map3 Plant
-        (field "id" Decode.int)
-        (field "name" Decode.string)
-        (Decode.maybe (field "last_watering_date" Decode.string))
-
-
-getPlants : Cmd Msg
-getPlants =
-    HttpBuilder.get "api/plants"
-        |> HttpBuilder.withHeaders
-            [ ( "Content-Type", "application/json" )
-            , ( "Accept"
-              , "application/json"
-              )
-            ]
-        |> HttpBuilder.withExpect (Http.expectJson NewPlants plantListDecoder)
-        |> HttpBuilder.request
+        linkToPlants =
+            a [ href Routes.plantsPath ] [ text "Plants" ]
+    in
+    div
+        []
+        links
 
 
 
