@@ -1,17 +1,19 @@
-module Plant exposing (..)
+module Plant exposing (Plant, getPlants, plantDecoder, plantListDecoder)
 
 import Http
 import HttpBuilder
 import Json.Decode as Decode exposing (Decoder, field, succeed)
 
+
 type alias Plant =
-  { id: Int
-  , name: String
-  , last_watering_date : Maybe String
-  }
+    { id : Int
+    , name : String
+    , lastWateringDate : Maybe String
+    }
+
 
 getPlants : (Result Http.Error (List Plant) -> msg) -> Cmd msg
-getPlants msg = 
+getPlants msg =
     HttpBuilder.get "api/plants"
         |> HttpBuilder.withHeaders
             [ ( "Content-Type", "application/json" )
@@ -21,6 +23,7 @@ getPlants msg =
             ]
         |> HttpBuilder.withExpect (Http.expectJson msg plantListDecoder)
         |> HttpBuilder.request
+
 
 plantListDecoder : Decoder (List Plant)
 plantListDecoder =
@@ -33,4 +36,3 @@ plantDecoder =
         (field "id" Decode.int)
         (field "name" Decode.string)
         (Decode.maybe (field "last_watering_date" Decode.string))
-

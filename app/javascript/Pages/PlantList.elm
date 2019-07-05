@@ -62,21 +62,21 @@ lastWateringDateText lastWateringDate =
             text "Not yet watered"
 
 
+cardImageUrl : String
+cardImageUrl =
+    "https://raw.githubusercontent.com/thoughtbot/refills/master/source/images/mountains.png"
+
+
 card : Plant.Plant -> Html msg
 card plant =
     div [ class "card" ]
         [ div [ class "card-image" ]
-            [ img
-                [ src
-                    "https://raw.githubusercontent.com/thoughtbot/refills/master/source/images/mountains.png"
-                ]
-                []
-            ]
+            [ img [ src cardImageUrl ] [] ]
         , div [ class "card-header" ] [ text plant.name ]
         , div [ class "card-copy" ]
             [ ul []
                 [ li [] [ text "Botanical Name" ]
-                , li [] [ lastWateringDateText plant.last_watering_date ]
+                , li [] [ lastWateringDateText plant.lastWateringDate ]
                 , li [] [ text "Placeholder Text" ]
                 ]
             ]
