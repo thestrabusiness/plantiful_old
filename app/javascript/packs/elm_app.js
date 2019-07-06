@@ -4,7 +4,7 @@
 
 import {
   Elm
-} from '../Main'
+} from '../../elm/Main'
 
 document.addEventListener('DOMContentLoaded', () => {
   const target = document.createElement('div')
