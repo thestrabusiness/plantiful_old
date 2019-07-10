@@ -7,6 +7,7 @@ gem 'active_model_serializers'
 gem 'bitters'
 gem 'bootsnap', '>= 1.1.0', require: false
 gem 'bourbon'
+gem 'dotenv-rails'
 gem 'foreman'
 gem 'haml'
 gem 'neat'
