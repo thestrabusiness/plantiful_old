@@ -1,24 +1,9 @@
-# README
+# Plantiful
 
-This README would normally document whatever steps are necessary to get the
-application up and running.
+Plantiful is an application that will let you track your plants health and watering schedule.
 
-Things you may want to cover:
+# Running Locally
 
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+`rails db:create && db:seed`
+`yarn install` to setup webpack dependencies
+`foreman start -f Procfile.dev` to run rails server and webpack-dev-server together
