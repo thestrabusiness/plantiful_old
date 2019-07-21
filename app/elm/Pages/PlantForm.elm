@@ -1,0 +1,62 @@
+module Pages.PlantForm exposing (Model, Msg, init, update, view)
+
+import Browser.Navigation as Nav
+import Html exposing (..)
+import Html.Attributes exposing (placeholder, value)
+import Html.Events exposing (onClick, onInput)
+import Http
+import Plant
+import Routes
+
+
+type alias Model =
+    { name : String }
+
+
+type Msg
+    = UserEnteredPlantName String
+    | UserSubmittedForm
+    | PlantCreated (Result Http.Error Plant.Plant)
+
+
+init : ( Model, Cmd Msg )
+init =
+    ( initialModel, Cmd.none )
+
+
+initialModel =
+    Model ""
+
+
+update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg )
+update msg model key =
+    case msg of
+        UserEnteredPlantName string ->
+            ( { model | name = string }, Cmd.none )
+
+        UserSubmittedForm ->
+            ( model, createNewPlant model.name )
+
+        PlantCreated (Ok plant) ->
+            ( model, Nav.pushUrl key Routes.plantsPath )
+
+        PlantCreated (Err error) ->
+            ( model, Cmd.none )
+
+
+view : Model -> Html Msg
+view model =
+    div []
+        [ input
+            [ placeholder "Name"
+            , value model.name
+            , onInput UserEnteredPlantName
+            ]
+            []
+        , button [ onClick UserSubmittedForm ] [ text "Submit" ]
+        ]
+
+
+createNewPlant : String -> Cmd Msg
+createNewPlant name =
+    Plant.createPlant PlantCreated name

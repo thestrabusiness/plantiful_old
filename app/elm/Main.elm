@@ -4,9 +4,8 @@ import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Http
+import Pages.PlantForm as PlantForm
 import Pages.PlantList as PlantList
-import Plant
 import Routes exposing (Route)
 import Url
 
@@ -47,11 +46,13 @@ type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
     | ListMsg PlantList.Msg
+    | PlantFormMsg PlantForm.Msg
 
 
 type Page
     = PageNone
     | PageList PlantList.Model
+    | PlantFormPage PlantForm.Model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -87,6 +88,18 @@ update msg model =
         ( ListMsg subMsg, _ ) ->
             ( model, Cmd.none )
 
+        ( PlantFormMsg subMsg, PlantFormPage pageModel ) ->
+            let
+                ( newPageModel, newCmd ) =
+                    PlantForm.update subMsg pageModel model.key
+            in
+            ( { model | page = PlantFormPage newPageModel }
+            , Cmd.map PlantFormMsg newCmd
+            )
+
+        ( PlantFormMsg subMsg, _ ) ->
+            ( model, Cmd.none )
+
 
 loadCurrentPage : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 loadCurrentPage ( model, cmd ) =
@@ -96,12 +109,19 @@ loadCurrentPage ( model, cmd ) =
                 Routes.HomeRoute ->
                     ( PageNone, Cmd.none )
 
-                Routes.ViewPlantsRoute ->
+                Routes.PlantsRoute ->
                     let
                         ( pageModel, pageCmd ) =
                             PlantList.init
                     in
                     ( PageList pageModel, Cmd.map ListMsg pageCmd )
+
+                Routes.NewPlantRoute ->
+                    let
+                        ( formModel, formCmd ) =
+                            PlantForm.init
+                    in
+                    ( PlantFormPage formModel, Cmd.map PlantFormMsg formCmd )
 
                 Routes.NotFoundRoute ->
                     ( PageNone, Cmd.none )
@@ -132,6 +152,10 @@ currentPage model =
                     PlantList.view pageModel
                         |> Html.map ListMsg
 
+                PlantFormPage pageModel ->
+                    PlantForm.view pageModel
+                        |> Html.map PlantFormMsg
+
                 PageNone ->
                     text "Home Page"
     in
@@ -149,8 +173,11 @@ nav model =
                 Routes.HomeRoute ->
                     [ linkToPlants ]
 
-                Routes.ViewPlantsRoute ->
+                Routes.PlantsRoute ->
                     [ text "Here are some plants" ]
+
+                Routes.NewPlantRoute ->
+                    [ text "Make a new plant" ]
 
                 Routes.NotFoundRoute ->
                     [ linkToPlants ]

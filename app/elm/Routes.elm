@@ -1,4 +1,4 @@
-module Routes exposing (Route(..), extractRoute, matchRoute, pathFor, plantsPath)
+module Routes exposing (Route(..), extractRoute, matchRoute, newPlantPath, pathFor, plantsPath)
 
 import Url exposing (Url)
 import Url.Parser exposing (..)
@@ -6,8 +6,9 @@ import Url.Parser exposing (..)
 
 type Route
     = HomeRoute
-    | ViewPlantsRoute
+    | PlantsRoute
     | NotFoundRoute
+    | NewPlantRoute
 
 
 extractRoute : Url -> Route
@@ -24,7 +25,8 @@ matchRoute : Parser (Route -> a) a
 matchRoute =
     oneOf
         [ map HomeRoute top
-        , map ViewPlantsRoute (s "plants")
+        , map PlantsRoute (s "plants")
+        , map NewPlantRoute (s "plants" </> s "new")
         ]
 
 
@@ -34,12 +36,21 @@ pathFor route =
         HomeRoute ->
             "/"
 
-        ViewPlantsRoute ->
-            "plants"
+        PlantsRoute ->
+            "/plants"
+
+        NewPlantRoute ->
+            "/plants/new"
 
         NotFoundRoute ->
             "/"
 
+
 plantsPath : String
 plantsPath =
-  pathFor ViewPlantsRoute
+    pathFor PlantsRoute
+
+
+newPlantPath : String
+newPlantPath =
+    pathFor NewPlantRoute

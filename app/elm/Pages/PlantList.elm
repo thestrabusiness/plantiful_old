@@ -5,7 +5,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
 import Plant
-import Routes
+import Routes exposing (newPlantPath)
 
 
 type alias Model =
@@ -73,7 +73,10 @@ updatePlantsList currentPlantList updatedPlant =
 
 view : Model -> Html Msg
 view model =
-    viewPlantList model.plants
+    div []
+        [ viewPlantList model.plants
+        , a [ href newPlantPath ] [ text "Add New Plant" ]
+        ]
 
 
 viewPlantList : List Plant.Plant -> Html Msg

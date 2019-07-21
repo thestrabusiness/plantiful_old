@@ -1,9 +1,10 @@
-module Plant exposing (Plant, getPlants, plantDecoder, plantListDecoder, waterPlant)
+module Plant exposing (Plant, createPlant, getPlants, plantDecoder, plantListDecoder, waterPlant)
 
 import Http
 import HttpBuilder
-import Json.Decode exposing (Decoder, float, int, nullable, string, succeed)
-import Json.Decode.Pipeline exposing (hardcoded, optional, required)
+import Json.Decode exposing (Decoder, int, string, succeed)
+import Json.Decode.Pipeline exposing (optional, required)
+import Json.Encode as Encode
 
 
 type alias Plant =
@@ -30,9 +31,29 @@ waterPlant : (Result Http.Error Plant -> msg) -> Plant -> Cmd msg
 waterPlant msg plant =
     let
         wateringPath =
-            "api/plants/" ++ String.fromInt plant.id ++ "/waterings"
+            "/api/plants/" ++ String.fromInt plant.id ++ "/waterings"
     in
     HttpBuilder.post wateringPath
+        |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
+        |> HttpBuilder.request
+
+
+encodePlant : String -> Encode.Value
+encodePlant name =
+    Encode.object [ ( "name", Encode.string name ) ]
+
+
+createPlant : (Result Http.Error Plant -> msg) -> String -> Cmd msg
+createPlant msg name =
+    let
+        url =
+            "/api/plants"
+
+        params =
+            encodePlant name
+    in
+    HttpBuilder.post url
+        |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
         |> HttpBuilder.request
 
