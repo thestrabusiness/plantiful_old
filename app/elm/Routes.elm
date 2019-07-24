@@ -9,6 +9,7 @@ type Route
     | PlantsRoute
     | NotFoundRoute
     | NewPlantRoute
+    | NewUserRoute
 
 
 extractRoute : Url -> Route
@@ -27,6 +28,7 @@ matchRoute =
         [ map HomeRoute top
         , map PlantsRoute (s "plants")
         , map NewPlantRoute (s "plants" </> s "new")
+        , map NewUserRoute (s "sign_up")
         ]
 
 
@@ -41,6 +43,9 @@ pathFor route =
 
         NewPlantRoute ->
             "/plants/new"
+
+        NewUserRoute ->
+            "/sign_up"
 
         NotFoundRoute ->
             "/"

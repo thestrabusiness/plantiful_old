@@ -6,6 +6,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Pages.PlantForm as PlantForm
 import Pages.PlantList as PlantList
+import Pages.UserForm as UserForm
 import Routes exposing (Route)
 import Url
 
@@ -45,14 +46,16 @@ init flags url key =
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
-    | ListMsg PlantList.Msg
+    | PlantListMsg PlantList.Msg
     | PlantFormMsg PlantForm.Msg
+    | UserFormMsg UserForm.Msg
 
 
 type Page
     = PageNone
-    | PageList PlantList.Model
+    | PlantListPage PlantList.Model
     | PlantFormPage PlantForm.Model
+    | UserPage UserForm.Model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -76,16 +79,16 @@ update msg model =
             ( { model | route = newRoute }, Cmd.none )
                 |> loadCurrentPage
 
-        ( ListMsg subMsg, PageList pageModel ) ->
+        ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let
                 ( newPageModel, newCmd ) =
                     PlantList.update subMsg pageModel
             in
-            ( { model | page = PageList newPageModel }
-            , Cmd.map ListMsg newCmd
+            ( { model | page = PlantListPage newPageModel }
+            , Cmd.map PlantListMsg newCmd
             )
 
-        ( ListMsg subMsg, _ ) ->
+        ( PlantListMsg subMsg, _ ) ->
             ( model, Cmd.none )
 
         ( PlantFormMsg subMsg, PlantFormPage pageModel ) ->
@@ -98,6 +101,18 @@ update msg model =
             )
 
         ( PlantFormMsg subMsg, _ ) ->
+            ( model, Cmd.none )
+
+        ( UserFormMsg subMsg, UserPage pageModel ) ->
+            let
+                ( newPageModel, newCmd ) =
+                    UserForm.update subMsg pageModel model.key
+            in
+            ( { model | page = UserPage newPageModel }
+            , Cmd.map UserFormMsg newCmd
+            )
+
+        ( UserFormMsg subMsg, _ ) ->
             ( model, Cmd.none )
 
 
@@ -114,7 +129,7 @@ loadCurrentPage ( model, cmd ) =
                         ( pageModel, pageCmd ) =
                             PlantList.init
                     in
-                    ( PageList pageModel, Cmd.map ListMsg pageCmd )
+                    ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
 
                 Routes.NewPlantRoute ->
                     let
@@ -122,6 +137,13 @@ loadCurrentPage ( model, cmd ) =
                             PlantForm.init
                     in
                     ( PlantFormPage formModel, Cmd.map PlantFormMsg formCmd )
+
+                Routes.NewUserRoute ->
+                    let
+                        ( formModel, formCmd ) =
+                            UserForm.init
+                    in
+                    ( UserPage formModel, Cmd.map UserFormMsg formCmd )
 
                 Routes.NotFoundRoute ->
                     ( PageNone, Cmd.none )
@@ -148,13 +170,17 @@ currentPage model =
     let
         page =
             case model.page of
-                PageList pageModel ->
+                PlantListPage pageModel ->
                     PlantList.view pageModel
-                        |> Html.map ListMsg
+                        |> Html.map PlantListMsg
 
                 PlantFormPage pageModel ->
                     PlantForm.view pageModel
                         |> Html.map PlantFormMsg
+
+                UserPage pageModel ->
+                    UserForm.view pageModel
+                        |> Html.map UserFormMsg
 
                 PageNone ->
                     text "Home Page"
@@ -181,6 +207,9 @@ nav model =
 
                 Routes.NotFoundRoute ->
                     [ linkToPlants ]
+
+                Routes.NewUserRoute ->
+                    [ text "Sign up" ]
 
         linkToPlants =
             a [ href Routes.plantsPath ] [ text "Plants" ]
