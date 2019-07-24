@@ -159,8 +159,7 @@ view : Model -> Browser.Document Msg
 view model =
     { title = "Plantiful"
     , body =
-        [ h2 [] [ text "Welcome to Plantiful" ]
-        , currentPage model
+        [ currentPage model
         ]
     }
 
@@ -185,38 +184,48 @@ currentPage model =
                 PageNone ->
                     text "Home Page"
     in
-    section []
+    div []
         [ nav model
-        , page
+        , div [ class "container" ] [ page ]
         ]
 
 
 nav : Model -> Html Msg
 nav model =
-    let
-        links =
-            case model.route of
-                Routes.HomeRoute ->
-                    [ linkToPlants ]
-
-                Routes.PlantsRoute ->
-                    [ text "Here are some plants" ]
-
-                Routes.NewPlantRoute ->
-                    [ text "Make a new plant" ]
-
-                Routes.NotFoundRoute ->
-                    [ linkToPlants ]
-
-                Routes.NewUserRoute ->
-                    [ text "Sign up" ]
-
-        linkToPlants =
-            a [ href Routes.plantsPath ] [ text "Plants" ]
-    in
     div
-        []
-        links
+        [ class "header" ]
+        [ h2 [] [ text "Plantiful" ]
+        , headerLink model
+        ]
+
+
+headerLink : Model -> Html Msg
+headerLink model =
+    case model.route of
+        Routes.HomeRoute ->
+            signUpLink
+
+        Routes.PlantsRoute ->
+            signOutLink
+
+        Routes.NewPlantRoute ->
+            signOutLink
+
+        Routes.NewUserRoute ->
+            signOutLink
+
+        Routes.NotFoundRoute ->
+            text ""
+
+
+signUpLink : Html Msg
+signUpLink =
+    a [ class "l-pr", href "/sign_up" ] [ text "Sign Up" ]
+
+
+signOutLink : Html Msg
+signOutLink =
+    a [ class "l-pr", href "/sign_out" ] [ text "Sign Out" ]
 
 
 

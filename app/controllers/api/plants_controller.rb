@@ -4,7 +4,7 @@ class Api::PlantsController < ApplicationController
   end
 
   def create
-    render json: Plant.create(plant_params)
+    render json: Plant.create(plant_params.merge(user: User.first))
   end
 
   private
