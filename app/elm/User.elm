@@ -1,4 +1,4 @@
-module User exposing (Errors, User, createUser)
+module User exposing (Errors, NewUser, User, createUser)
 
 import Http
 import HttpBuilder

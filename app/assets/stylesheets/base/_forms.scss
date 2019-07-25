@@ -41,6 +41,10 @@ textarea {
   transition: border-color $base-duration $base-timing;
   width: 100%;
 
+  &.field_with_errors {
+    border-color: #B00100;
+  }
+
   &:hover {
     border-color: shade($base-border-color, 20%);
   }
@@ -94,3 +98,9 @@ select {
     outline-offset: $focus-outline-offset;
   }
 }
+
+.errors {
+  color: #B00100;
+  height: 2em;
+}
+

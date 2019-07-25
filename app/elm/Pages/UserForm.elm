@@ -7,43 +7,50 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Routes
 import User
+import Validate exposing (Validator, fromValid, ifBlank, ifInvalidEmail, validate)
 
 
 type alias Model =
-    { firstName : String, lastName : String, email : String, password : String }
+    { firstName : String
+    , lastName : String
+    , email : String
+    , password : String
+    , errors : List Error
+    }
 
 
 type Msg
-    = UserEnteredFirstName String
-    | UserEnteredLastName String
-    | UserEnteredEmail String
-    | UserEnteredPassword String
-    | UserSubmittedForm
+    = UserSubmittedForm
     | UserCreated (Result Http.Error User.User)
+    | UserEditedField Field String
+
+
+type Field
+    = FirstName
+    | LastName
+    | Email
+    | Password
+
+
+type alias Error =
+    ( Field, String )
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" "" "" "", Cmd.none )
+    ( Model "" "" "" "" [], Cmd.none )
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg )
 update msg model key =
     case msg of
-        UserEnteredFirstName value ->
-            ( { model | firstName = value }, Cmd.none )
-
-        UserEnteredLastName value ->
-            ( { model | lastName = value }, Cmd.none )
-
-        UserEnteredEmail value ->
-            ( { model | email = value }, Cmd.none )
-
-        UserEnteredPassword value ->
-            ( { model | password = value }, Cmd.none )
-
         UserSubmittedForm ->
-            ( model, createUser model )
+            case validate modelValidator model of
+                Ok validatedModel ->
+                    ( fromValid validatedModel, createUser (toNewUser model) )
+
+                Err errorList ->
+                    ( { model | errors = errorList }, Cmd.none )
 
         UserCreated (Ok user) ->
             ( model, Nav.pushUrl key Routes.plantsPath )
@@ -51,39 +58,92 @@ update msg model key =
         UserCreated (Err error) ->
             ( model, Cmd.none )
 
+        UserEditedField field value ->
+            ( setField field value model, Cmd.none )
+
+
+setField : Field -> String -> Model -> Model
+setField field value model =
+    case field of
+        FirstName ->
+            { model | firstName = value }
+
+        LastName ->
+            { model | lastName = value }
+
+        Email ->
+            { model | email = value }
+
+        Password ->
+            { model | password = value }
+
 
 view : Model -> Html Msg
 view model =
     div [ class "form container" ]
         [ h2 [] [ text "Sign Up" ]
-        , input
-            [ placeholder "First Name"
-            , value model.firstName
-            , onInput UserEnteredFirstName
-            ]
-            []
-        , input
-            [ placeholder "Last Name"
-            , value model.lastName
-            , onInput UserEnteredLastName
-            ]
-            []
-        , input
-            [ placeholder "Email"
-            , value model.email
-            , onInput UserEnteredEmail
-            ]
-            []
-        , input
-            [ placeholder "Password"
-            , value model.password
-            , onInput UserEnteredPassword
-            ]
-            []
+        , textField FirstName "First Name" model.firstName model.errors
+        , textField LastName "Last Name" model.lastName model.errors
+        , textField Email "Email" model.email model.errors
+        , textField Password "Password" model.password model.errors
         , button [ onClick UserSubmittedForm ] [ text "Submit" ]
         ]
 
 
-createUser : Model -> Cmd Msg
-createUser model =
-    User.createUser UserCreated model
+textField : Field -> String -> String -> List Error -> Html Msg
+textField field name fieldValue errors =
+    label []
+        [ text name
+        , input
+            [ class <| textFieldClass field errors
+            , value fieldValue
+            , onInput <| UserEditedField field
+            ]
+            []
+        , viewFormErrors field errors
+        ]
+
+
+textFieldClass : Field -> List Error -> String
+textFieldClass field errors =
+    case errorsForField field errors of
+        [] ->
+            ""
+
+        _ ->
+            "field_with_errors"
+
+
+viewFormErrors : Field -> List Error -> Html msg
+viewFormErrors field errors =
+    errorsForField field errors
+        |> List.map (\( _, error ) -> li [] [ text error ])
+        |> List.take 1
+        |> ul [ class "errors" ]
+
+
+errorsForField : Field -> List Error -> List Error
+errorsForField field errors =
+    errors
+        |> List.filter (\( errorField, _ ) -> errorField == field)
+
+
+createUser : User.NewUser -> Cmd Msg
+createUser newUser =
+    User.createUser UserCreated newUser
+
+
+toNewUser : Model -> User.NewUser
+toNewUser { firstName, lastName, email, password } =
+    User.NewUser firstName lastName email password
+
+
+modelValidator : Validator Error Model
+modelValidator =
+    Validate.all
+        [ ifBlank .email ( Email, "Email can't be blank" )
+        , ifInvalidEmail .email (\_ -> ( Email, "Isn't the right format" ))
+        , ifBlank .password ( Password, "Password can't be blank" )
+        , ifBlank .firstName ( FirstName, "First name can't be blank" )
+        , ifBlank .lastName ( LastName, "Last name can't be blank" )
+        ]
