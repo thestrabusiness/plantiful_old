@@ -1,6 +1,7 @@
 module Pages.UserForm exposing (Model, Msg, init, update, view)
 
 import Browser.Navigation as Nav
+import Form exposing (errorsForField)
 import Html exposing (..)
 import Html.Attributes exposing (class, placeholder, value)
 import Html.Events exposing (onClick, onInput)
@@ -82,50 +83,21 @@ view : Model -> Html Msg
 view model =
     div [ class "form container" ]
         [ h2 [] [ text "Sign Up" ]
-        , textField FirstName "First Name" model.firstName model.errors
-        , textField LastName "Last Name" model.lastName model.errors
-        , textField Email "Email" model.email model.errors
-        , textField Password "Password" model.password model.errors
+        , textField FirstName model.errors "First Name" model.firstName
+        , textField LastName model.errors "Last Name" model.lastName
+        , textField Email model.errors "Email" model.email
+        , textField Password model.errors "Password" model.password
         , button [ onClick UserSubmittedForm ] [ text "Submit" ]
         ]
 
 
-textField : Field -> String -> String -> List Error -> Html Msg
-textField field name fieldValue errors =
-    label []
-        [ text name
-        , input
-            [ class <| textFieldClass field errors
-            , value fieldValue
-            , onInput <| UserEditedField field
-            ]
-            []
-        , viewFormErrors field errors
-        ]
-
-
-textFieldClass : Field -> List Error -> String
-textFieldClass field errors =
-    case errorsForField field errors of
-        [] ->
-            ""
-
-        _ ->
-            "field_with_errors"
-
-
-viewFormErrors : Field -> List Error -> Html msg
-viewFormErrors field errors =
-    errorsForField field errors
-        |> List.map (\( _, error ) -> li [] [ text error ])
-        |> List.take 1
-        |> ul [ class "errors" ]
-
-
-errorsForField : Field -> List Error -> List Error
-errorsForField field errors =
-    errors
-        |> List.filter (\( errorField, _ ) -> errorField == field)
+textField : Field -> List Error -> String -> String -> Html Msg
+textField field errors =
+    let
+        fieldErrors =
+            errorsForField field errors
+    in
+    Form.textField (UserEditedField field) fieldErrors
 
 
 createUser : User.NewUser -> Cmd Msg
