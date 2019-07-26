@@ -7,6 +7,7 @@ RSpec.describe 'User requests', type: :request do
 
         user_response = JSON.parse(response.body)
 
+        expect(user_response['id']).to be
         expect(user_response['first_name']).to eq 'Uncle'
         expect(user_response['last_name']).to eq 'Tony'
         expect(user_response['email']).to eq 'uncle@tony.com'

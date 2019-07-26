@@ -6,10 +6,13 @@ import Html.Events exposing (onClick)
 import Http
 import Plant
 import Routes exposing (newPlantPath)
+import User exposing (User)
 
 
 type alias Model =
-    { plants : List Plant.Plant }
+    { plants : List Plant.Plant
+    , currentUser : User
+    }
 
 
 type Msg
@@ -18,9 +21,9 @@ type Msg
     | UpdatePlant (Result Http.Error Plant.Plant)
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Model [], getPlants )
+init : User -> ( Model, Cmd Msg )
+init user =
+    ( Model [] user, getPlants )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

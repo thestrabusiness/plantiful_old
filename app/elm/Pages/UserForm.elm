@@ -6,7 +6,7 @@ import Html.Attributes exposing (class, placeholder, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Routes
-import User
+import User exposing (User)
 import Validate exposing (Validator, fromValid, ifBlank, ifInvalidEmail, validate)
 
 
@@ -41,25 +41,25 @@ init =
     ( Model "" "" "" "" [], Cmd.none )
 
 
-update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg )
+update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Maybe User )
 update msg model key =
     case msg of
         UserSubmittedForm ->
             case validate modelValidator model of
                 Ok validatedModel ->
-                    ( fromValid validatedModel, createUser (toNewUser model) )
+                    ( fromValid validatedModel, createUser (toNewUser model), Nothing )
 
                 Err errorList ->
-                    ( { model | errors = errorList }, Cmd.none )
+                    ( { model | errors = errorList }, Cmd.none, Nothing )
 
         UserCreated (Ok user) ->
-            ( model, Nav.pushUrl key Routes.plantsPath )
+            ( model, Nav.pushUrl key Routes.plantsPath, Just user )
 
         UserCreated (Err error) ->
-            ( model, Cmd.none )
+            ( model, Cmd.none, Nothing )
 
         UserEditedField field value ->
-            ( setField field value model, Cmd.none )
+            ( setField field value model, Cmd.none, Nothing )
 
 
 setField : Field -> String -> Model -> Model

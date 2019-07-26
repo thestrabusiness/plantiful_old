@@ -4,11 +4,16 @@ import Browser
 import Browser.Navigation as Nav
 import Html exposing (..)
 import Html.Attributes exposing (..)
+import Html.Events exposing (onClick)
+import Http
+import Pages.NotAuthorized as NotAuthorized
 import Pages.PlantForm as PlantForm
 import Pages.PlantList as PlantList
+import Pages.SignIn as SignIn
 import Pages.UserForm as UserForm
 import Routes exposing (Route)
 import Url
+import User exposing (User)
 
 
 
@@ -19,6 +24,7 @@ type alias Model =
     { key : Nav.Key
     , page : Page
     , route : Route
+    , currentUser : Maybe User
     }
 
 
@@ -33,6 +39,7 @@ init flags url key =
             { key = key
             , page = PageNone
             , route = Routes.extractRoute url
+            , currentUser = Nothing
             }
     in
     ( model, Cmd.none )
@@ -49,6 +56,10 @@ type Msg
     | PlantListMsg PlantList.Msg
     | PlantFormMsg PlantForm.Msg
     | UserFormMsg UserForm.Msg
+    | NotAuthorizedMsg NotAuthorized.Msg
+    | SignInMsg SignIn.Msg
+    | UserClickedSignOutButton
+    | ReceivedUserSignOutResponse (Result Http.Error ())
 
 
 type Page
@@ -56,6 +67,8 @@ type Page
     | PlantListPage PlantList.Model
     | PlantFormPage PlantForm.Model
     | UserPage UserForm.Model
+    | NotAuthorizedPage NotAuthorized.Model
+    | SignInPage SignIn.Model
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -79,6 +92,15 @@ update msg model =
             ( { model | route = newRoute }, Cmd.none )
                 |> loadCurrentPage
 
+        ( UserClickedSignOutButton, _ ) ->
+            ( model, User.signOut ReceivedUserSignOutResponse )
+
+        ( ReceivedUserSignOutResponse (Ok _), _ ) ->
+            ( { model | currentUser = Nothing }, Nav.pushUrl model.key Routes.signInPath )
+
+        ( ReceivedUserSignOutResponse (Err error), _ ) ->
+            ( model, Cmd.none )
+
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let
                 ( newPageModel, newCmd ) =
@@ -87,9 +109,6 @@ update msg model =
             ( { model | page = PlantListPage newPageModel }
             , Cmd.map PlantListMsg newCmd
             )
-
-        ( PlantListMsg subMsg, _ ) ->
-            ( model, Cmd.none )
 
         ( PlantFormMsg subMsg, PlantFormPage pageModel ) ->
             let
@@ -100,19 +119,31 @@ update msg model =
             , Cmd.map PlantFormMsg newCmd
             )
 
-        ( PlantFormMsg subMsg, _ ) ->
-            ( model, Cmd.none )
-
         ( UserFormMsg subMsg, UserPage pageModel ) ->
             let
-                ( newPageModel, newCmd ) =
+                ( newPageModel, newCmd, currentUser ) =
                     UserForm.update subMsg pageModel model.key
             in
-            ( { model | page = UserPage newPageModel }
+            ( { model
+                | page = UserPage newPageModel
+                , currentUser = currentUser
+              }
             , Cmd.map UserFormMsg newCmd
             )
 
-        ( UserFormMsg subMsg, _ ) ->
+        ( SignInMsg subMsg, SignInPage pageModel ) ->
+            let
+                ( newPageModel, newCmd, currentUser ) =
+                    SignIn.update subMsg pageModel model.key
+            in
+            ( { model
+                | page = SignInPage newPageModel
+                , currentUser = currentUser
+              }
+            , Cmd.map SignInMsg newCmd
+            )
+
+        ( _, _ ) ->
             ( model, Cmd.none )
 
 
@@ -125,18 +156,28 @@ loadCurrentPage ( model, cmd ) =
                     ( PageNone, Cmd.none )
 
                 Routes.PlantsRoute ->
-                    let
-                        ( pageModel, pageCmd ) =
-                            PlantList.init
-                    in
-                    ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
+                    case model.currentUser of
+                        Just user ->
+                            let
+                                ( pageModel, pageCmd ) =
+                                    PlantList.init user
+                            in
+                            ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
+
+                        Nothing ->
+                            ( NotAuthorizedPage {}, Cmd.map NotAuthorizedMsg Cmd.none )
 
                 Routes.NewPlantRoute ->
-                    let
-                        ( formModel, formCmd ) =
-                            PlantForm.init
-                    in
-                    ( PlantFormPage formModel, Cmd.map PlantFormMsg formCmd )
+                    case model.currentUser of
+                        Just user ->
+                            let
+                                ( formModel, formCmd ) =
+                                    PlantForm.init user
+                            in
+                            ( PlantFormPage formModel, Cmd.map PlantFormMsg formCmd )
+
+                        Nothing ->
+                            ( NotAuthorizedPage {}, Cmd.map NotAuthorizedMsg Cmd.none )
 
                 Routes.NewUserRoute ->
                     let
@@ -144,6 +185,22 @@ loadCurrentPage ( model, cmd ) =
                             UserForm.init
                     in
                     ( UserPage formModel, Cmd.map UserFormMsg formCmd )
+
+                Routes.SignInRoute ->
+                    case model.currentUser of
+                        Just user ->
+                            let
+                                ( pageModel, pageCmd ) =
+                                    PlantList.init user
+                            in
+                            ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
+
+                        Nothing ->
+                            let
+                                ( pageModel, pageCmd ) =
+                                    SignIn.init
+                            in
+                            ( SignInPage pageModel, Cmd.map SignInMsg pageCmd )
 
                 Routes.NotFoundRoute ->
                     ( PageNone, Cmd.none )
@@ -181,6 +238,14 @@ currentPage model =
                     UserForm.view pageModel
                         |> Html.map UserFormMsg
 
+                NotAuthorizedPage _ ->
+                    NotAuthorized.view
+                        |> Html.map NotAuthorizedMsg
+
+                SignInPage pageModel ->
+                    SignIn.view pageModel
+                        |> Html.map SignInMsg
+
                 PageNone ->
                     text "Home Page"
     in
@@ -206,13 +271,16 @@ headerLink model =
             signUpLink
 
         Routes.PlantsRoute ->
-            signOutLink
+            signOutButton
 
         Routes.NewPlantRoute ->
-            signOutLink
+            signOutButton
 
         Routes.NewUserRoute ->
-            signOutLink
+            signOutButton
+
+        Routes.SignInRoute ->
+            signUpLink
 
         Routes.NotFoundRoute ->
             text ""
@@ -223,9 +291,13 @@ signUpLink =
     a [ class "l-pr", href "/sign_up" ] [ text "Sign Up" ]
 
 
-signOutLink : Html Msg
-signOutLink =
-    a [ class "l-pr", href "/sign_out" ] [ text "Sign Out" ]
+signOutButton : Html Msg
+signOutButton =
+    button
+        [ class "l-pr"
+        , onClick UserClickedSignOutButton
+        ]
+        [ text "Sign Out" ]
 
 
 

@@ -7,10 +7,13 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Plant
 import Routes
+import User exposing (User)
 
 
 type alias Model =
-    { name : String }
+    { name : String
+    , currentUser : User
+    }
 
 
 type Msg
@@ -19,13 +22,9 @@ type Msg
     | PlantCreated (Result Http.Error Plant.Plant)
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( initialModel, Cmd.none )
-
-
-initialModel =
-    Model ""
+init : User -> ( Model, Cmd Msg )
+init user =
+    ( Model "" user, Cmd.none )
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg )
