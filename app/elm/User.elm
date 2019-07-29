@@ -1,4 +1,4 @@
-module User exposing (Errors, NewUser, User, createUser, signIn, signOut)
+module User exposing (Errors, NewUser, User, createUser, signIn, signOut, toCredentials)
 
 import Http
 import HttpBuilder
@@ -122,3 +122,8 @@ encodeCredentials credentials =
                 ]
           )
         ]
+
+
+toCredentials : { a | email : String, password : String } -> Credentials
+toCredentials { email, password } =
+    Credentials email password
