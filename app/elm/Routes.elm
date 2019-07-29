@@ -5,8 +5,7 @@ import Url.Parser exposing (..)
 
 
 type Route
-    = HomeRoute
-    | PlantsRoute
+    = PlantsRoute
     | NotFoundRoute
     | NewPlantRoute
     | NewUserRoute
@@ -26,7 +25,7 @@ extractRoute url =
 matchRoute : Parser (Route -> a) a
 matchRoute =
     oneOf
-        [ map HomeRoute top
+        [ map SignInRoute top
         , map PlantsRoute (s "plants")
         , map NewPlantRoute (s "plants" </> s "new")
         , map NewUserRoute (s "sign_up")
@@ -37,9 +36,6 @@ matchRoute =
 pathFor : Route -> String
 pathFor route =
     case route of
-        HomeRoute ->
-            "/"
-
         PlantsRoute ->
             "/plants"
 

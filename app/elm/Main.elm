@@ -152,9 +152,6 @@ loadCurrentPage ( model, cmd ) =
     let
         ( page, newCmd ) =
             case model.route of
-                Routes.HomeRoute ->
-                    ( PageNone, Cmd.none )
-
                 Routes.PlantsRoute ->
                     case model.currentUser of
                         Just user ->
@@ -247,7 +244,7 @@ currentPage model =
                         |> Html.map SignInMsg
 
                 PageNone ->
-                    text "Home Page"
+                    text "Page Not Found"
     in
     div []
         [ nav model
@@ -267,9 +264,6 @@ nav model =
 headerLink : Model -> Html Msg
 headerLink model =
     case model.route of
-        Routes.HomeRoute ->
-            signUpLink
-
         Routes.PlantsRoute ->
             signOutButton
 
