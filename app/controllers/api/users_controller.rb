@@ -1,4 +1,6 @@
-class Api::UsersController < ApplicationController
+class Api::UsersController < Api::BaseController
+  skip_before_action :require_login
+
   def create
     user = User.new(user_params)
 

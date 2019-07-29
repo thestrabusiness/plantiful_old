@@ -5,7 +5,8 @@ Rails.application.routes.draw do
     resources :plants, only: [:create, :index] do
       resources :waterings, only: :create
     end
-    resources :users, only: :create
+    resources :users, only: [:create]
+    resource :current_user, only: :show
     resources :sessions, only: :create
     delete "/sign_out" => "sessions#destroy", as: "sign_out"
   end

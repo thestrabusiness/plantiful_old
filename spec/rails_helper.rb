@@ -6,6 +6,8 @@ require 'database_cleaner'
 require 'rspec/rails'
 require 'spec_helper'
 
+Dir[Rails.root.join("spec", "support", "**", "*.rb")].sort.each { |file| require file }
+
 abort('The Rails environment is running in production mode!') if Rails.env.production?
 
 begin
@@ -20,6 +22,10 @@ RSpec.configure do |config|
   config.use_transactional_fixtures = true
   config.infer_spec_type_from_file_location!
   config.filter_rails_from_backtrace!
+  config.include FactoryBot::Syntax::Methods
+
+  config.include ApiRequestHelpers
+  config.include JsonHelpers
 
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction

@@ -1,4 +1,6 @@
-class Api::SessionsController < ApplicationController
+class Api::SessionsController < Api::BaseController
+  skip_before_action :require_login, only: :create
+
   def create
     user = User.authenticate(user_params[:email], user_params[:password])
 

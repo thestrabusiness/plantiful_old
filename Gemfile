@@ -23,6 +23,7 @@ gem 'webpacker', '~> 4.x'
 
 group :development, :test do
   gem 'capybara'
+  gem 'factory_bot_rails'
   gem 'pry'
   gem 'rspec'
   gem 'rspec-rails'
@@ -38,5 +39,6 @@ end
 group :test do
   gem 'database_cleaner'
 end
+
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]

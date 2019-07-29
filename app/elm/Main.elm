@@ -42,7 +42,7 @@ init flags url key =
             , currentUser = Nothing
             }
     in
-    ( model, Cmd.none )
+    ( model, User.getCurrentUser ReceivedCurrentUserResponse )
         |> loadCurrentPage
 
 
@@ -60,6 +60,7 @@ type Msg
     | SignInMsg SignIn.Msg
     | UserClickedSignOutButton
     | ReceivedUserSignOutResponse (Result Http.Error ())
+    | ReceivedCurrentUserResponse (Result Http.Error User)
 
 
 type Page
@@ -98,8 +99,14 @@ update msg model =
         ( ReceivedUserSignOutResponse (Ok _), _ ) ->
             ( { model | currentUser = Nothing }, Nav.pushUrl model.key Routes.signInPath )
 
-        ( ReceivedUserSignOutResponse (Err error), _ ) ->
+        ( ReceivedUserSignOutResponse (Err _), _ ) ->
             ( model, Cmd.none )
+
+        ( ReceivedCurrentUserResponse (Ok user), _ ) ->
+            ( { model | currentUser = Just user }, Nav.pushUrl model.key Routes.plantsPath )
+
+        ( ReceivedCurrentUserResponse (Err error), _ ) ->
+            ( { model | currentUser = Nothing }, Cmd.none )
 
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let

@@ -1,4 +1,4 @@
-module User exposing (Errors, NewUser, User, createUser, signIn, signOut, toCredentials)
+module User exposing (Errors, NewUser, User, createUser, getCurrentUser, signIn, signOut, toCredentials)
 
 import Http
 import HttpBuilder
@@ -76,6 +76,17 @@ signOut msg =
     in
     HttpBuilder.delete url
         |> HttpBuilder.withExpect (Http.expectWhatever msg)
+        |> HttpBuilder.request
+
+
+getCurrentUser : (Result Http.Error User -> msg) -> Cmd msg
+getCurrentUser msg =
+    let
+        url =
+            "/api/current_user"
+    in
+    HttpBuilder.get url
+        |> HttpBuilder.withExpect (Http.expectJson msg userDecoder)
         |> HttpBuilder.request
 
 

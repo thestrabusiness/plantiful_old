@@ -1,10 +1,10 @@
-class Api::PlantsController < ApplicationController
+class Api::PlantsController < Api::BaseController
   def index
-    render json: Plant.includes(:last_watering)
+    render json: current_user.plants.includes(:last_watering)
   end
 
   def create
-    render json: Plant.create(plant_params.merge(user: User.first))
+    render json: current_user.plants.create(plant_params)
   end
 
   private
