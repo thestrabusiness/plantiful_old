@@ -1,5 +1,4 @@
 .cards {
-  @include grid-container;
   display: flex;
   flex-wrap: wrap;
 }
@@ -19,8 +18,6 @@
   $card-margin: 1em;
   $card-image-hover-opacity: 0.7;
   $card-image-hover-color: #F8F2B4;
-
-  @include grid-column(4);
 
   background-color: $card-background;
   border: $card-border;

@@ -255,7 +255,7 @@ currentPage model =
     in
     div []
         [ nav model
-        , div [ class "container" ] [ page ]
+        , div [ class "main" ] [ page ]
         ]
 
 
@@ -263,7 +263,7 @@ nav : Model -> Html Msg
 nav model =
     div
         [ class "header" ]
-        [ h2 [] [ text "Plantiful" ]
+        [ h2 [ class "header__item--full" ] [ text "Plantiful" ]
         , headerLink model
         ]
 
@@ -278,7 +278,7 @@ headerLink model =
             signOutButton
 
         Routes.NewUserRoute ->
-            signOutButton
+            signInLink
 
         Routes.SignInRoute ->
             signUpLink
@@ -289,16 +289,21 @@ headerLink model =
 
 signUpLink : Html Msg
 signUpLink =
-    a [ class "l-pr", href "/sign_up" ] [ text "Sign Up" ]
+    a [ class "header__item", href "/sign_up" ] [ text "Sign Up" ]
 
 
 signOutButton : Html Msg
 signOutButton =
     button
-        [ class "l-pr"
+        [ class "header__item"
         , onClick UserClickedSignOutButton
         ]
         [ text "Sign Out" ]
+
+
+signInLink : Html Msg
+signInLink =
+    a [ class "header__item", href "/sign_in" ] [ text "Sign In" ]
 
 
 

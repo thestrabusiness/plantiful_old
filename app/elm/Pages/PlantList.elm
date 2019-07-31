@@ -78,7 +78,7 @@ view : Model -> Html Msg
 view model =
     div []
         [ viewPlantList model.plants
-        , a [ href newPlantPath ] [ text "Add New Plant" ]
+        , a [ class "add-record-btn", href newPlantPath ] [ text "Add New Plant" ]
         ]
 
 

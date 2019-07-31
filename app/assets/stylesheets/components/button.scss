@@ -1,0 +1,11 @@
+.add-record-btn {
+  @include hide_text;
+  @include size(93px);
+
+  position: absolute;
+  right:    20px;
+  bottom:   20px;
+  background-image: url('add-record-btn.svg');
+  border-radius: 50%;
+  box-shadow: 2px 4px 2px $light-gray;
+}

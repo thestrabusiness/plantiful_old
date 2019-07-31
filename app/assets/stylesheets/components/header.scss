@@ -1,0 +1,17 @@
+.header {
+  display: flex;
+  align-items: center;
+
+  height: 65px;
+  background: #dbffce;
+  padding: 20px;
+}
+
+.header__item--full {
+  flex: auto;
+  margin: 0;
+}
+
+.header__item {
+  margin: 0;
+}
