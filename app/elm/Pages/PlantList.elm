@@ -93,7 +93,7 @@ viewPlantList plants =
 
 cardImageUrl : String
 cardImageUrl =
-    "https://raw.githubusercontent.com/thoughtbot/refills/master/source/images/mountains.png"
+    "https://thumbs.dreamstime.com/z/growing-plant-3599470.jpg"
 
 
 card : Plant.Plant -> Html Msg

@@ -1,7 +1,7 @@
 .main {
   margin-left: auto;
   margin-right: auto;
-  padding: 20px 20px 0 20px;
+  padding: 25px 25px 0 25px;
 }
 
 .container__center {
@@ -9,7 +9,12 @@
   margin-right: auto;
 }
 
+.container__shadow {
+  box-shadow: 0px 0px 3px $light-gray;
+}
+
 .form {
   width: 768px;
-  text-align: center
+  text-align: center;
+  padding: 20px;
 }

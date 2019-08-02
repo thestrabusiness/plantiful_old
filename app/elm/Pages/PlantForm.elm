@@ -45,7 +45,7 @@ update msg model key =
 
 view : Model -> Html Msg
 view model =
-    div [ class "form container__center" ]
+    div [ class "form container__center container__shadow" ]
         [ h2 [] [ text "Add a Plant" ]
         , input
             [ placeholder "Name"

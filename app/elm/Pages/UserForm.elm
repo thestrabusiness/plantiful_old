@@ -81,7 +81,7 @@ setField field value model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "form container__center" ]
+    div [ class "form container__center container__shadow" ]
         [ h2 [] [ text "Sign Up" ]
         , textField FirstName model.errors "First Name" model.firstName
         , textField LastName model.errors "Last Name" model.lastName
