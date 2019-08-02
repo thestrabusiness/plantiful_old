@@ -1,7 +1,7 @@
 module Pages.NotAuthorized exposing (Model, Msg, init, view)
 
 import Html exposing (Html, a, div, p, text)
-import Html.Attributes exposing (href)
+import Html.Attributes exposing (class, href)
 
 
 type alias Model =
@@ -19,7 +19,7 @@ init =
 
 view : Html Msg
 view =
-    div []
+    div [ class "form container__center container__shadow" ]
         [ p [] [ text "You aren't authorized to view that page" ]
         , p []
             [ text "Click "
