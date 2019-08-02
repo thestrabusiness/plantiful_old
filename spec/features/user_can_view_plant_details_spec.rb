@@ -1,5 +1,6 @@
 RSpec.feature 'User can view plant details' do
   it 'user can see the plants details' do
+    skip
     plant = Plant.create(
       name: 'Planthony',
       botanical_name: 'Planthonius Moffa'
@@ -12,6 +13,7 @@ RSpec.feature 'User can view plant details' do
   end
 
   it 'user can see the last 5 waterings' do
+    skip
     plant = Plant.create(
       name: 'Planthony',
       botanical_name: 'Planthonius Moffa'

@@ -2,6 +2,7 @@ require 'rails_helper'
 
 RSpec.feature 'User can record when a plant is watered' do
   it 'Adds a new watering event record for the given plant' do
+    skip
     plant = Plant.create(name: 'test')
 
     visit plants_path
