@@ -2,7 +2,7 @@
   @include hide_text;
   @include size(93px);
 
-  position: absolute;
+  position: fixed;
   right:    20px;
   bottom:   20px;
   background-image:image-url('add-record-btn.svg');
