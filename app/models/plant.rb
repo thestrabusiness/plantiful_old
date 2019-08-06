@@ -13,6 +13,10 @@ class Plant < ApplicationRecord
   validates :check_frequency_scalar, presence: true, numericality: true
   validates :check_frequency_unit, presence: true, inclusion: FREQUENCY_UNITS
 
+  def last_watered_at
+    last_watering&.happened_at
+  end
+
   def last_watering_date
     last_watering&.happened_at_date
   end

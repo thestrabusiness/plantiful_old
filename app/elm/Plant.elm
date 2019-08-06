@@ -1,16 +1,19 @@
 module Plant exposing (Plant, createPlant, getPlants, plantDecoder, plantListDecoder, toNewPlant, waterPlant)
 
+import DateAndTime
 import Http
 import HttpBuilder
 import Json.Decode exposing (Decoder, int, string, succeed)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
+import Time exposing (Posix)
 
 
 type alias Plant =
     { id : Int
     , name : String
     , lastWateringDate : String
+    , lastWateredAt : Posix
     }
 
 
@@ -94,3 +97,14 @@ plantDecoder =
         |> required "id" int
         |> required "name" string
         |> optional "last_watering_date" string "Not Yet Watered"
+        |> optional "last_watered_at" posixDecoder (Time.millisToPosix 0)
+
+
+posixDecoder : Decoder Posix
+posixDecoder =
+    Json.Decode.andThen timeHelper int
+
+
+timeHelper : Int -> Decoder Posix
+timeHelper value =
+    succeed <| DateAndTime.secondsToPosix value

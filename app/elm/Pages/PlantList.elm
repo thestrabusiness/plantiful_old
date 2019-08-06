@@ -1,17 +1,22 @@
 module Pages.PlantList exposing (Model, Msg(..), card, cardImageUrl, getPlants, init, update, updatePlantsList, view, viewPlantList)
 
+import DateAndTime
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
 import Plant
 import Routes exposing (newPlantPath)
+import Task
+import Time exposing (Posix)
 import User exposing (User)
 
 
 type alias Model =
     { plants : List Plant.Plant
     , currentUser : User
+    , currentTime : Posix
+    , currentTimeZone : Time.Zone
     }
 
 
@@ -19,11 +24,30 @@ type Msg
     = NewPlants (Result Http.Error (List Plant.Plant))
     | WaterPlant Plant.Plant
     | UpdatePlant (Result Http.Error Plant.Plant)
+    | ReceivedCurrentTime Time.Posix
+    | ReceivedTimeZone Time.Zone
 
 
 init : User -> ( Model, Cmd Msg )
 init user =
-    ( Model [] user, getPlants )
+    ( Model [] user initialTime Time.utc
+    , Cmd.batch [ getCurrentTime, getTimeZone, getPlants ]
+    )
+
+
+getCurrentTime : Cmd Msg
+getCurrentTime =
+    Task.perform ReceivedCurrentTime Time.now
+
+
+getTimeZone : Cmd Msg
+getTimeZone =
+    Task.perform ReceivedTimeZone Time.here
+
+
+initialTime : Posix
+initialTime =
+    Time.millisToPosix 0
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -56,13 +80,19 @@ update msg model =
         WaterPlant plant ->
             ( model, waterPlant plant )
 
+        ReceivedTimeZone zone ->
+            ( { model | currentTimeZone = zone }, Cmd.none )
+
+        ReceivedCurrentTime time ->
+            ( { model | currentTime = time }, Cmd.none )
+
 
 updatePlantsList : List Plant.Plant -> Plant.Plant -> List Plant.Plant
 updatePlantsList currentPlantList updatedPlant =
     let
         updatePlant plant =
             if plant.id == updatedPlant.id then
-                { plant | lastWateringDate = updatedPlant.lastWateringDate }
+                { plant | lastWateredAt = updatedPlant.lastWateredAt }
 
             else
                 plant
@@ -77,16 +107,16 @@ updatePlantsList currentPlantList updatedPlant =
 view : Model -> Html Msg
 view model =
     div []
-        [ viewPlantList model.plants
+        [ viewPlantList model
         , a [ class "add-record-btn", href newPlantPath ] [ text "Add New Plant" ]
         ]
 
 
-viewPlantList : List Plant.Plant -> Html Msg
-viewPlantList plants =
+viewPlantList : Model -> Html Msg
+viewPlantList model =
     let
         listOfPlants =
-            List.map card plants
+            List.map (card model.currentTime) model.plants
     in
     div [ class "cards" ] listOfPlants
 
@@ -96,8 +126,8 @@ cardImageUrl =
     "https://thumbs.dreamstime.com/z/growing-plant-3599470.jpg"
 
 
-card : Plant.Plant -> Html Msg
-card plant =
+card : Posix -> Plant.Plant -> Html Msg
+card currentTime plant =
     div [ class "card" ]
         [ div [ class "card-image" ]
             [ img [ src cardImageUrl ] [] ]
@@ -105,7 +135,7 @@ card plant =
         , div [ class "card-copy" ]
             [ ul []
                 [ li [] [ text "Botanical Name" ]
-                , li [] [ text plant.lastWateringDate ]
+                , li [] [ text <| distanceInDays currentTime plant.lastWateredAt ]
                 , li []
                     [ button [ onClick (WaterPlant plant) ]
                         [ text "Water" ]
@@ -113,6 +143,15 @@ card plant =
                 ]
             ]
         ]
+
+
+distanceInDays : Posix -> Posix -> String
+distanceInDays currentTime wateredAt =
+    if Time.posixToMillis wateredAt == 0 then
+        "Not Yet Watered"
+
+    else
+        DateAndTime.distanceInDays currentTime wateredAt
 
 
 
