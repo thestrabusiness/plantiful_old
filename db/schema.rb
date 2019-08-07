@@ -10,15 +10,26 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_07_17_143848) do
+ActiveRecord::Schema.define(version: 2019_08_06_233742) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "plant_care_events", force: :cascade do |t|
+    t.bigint "plant_id"
+    t.datetime "happened_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
+    t.string "kind", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["plant_id"], name: "index_plant_care_events_on_plant_id"
+  end
 
   create_table "plants", force: :cascade do |t|
     t.string "name"
     t.string "botanical_name"
     t.bigint "user_id"
+    t.integer "check_frequency_scalar", default: 3, null: false
+    t.string "check_frequency_unit", default: "days", null: false
     t.index ["user_id"], name: "index_plants_on_user_id"
   end
 
@@ -35,13 +46,6 @@ ActiveRecord::Schema.define(version: 2019_07_17_143848) do
     t.index ["remember_token"], name: "index_users_on_remember_token"
   end
 
-  create_table "waterings", force: :cascade do |t|
-    t.bigint "plant_id", null: false
-    t.datetime "watered_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["plant_id"], name: "index_waterings_on_plant_id"
-  end
-
+  add_foreign_key "plant_care_events", "plants"
   add_foreign_key "plants", "users"
 end

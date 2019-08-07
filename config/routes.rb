@@ -3,7 +3,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     resources :plants, only: [:create, :index] do
-      resources :waterings, only: :create
+      resources :plant_care_events, only: :create
     end
     resources :users, only: [:create]
     resource :current_user, only: :show

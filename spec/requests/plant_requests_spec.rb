@@ -1,5 +1,5 @@
 RSpec.describe 'Plant requests', type: :request do
-  describe 'get /api/plants' do
+  describe 'GET /api/plants' do
     context 'when a user is signed in' do
       context 'and the user has plants' do
         it 'returns a list of the users plants' do
@@ -35,6 +35,45 @@ RSpec.describe 'Plant requests', type: :request do
       it 'returns a 401 - Unauthorized' do
         get '/api/plants'
         expect(response.code).to eq '401'
+      end
+    end
+  end
+
+  describe 'POST /api/plants' do
+    context 'with valid input' do
+      it 'returns the created plant' do
+        user = create(:user)
+        plant_params = { plant:
+          { name: 'Bobby',
+            check_frequency_scalar: 1,
+            check_frequency_unit: 'week' } }
+
+        api_sign_in(user)
+        post api_plants_path, params: plant_params
+
+        result = response_json
+
+        expect(result[:name]).to eq 'Bobby'
+        expect(result[:last_watering_date]).to be nil
+        expect(result[:next_check_date]).to eq I18n.l(Time.current, format: :month_day_year)
+      end
+    end
+
+    context 'with an invalid input' do
+      it 'returns a 422 - Unprocessable Entity' do
+        user = create(:user)
+        plant_params = { plant:
+          { name: nil,
+            check_frequency_scalar: nil,
+            check_frequency_unit: nil } }
+
+        api_sign_in(user)
+        post api_plants_path, params: plant_params
+
+        result = response_json
+
+        expect(response.code).to eq '422'
+        expect(result.keys).to match_array [:name, :check_frequency_scalar, :check_frequency_unit]
       end
     end
   end
