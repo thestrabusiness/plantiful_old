@@ -1,4 +1,4 @@
-module Plant exposing (Plant, createPlant, getPlants, plantDecoder, plantListDecoder, waterPlant)
+module Plant exposing (Plant, createPlant, getPlants, plantDecoder, plantListDecoder, toNewPlant, waterPlant)
 
 import Http
 import HttpBuilder
@@ -11,6 +11,13 @@ type alias Plant =
     { id : Int
     , name : String
     , lastWateringDate : String
+    }
+
+
+type alias NewPlant =
+    { name : String
+    , checkFrequencyUnit : String
+    , checkFrequencyScalar : String
     }
 
 
@@ -31,31 +38,49 @@ waterPlant : (Result Http.Error Plant -> msg) -> Plant -> Cmd msg
 waterPlant msg plant =
     let
         wateringPath =
-            "/api/plants/" ++ String.fromInt plant.id ++ "/waterings"
+            "/api/plants/" ++ String.fromInt plant.id ++ "/plant_care_events"
+
+        params =
+            encodeCareEvent "watering"
     in
     HttpBuilder.post wateringPath
+        |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
         |> HttpBuilder.request
 
 
-encodePlant : String -> Encode.Value
-encodePlant name =
-    Encode.object [ ( "name", Encode.string name ) ]
+encodeCareEvent : String -> Encode.Value
+encodeCareEvent kind =
+    Encode.object [ ( "kind", Encode.string kind ) ]
 
 
-createPlant : (Result Http.Error Plant -> msg) -> String -> Cmd msg
-createPlant msg name =
+encodePlant : NewPlant -> Encode.Value
+encodePlant plant =
+    Encode.object
+        [ ( "name", Encode.string plant.name )
+        , ( "check_frequency_unit", Encode.string plant.checkFrequencyUnit )
+        , ( "check_frequency_scalar", Encode.string plant.checkFrequencyScalar )
+        ]
+
+
+createPlant : (Result Http.Error Plant -> msg) -> NewPlant -> Cmd msg
+createPlant msg newPlant =
     let
         url =
             "/api/plants"
 
         params =
-            encodePlant name
+            encodePlant newPlant
     in
     HttpBuilder.post url
         |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
         |> HttpBuilder.request
+
+
+toNewPlant : { a | name : String, checkFrequencyUnit : String, checkFrequencyScalar : String } -> NewPlant
+toNewPlant { name, checkFrequencyUnit, checkFrequencyScalar } =
+    NewPlant name checkFrequencyUnit checkFrequencyScalar
 
 
 plantListDecoder : Decoder (List Plant)

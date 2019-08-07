@@ -17,4 +17,16 @@
   width: 768px;
   text-align: center;
   padding: 20px;
+
+  .input__number {
+    width: 10%;
+  }
+
+  .input__check {
+    display: inline-block;
+  }
+
+  .input__select {
+    width: 75%;
+  }
 }
