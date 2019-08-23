@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.feature "User can view a list of plants", type: :feature do
+RSpec.feature 'User can view a list of plants', type: :feature do
   it 'user can see a list of plant names' do
     skip
     plant1 = Plant.create(name: 'name')

@@ -2,7 +2,15 @@ RSpec.describe 'User requests', type: :request do
   describe 'POST /api/users' do
     context 'with the required fields' do
       it 'returns the created user' do
-        user_params = { user: { first_name: 'Uncle', last_name: 'Tony', email: 'uncle@tony.com', password: 'password'} }
+        user_params = {
+          user: {
+            first_name: 'Uncle',
+            last_name: 'Tony',
+            email: 'uncle@tony.com',
+            password: 'password'
+          }
+        }
+
         post api_users_path, params: user_params
 
         user_response = response_json

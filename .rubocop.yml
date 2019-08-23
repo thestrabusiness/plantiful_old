@@ -1,0 +1,13 @@
+AllCops:
+  Exclude:
+    - 'db/**/*'
+    - 'config/**/*'
+    - 'node_modules/**/*'
+    - 'bin/**/*'
+    - 'spec/rails_helper.rb'
+Style/FrozenStringLiteralComment:
+    Enabled: false
+Documentation:
+    Enabled: false
+Metrics/BlockLength:
+    Enabled: false

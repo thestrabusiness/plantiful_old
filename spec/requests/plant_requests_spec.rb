@@ -4,13 +4,13 @@ RSpec.describe 'Plant requests', type: :request do
       context 'and the user has plants' do
         it 'returns a list of the users plants' do
           user = create(:user, :with_plants, number: 3)
-          other_plants = create_list(:plant, 3)
+          _other_plants = create_list(:plant, 3)
           api_sign_in(user)
 
           get api_plants_path
 
-          result = response_json
-          returned_ids = result.collect { |result| result[:id] }
+          api_response = response_json
+          returned_ids = api_response.collect { |result| result[:id] }
 
           expect(returned_ids.size).to eq 3
           expect(returned_ids).to match_array user.plants.pluck(:id)
@@ -20,7 +20,7 @@ RSpec.describe 'Plant requests', type: :request do
       context 'and the user does not have plants' do
         it 'returns an empty list' do
           user = create(:user)
-          other_plants = create_list(:plant, 3)
+          _other_plants = create_list(:plant, 3)
           api_sign_in(user)
 
           get api_plants_path
@@ -73,7 +73,7 @@ RSpec.describe 'Plant requests', type: :request do
         result = response_json
 
         expect(response.code).to eq '422'
-        expect(result.keys).to match_array [:name, :check_frequency_scalar, :check_frequency_unit]
+        expect(result.keys).to match_array %i[name check_frequency_scalar check_frequency_unit]
       end
     end
   end

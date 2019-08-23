@@ -5,7 +5,8 @@ RSpec.describe 'Plant care event request', type: :request do
         plant = create(:plant, name: 'Planty')
         api_sign_in(plant.user)
 
-        post api_plant_plant_care_events_path(plant), params: { kind: 'watering'}
+        post(api_plant_plant_care_events_path(plant),
+             params: { kind: 'watering' })
 
         result = response_json
 

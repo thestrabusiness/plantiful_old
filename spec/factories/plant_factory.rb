@@ -15,7 +15,7 @@ FactoryBot.define do
         number { 2 }
       end
 
-      after :create do |plant, evaluator|
+      after :create do |plant, _evaluator|
         create_list(:watering, number, plant: plant)
       end
     end

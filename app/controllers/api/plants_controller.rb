@@ -1,20 +1,26 @@
-class Api::PlantsController < Api::BaseController
-  def index
-    render json: current_user.plants.includes(:last_watering, :last_check)
-  end
-
-  def create
-    plant = current_user.plants.create(plant_params)
-    if plant.errors.empty?
-      render json: plant, status: :created
-    else
-      render json: plant.errors, status: :unprocessable_entity
+module Api
+  class PlantsController < Api::BaseController
+    def index
+      render json: current_user.plants.includes(:last_watering, :last_check)
     end
-  end
 
-  private
+    def create
+      plant = current_user.plants.create(plant_params)
+      if plant.errors.empty?
+        render json: plant, status: :created
+      else
+        render json: plant.errors, status: :unprocessable_entity
+      end
+    end
 
-  def plant_params
-    params.require(:plant).permit(:name, :check_frequency_unit, :check_frequency_scalar)
+    private
+
+    def plant_params
+      params.require(:plant).permit(
+        :name,
+        :check_frequency_unit,
+        :check_frequency_scalar
+      )
+    end
   end
 end

@@ -5,7 +5,12 @@ RSpec.describe 'Session requests', type: :request do
         it 'returns the user and status 200' do
           user = create(:user)
 
-          session_params = { user: { email: user.email, password: user.password } }
+          session_params = {
+            user: {
+              email: user.email,
+              password: user.password
+            }
+          }
           post api_sessions_path, params: session_params
 
           user_response = response_json
@@ -21,9 +26,16 @@ RSpec.describe 'Session requests', type: :request do
 
       context 'that don\'t match an existing user' do
         it 'returns a 401' do
-          create(:user, email: 'realemail@example.come', password: 'realpassword')
+          create(:user,
+                 email: 'realemail@example.come',
+                 password: 'realpassword')
 
-          session_params = { user: { email: 'somethingelse@email.com', password: 'fake' } }
+          session_params = {
+            user: {
+              email: 'somethingelse@email.com',
+              password: 'fake'
+            }
+          }
           post api_sessions_path, params: session_params
 
           expect(response.code).to eq '401'

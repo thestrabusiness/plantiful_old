@@ -9,7 +9,7 @@ class PlantCareEvent < ApplicationRecord
   default_scope -> { order(happened_at: :desc) }
 
   scope :watering, -> { where kind: 'watering' }
-  scope :check, -> { where kind: 'check'}
+  scope :check, -> { where kind: 'check' }
 
   def happened_at_date
     l(happened_at, format: :month_day_year)
