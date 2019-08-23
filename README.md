@@ -13,7 +13,7 @@ Plantiful is an application that will let you track your plants health and water
 
 Clone the repo and `bundle install` in the root directory
 
-`rails db:create && db:seed`
+`rails db:create && rails db:seed`
 
 `yarn install` to setup webpack dependencies
 
