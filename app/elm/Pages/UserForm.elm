@@ -86,9 +86,18 @@ view model =
         , textField FirstName model.errors "First Name" model.firstName
         , textField LastName model.errors "Last Name" model.lastName
         , textField Email model.errors "Email" model.email
-        , textField Password model.errors "Password" model.password
+        , passwordField Password model.errors "Password" model.password
         , button [ onClick UserSubmittedForm ] [ text "Submit" ]
         ]
+
+
+passwordField : Field -> List Error -> String -> String -> Html Msg
+passwordField field errors =
+    let
+        fieldErrors =
+            errorsForField field errors
+    in
+    Form.passwordField (UserEditedField field) UserSubmittedForm fieldErrors
 
 
 textField : Field -> List Error -> String -> String -> Html Msg
@@ -97,7 +106,7 @@ textField field errors =
         fieldErrors =
             errorsForField field errors
     in
-    Form.textField (UserEditedField field) fieldErrors
+    Form.textField (UserEditedField field) UserSubmittedForm fieldErrors
 
 
 createUser : User.NewUser -> Cmd Msg

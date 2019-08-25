@@ -20,7 +20,7 @@ type alias Model =
 
 type Msg
     = UserEditedField Field String
-    | UserClickedSubmitButton
+    | UserSubmittedForm
     | ReceivedSignInResponse (Result Http.Error User)
 
 
@@ -44,7 +44,7 @@ update msg model key =
         UserEditedField field value ->
             ( setField field value model, Cmd.none, Nothing )
 
-        UserClickedSubmitButton ->
+        UserSubmittedForm ->
             case validate modelValidator model of
                 Ok validatedModel ->
                     ( fromValid validatedModel
@@ -77,9 +77,9 @@ view model =
     div [ class "form container__center container__shadow" ]
         [ h2 [] [ text "Sign In" ]
         , textField Email model.errors "Email" model.email
-        , textField Password model.errors "Password" model.password
+        , passwordField Password model.errors "Password" model.password
         , button
-            [ onClick UserClickedSubmitButton ]
+            [ onClick UserSubmittedForm ]
             [ text "Sign in" ]
         ]
 
@@ -90,7 +90,16 @@ textField field errors =
         fieldErrors =
             errorsForField field errors
     in
-    Form.textField (UserEditedField field) fieldErrors
+    Form.textField (UserEditedField field) UserSubmittedForm fieldErrors
+
+
+passwordField : Field -> List Error -> String -> String -> Html Msg
+passwordField field errors =
+    let
+        fieldErrors =
+            errorsForField field errors
+    in
+    Form.passwordField (UserEditedField field) UserSubmittedForm fieldErrors
 
 
 modelValidator : Validator Error Model

@@ -1,7 +1,7 @@
 module Pages.PlantForm exposing (Model, Msg, init, update, view)
 
 import Browser.Navigation as Nav
-import Form exposing (errorsForField)
+import Form exposing (errorsForField, onEnter)
 import Html exposing (..)
 import Html.Attributes exposing (class, selected, type_, value)
 import Html.Events exposing (onClick, onInput)
@@ -89,6 +89,7 @@ view model =
                 , class "input__number input__check"
                 , value model.checkFrequencyScalar
                 , onInput <| UserEditedField CheckFrequencyScalar
+                , onEnter UserSubmittedForm
                 ]
                 []
             , checkFrequencySelect model
@@ -123,7 +124,7 @@ textField field errors =
         fieldErrors =
             errorsForField field errors
     in
-    Form.textField (UserEditedField field) fieldErrors
+    Form.textField (UserEditedField field) UserSubmittedForm fieldErrors
 
 
 modelValidator : Validator Error Model
