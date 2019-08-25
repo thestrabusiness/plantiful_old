@@ -9,7 +9,7 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Routes
 import User exposing (User)
-import Validate exposing (Validator, fromValid, ifBlank, ifInvalidEmail, validate)
+import Validate exposing (Validator, fromValid, ifBlank, ifFalse, ifInvalidEmail, validate)
 
 
 type alias Model =
@@ -17,6 +17,7 @@ type alias Model =
     , lastName : String
     , email : String
     , password : String
+    , passwordConfirmation : String
     , errors : List Error
     , apiError : String
     }
@@ -33,6 +34,7 @@ type Field
     | LastName
     | Email
     | Password
+    | PasswordConfirmation
 
 
 type alias Error =
@@ -41,7 +43,7 @@ type alias Error =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" "" "" "" [] "", Cmd.none )
+    ( Model "" "" "" "" "" [] "", Cmd.none )
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Maybe User )
@@ -67,6 +69,17 @@ update msg model key =
                 Http.NetworkError ->
                     ( { model | apiError = networkError }, Cmd.none, Nothing )
 
+                Http.BadStatus code ->
+                    case code of
+                        422 ->
+                            ( { model | apiError = unProcessableError }, Cmd.none, Nothing )
+
+                        _ ->
+                            ( { model | apiError = somethingWentWrongError }
+                            , Cmd.none
+                            , Nothing
+                            )
+
                 _ ->
                     ( { model | apiError = somethingWentWrongError }
                     , Cmd.none
@@ -75,6 +88,11 @@ update msg model key =
 
         UserEditedField field value ->
             ( setField field value model, Cmd.none, Nothing )
+
+
+unProcessableError : String
+unProcessableError =
+    "Are you sure you didn't already sign up?"
 
 
 setField : Field -> String -> Model -> Model
@@ -92,15 +110,23 @@ setField field value model =
         Password ->
             { model | password = value }
 
+        PasswordConfirmation ->
+            { model | passwordConfirmation = value }
+
 
 view : Model -> Html Msg
 view model =
     div [ class "form container__center container__shadow" ]
         [ h2 [] [ text "Sign Up" ]
+        , div [ class "errors" ] [ text model.apiError ]
         , textField FirstName model.errors "First Name" model.firstName
         , textField LastName model.errors "Last Name" model.lastName
         , textField Email model.errors "Email" model.email
         , passwordField Password model.errors "Password" model.password
+        , passwordField PasswordConfirmation
+            model.errors
+            "Confirm Password"
+            model.passwordConfirmation
         , button [ onClick UserSubmittedForm ] [ text "Submit" ]
         ]
 
@@ -141,4 +167,10 @@ modelValidator =
         , ifBlank .password ( Password, "Password can't be blank" )
         , ifBlank .firstName ( FirstName, "First name can't be blank" )
         , ifBlank .lastName ( LastName, "Last name can't be blank" )
+        , ifFalse (\model -> model.password == model.passwordConfirmation)
+            ( Password, "Passwords must match" )
+        , ifFalse (\model -> model.password == model.passwordConfirmation)
+            ( PasswordConfirmation
+            , "Passwords must match"
+            )
         ]
