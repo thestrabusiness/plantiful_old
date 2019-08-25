@@ -1,4 +1,15 @@
-module Pages.PlantList exposing (Model, Msg(..), card, cardImageUrl, getPlants, init, update, updatePlantsList, view, viewPlantList)
+module Pages.PlantList exposing
+    ( Model
+    , Msg(..)
+    , card
+    , cardImageUrl
+    , getPlants
+    , init
+    , update
+    , updatePlantsList
+    , view
+    , viewPlantList
+    )
 
 import DateAndTime
 import Html exposing (..)
