@@ -3,8 +3,8 @@ module Pages.SignIn exposing (Model, Msg, init, update, view)
 import Api exposing (networkError, somethingWentWrongError, unauthorizedError)
 import Browser.Navigation as Nav
 import Form exposing (errorsForField)
-import Html exposing (Html, button, div, h2, input, label, text)
-import Html.Attributes exposing (class, value)
+import Html exposing (Html, a, button, div, h2, input, label, text)
+import Html.Attributes exposing (class, href, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Routes
@@ -101,6 +101,12 @@ view model =
         , div [ class "errors" ] [ text model.apiError ]
         , textField Email model.errors "Email" model.email
         , passwordField Password model.errors "Password" model.password
+        , div [ class "hint" ]
+            [ text "Don't have an account yet? "
+            , a [ href "/sign_up" ]
+                [ text "Sign up"
+                ]
+            ]
         , button
             [ onClick UserSubmittedForm ]
             [ text "Sign in" ]

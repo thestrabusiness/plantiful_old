@@ -99,8 +99,15 @@ select {
   }
 }
 
-.errors {
-  color: #B00100;
+@mixin hint {
   height: 2em;
 }
 
+.errors {
+  @include hint;
+  color: #B00100;
+}
+
+.hint {
+  @include hint;
+}
