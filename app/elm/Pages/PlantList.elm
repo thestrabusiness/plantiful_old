@@ -129,7 +129,16 @@ viewPlantList model =
         listOfPlants =
             List.map (card model.currentTime) model.plants
     in
-    div [ class "cards" ] listOfPlants
+    if List.length model.plants > 0 then
+        div [ class "cards" ] listOfPlants
+
+    else
+        div [ class "container__center centered-text" ] [ text noPlantsMessage ]
+
+
+noPlantsMessage : String
+noPlantsMessage =
+    "You dont have any plants yet! Add some new friends with the + button."
 
 
 cardImageUrl : String

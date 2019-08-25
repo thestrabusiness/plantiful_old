@@ -3,9 +3,17 @@
   @include size(93px);
 
   position: fixed;
-  right:    20px;
-  bottom:   20px;
+  right:    25px;
+  bottom:   45px;
   background-image:image-url('add-record-btn.svg');
   border-radius: 50%;
   box-shadow: 2px 4px 2px $light-gray;
+}
+
+
+#{$all-buttons} {
+  &.secondary {
+    background-color: $light-gray;
+    color: black;
+  }
 }

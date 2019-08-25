@@ -42,9 +42,4 @@ $_button-background-color-hover: shade($action-color, 20%);
       background-color: $_button-background-color;
     }
   }
-
-  &.secondary {
-    background-color: $light-gray;
-    color: black;
-  }
 }
