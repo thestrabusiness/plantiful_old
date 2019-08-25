@@ -1,7 +1,9 @@
 module Api
   class PlantsController < Api::BaseController
     def index
-      render json: current_user.plants.includes(:last_watering, :last_check)
+      render json: current_user
+        .plants
+        .includes(:last_watering, :last_care_event)
     end
 
     def create
