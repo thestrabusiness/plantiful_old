@@ -125,13 +125,50 @@ view model =
 
 checkFrequencySelect : Model -> Html Msg
 checkFrequencySelect model =
+    let
+        selectedUnit =
+            model.checkFrequencyUnit
+
+        selectedScalar =
+            model.checkFrequencyScalar
+
+        dayLabel =
+            daySelectLabel <| String.toInt selectedScalar
+
+        weekLabel =
+            weekSelectLabel <| String.toInt selectedScalar
+    in
     select
         [ class "input__select input__check"
         , onInput <| UserEditedField CheckFrequencyUnit
         ]
-        [ selectOption "Day" "day" model.checkFrequencyUnit
-        , selectOption "Week" "week" model.checkFrequencyUnit
+        [ selectOption dayLabel "day" selectedUnit
+        , selectOption weekLabel "week" selectedUnit
         ]
+
+
+pluralize : String -> String -> Maybe Int -> String
+pluralize singular plural maybeCount =
+    case maybeCount of
+        Just count ->
+            if count > 1 then
+                plural
+
+            else
+                singular
+
+        Nothing ->
+            singular
+
+
+daySelectLabel : Maybe Int -> String
+daySelectLabel count =
+    pluralize "Day" "Days" count
+
+
+weekSelectLabel : Maybe Int -> String
+weekSelectLabel count =
+    pluralize "Week" "Weeks" count
 
 
 selectOption : String -> String -> String -> Html Msg
