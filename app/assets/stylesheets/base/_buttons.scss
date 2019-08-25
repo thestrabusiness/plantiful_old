@@ -15,6 +15,7 @@ $_button-background-color-hover: shade($action-color, 20%);
   -webkit-font-smoothing: antialiased;
   font-weight: 600;
   line-height: 1;
+  margin: 10px;
   padding: $small-spacing $base-spacing;
   text-align: center;
   text-decoration: none;
@@ -40,5 +41,10 @@ $_button-background-color-hover: shade($action-color, 20%);
     &:hover {
       background-color: $_button-background-color;
     }
+  }
+
+  &.secondary {
+    background-color: $light-gray;
+    color: black;
   }
 }

@@ -26,6 +26,7 @@ type alias Model =
 type Msg
     = UserEditedField Field String
     | UserSubmittedForm
+    | UserCancelledForm
     | PlantCreated (Result Http.Error Plant.Plant)
 
 
@@ -58,8 +59,11 @@ update msg model key =
                 Err errorList ->
                     ( { model | errors = errorList }, Cmd.none )
 
+        UserCancelledForm ->
+            ( model, goBackToPlantsList key )
+
         PlantCreated (Ok plant) ->
-            ( model, Nav.pushUrl key Routes.plantsPath )
+            ( model, goBackToPlantsList key )
 
         PlantCreated (Err error) ->
             case error of
@@ -76,6 +80,11 @@ update msg model key =
 
                 _ ->
                     ( { model | apiError = somethingWentWrongError }, Cmd.none )
+
+
+goBackToPlantsList : Nav.Key -> Cmd Msg
+goBackToPlantsList key =
+    Nav.pushUrl key Routes.plantsPath
 
 
 setField : Field -> String -> Model -> Model
@@ -109,6 +118,7 @@ view model =
                 []
             , checkFrequencySelect model
             ]
+        , button [ class "secondary", onClick UserCancelledForm ] [ text "Cancel" ]
         , button [ onClick UserSubmittedForm ] [ text "Submit" ]
         ]
 
