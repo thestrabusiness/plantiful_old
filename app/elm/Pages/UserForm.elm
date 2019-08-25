@@ -1,5 +1,6 @@
 module Pages.UserForm exposing (Model, Msg, init, update, view)
 
+import Api exposing (networkError, somethingWentWrongError)
 import Browser.Navigation as Nav
 import Form exposing (errorsForField)
 import Html exposing (..)
@@ -17,6 +18,7 @@ type alias Model =
     , email : String
     , password : String
     , errors : List Error
+    , apiError : String
     }
 
 
@@ -39,7 +41,7 @@ type alias Error =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" "" "" "" [], Cmd.none )
+    ( Model "" "" "" "" [] "", Cmd.none )
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Maybe User )
@@ -48,7 +50,11 @@ update msg model key =
         UserSubmittedForm ->
             case validate modelValidator model of
                 Ok validatedModel ->
-                    ( fromValid validatedModel, createUser (toNewUser model), Nothing )
+                    let
+                        validModel =
+                            fromValid validatedModel
+                    in
+                    ( { validModel | errors = [] }, createUser (toNewUser model), Nothing )
 
                 Err errorList ->
                     ( { model | errors = errorList }, Cmd.none, Nothing )
@@ -57,7 +63,15 @@ update msg model key =
             ( model, Nav.pushUrl key Routes.plantsPath, Just user )
 
         UserCreated (Err error) ->
-            ( model, Cmd.none, Nothing )
+            case error of
+                Http.NetworkError ->
+                    ( { model | apiError = networkError }, Cmd.none, Nothing )
+
+                _ ->
+                    ( { model | apiError = somethingWentWrongError }
+                    , Cmd.none
+                    , Nothing
+                    )
 
         UserEditedField field value ->
             ( setField field value model, Cmd.none, Nothing )

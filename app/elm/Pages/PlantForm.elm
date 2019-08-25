@@ -1,5 +1,6 @@
 module Pages.PlantForm exposing (Model, Msg, init, update, view)
 
+import Api exposing (networkError, somethingWentWrongError, unauthorizedError)
 import Browser.Navigation as Nav
 import Form exposing (errorsForField, onEnter)
 import Html exposing (..)
@@ -18,6 +19,7 @@ type alias Model =
     , checkFrequencyScalar : String
     , currentUser : User
     , errors : List Error
+    , apiError : String
     }
 
 
@@ -39,7 +41,7 @@ type alias Error =
 
 init : User -> ( Model, Cmd Msg )
 init user =
-    ( Model "" "day" "3" user [], Cmd.none )
+    ( Model "" "day" "3" user [] "", Cmd.none )
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg )
@@ -60,7 +62,20 @@ update msg model key =
             ( model, Nav.pushUrl key Routes.plantsPath )
 
         PlantCreated (Err error) ->
-            ( model, Cmd.none )
+            case error of
+                Http.BadStatus code ->
+                    case code of
+                        401 ->
+                            ( model, Nav.pushUrl key Routes.signInPath )
+
+                        _ ->
+                            ( { model | apiError = somethingWentWrongError }, Cmd.none )
+
+                Http.NetworkError ->
+                    ( { model | apiError = networkError }, Cmd.none )
+
+                _ ->
+                    ( { model | apiError = somethingWentWrongError }, Cmd.none )
 
 
 setField : Field -> String -> Model -> Model

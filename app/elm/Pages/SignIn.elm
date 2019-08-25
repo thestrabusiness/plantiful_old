@@ -1,5 +1,6 @@
 module Pages.SignIn exposing (Model, Msg, init, update, view)
 
+import Api exposing (networkError, somethingWentWrongError, unauthorizedError)
 import Browser.Navigation as Nav
 import Form exposing (errorsForField)
 import Html exposing (Html, button, div, h2, input, label, text)
@@ -15,6 +16,7 @@ type alias Model =
     { email : String
     , password : String
     , errors : List Error
+    , apiError : String
     }
 
 
@@ -35,7 +37,7 @@ type alias Error =
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" "" [], Cmd.none )
+    ( Model "" "" [] "", Cmd.none )
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Maybe User )
@@ -47,7 +49,11 @@ update msg model key =
         UserSubmittedForm ->
             case validate modelValidator model of
                 Ok validatedModel ->
-                    ( fromValid validatedModel
+                    let
+                        validModel =
+                            fromValid validatedModel
+                    in
+                    ( { validModel | errors = [] }
                     , User.signIn ReceivedSignInResponse (User.toCredentials model)
                     , Nothing
                     )
@@ -59,7 +65,23 @@ update msg model key =
             ( model, Nav.pushUrl key Routes.plantsPath, Just user )
 
         ReceivedSignInResponse (Err error) ->
-            ( model, Cmd.none, Nothing )
+            case error of
+                Http.BadStatus code ->
+                    case code of
+                        401 ->
+                            ( { model | apiError = unauthorizedError }, Cmd.none, Nothing )
+
+                        _ ->
+                            ( { model | apiError = somethingWentWrongError }, Cmd.none, Nothing )
+
+                Http.NetworkError ->
+                    ( { model | apiError = networkError }
+                    , Cmd.none
+                    , Nothing
+                    )
+
+                _ ->
+                    ( { model | apiError = somethingWentWrongError }, Cmd.none, Nothing )
 
 
 setField : Field -> String -> Model -> Model
@@ -76,6 +98,7 @@ view : Model -> Html Msg
 view model =
     div [ class "form container__center container__shadow" ]
         [ h2 [] [ text "Sign In" ]
+        , div [ class "errors" ] [ text model.apiError ]
         , textField Email model.errors "Email" model.email
         , passwordField Password model.errors "Password" model.password
         , button
