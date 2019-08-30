@@ -1,0 +1,10 @@
+%p= "Hey #{@user.full_name}," 
+  
+%p Some of your plants need some love!
+%ul
+  - @plants_that_need_care.each do |plant|
+    %li= plant.name
+
+%p
+  = link_to "Sign in", @sign_in_url 
+  to see your plants.

@@ -13,6 +13,14 @@ class Plant < ApplicationRecord
   validates :check_frequency_scalar, presence: true, numericality: true
   validates :check_frequency_unit, presence: true, inclusion: FREQUENCY_UNITS
 
+  def self.need_care
+    joins(:plant_care_events)
+      .where(
+        "plant_care_events.happened_at + #{care_frequency_interval_sql}
+        <= now()"
+      )
+  end
+
   def last_watered_at
     last_watering&.happened_at
   end
@@ -29,7 +37,15 @@ class Plant < ApplicationRecord
     check_frequency_scalar.public_send(check_frequency_unit)
   end
 
+  def needs_care?
+    next_check_time <= Time.current
+  end
+
   private
+
+  def self.care_frequency_interval_sql
+    "(check_frequency_scalar || ' ' || check_frequency_unit::TEXT)::INTERVAL"
+  end
 
   def recent_care_event
     last_care_event || NullCareEvent.new(self)
