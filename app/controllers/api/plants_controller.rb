@@ -3,7 +3,7 @@ module Api
     def index
       render json: current_user
         .plants
-        .includes(:last_watering, :last_care_event)
+        .includes(:last_watering, :last_check_in)
     end
 
     def create

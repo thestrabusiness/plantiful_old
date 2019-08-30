@@ -4,13 +4,13 @@ RSpec.describe Plant do
   describe '.need_care' do
     it 'returns plants who are on or past the last scheduled care time' do
       doesnt_need_care = create(:plant, :with_weekly_check, name: 'not included')
-      create(:watering, plant: doesnt_need_care, happened_at: 6.days.ago)
+      create(:check_in, :watered, plant: doesnt_need_care, created_at: 6.days.ago)
 
       needs_care1 = create(:plant, :with_weekly_check, name: 'included1')
-      create(:watering, plant: needs_care1, happened_at: 7.days.ago - 1.second)
+      create(:check_in, :watered, plant: needs_care1, created_at: 7.days.ago - 1.second)
 
       needs_care2 = create(:plant, :with_weekly_check, name: 'included2')
-      create(:watering, plant: needs_care2, happened_at: 8.days.ago)
+      create(:check_in, :watered, plant: needs_care2, created_at: 8.days.ago)
 
       expect(Plant.need_care.pluck(:name)).to match_array(%w[included1 included2])
     end
@@ -20,7 +20,7 @@ RSpec.describe Plant do
     context 'on the day a plant needs care' do
       it 'returns true' do
         plant = create(:plant, :with_weekly_check)
-        create(:watering, plant: plant, happened_at: 7.days.ago)
+        create(:check_in, :watered, plant: plant, created_at: 7.days.ago)
 
         expect(plant.needs_care?).to eq true
       end
@@ -29,7 +29,7 @@ RSpec.describe Plant do
     context 'on the day after the last scheduled care time' do
       it 'returns true' do
         plant = create(:plant, :with_weekly_check)
-        create(:watering, plant: plant, happened_at: 8.days.ago)
+        create(:check_in, :watered, plant: plant, created_at: 8.days.ago)
 
         expect(plant.needs_care?).to eq true
       end
@@ -38,7 +38,7 @@ RSpec.describe Plant do
     context 'on the day before the next scheduled care time' do
       it 'returns false' do
         plant = create(:plant, :with_weekly_check)
-        create(:watering, plant: plant, happened_at: 6.days.ago)
+        create(:check_in, :watered, plant: plant, created_at: 6.days.ago)
 
         expect(plant.needs_care?).to eq false
       end
@@ -53,7 +53,7 @@ RSpec.describe Plant do
           expected_next_check = watering_date + 1.week
 
           plant = create(:plant, :with_weekly_check)
-          create(:watering, plant: plant, happened_at: watering_date)
+          create(:check_in, :watered, plant: plant, created_at: watering_date)
 
           expect(plant.next_check_date).to eq expected_next_check.strftime('%m/%d/%Y')
         end
@@ -66,8 +66,8 @@ RSpec.describe Plant do
           expected_next_check = watering_date + 1.week
 
           plant = create(:plant, :with_weekly_check)
-          create(:watering, plant: plant, happened_at: watering_date)
-          create(:check, plant: plant, happened_at: check_date)
+          create(:check_in, :watered, plant: plant, created_at: watering_date)
+          create(:check_in, plant: plant, created_at: check_date)
 
           expect(plant.next_check_date).to eq expected_next_check.strftime('%m/%d/%Y')
         end
@@ -80,8 +80,8 @@ RSpec.describe Plant do
           expected_next_check = check_date + 1.week
 
           plant = create(:plant, :with_weekly_check)
-          create(:watering, plant: plant, happened_at: watering_date)
-          create(:check, plant: plant, happened_at: check_date)
+          create(:check_in, :watered, plant: plant, created_at: watering_date)
+          create(:check_in, plant: plant, created_at: check_date)
 
           expect(plant.next_check_date).to eq expected_next_check.strftime('%m/%d/%Y')
         end
@@ -94,7 +94,7 @@ RSpec.describe Plant do
         expected_next_check = check_date + 1.week
 
         plant = create(:plant, :with_weekly_check)
-        create(:check, plant: plant, happened_at: check_date)
+        create(:check_in, plant: plant, created_at: check_date)
 
         expect(plant.next_check_date).to eq expected_next_check.strftime('%m/%d/%Y')
       end

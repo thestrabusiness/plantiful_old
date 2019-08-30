@@ -10,18 +10,22 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_08_06_233742) do
+ActiveRecord::Schema.define(version: 2019_08_30_124900) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "plant_care_events", force: :cascade do |t|
-    t.bigint "plant_id"
-    t.datetime "happened_at", default: -> { "CURRENT_TIMESTAMP" }, null: false
-    t.string "kind", null: false
+  create_table "check_ins", force: :cascade do |t|
+    t.bigint "plant_id", null: false
+    t.string "notes"
+    t.boolean "watered", default: false, null: false
+    t.boolean "fertilized", default: false, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.index ["plant_id"], name: "index_plant_care_events_on_plant_id"
+    t.index ["fertilized"], name: "index_check_ins_on_fertilized"
+    t.index ["plant_id"], name: "index_check_ins_on_plant_id"
+    t.index ["watered", "fertilized"], name: "index_check_ins_on_watered_and_fertilized"
+    t.index ["watered"], name: "index_check_ins_on_watered"
   end
 
   create_table "plants", force: :cascade do |t|
@@ -46,6 +50,6 @@ ActiveRecord::Schema.define(version: 2019_08_06_233742) do
     t.index ["remember_token"], name: "index_users_on_remember_token"
   end
 
-  add_foreign_key "plant_care_events", "plants"
+  add_foreign_key "check_ins", "plants"
   add_foreign_key "plants", "users"
 end

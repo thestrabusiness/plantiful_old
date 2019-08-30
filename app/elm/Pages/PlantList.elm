@@ -11,6 +11,7 @@ module Pages.PlantList exposing
     , viewPlantList
     )
 
+import CheckIn exposing (Event(..))
 import DateAndTime
 import Html exposing (..)
 import Html.Attributes exposing (..)
@@ -30,24 +31,8 @@ type alias Model =
     , currentTime : Posix
     , currentTimeZone : Time.Zone
     , modal : Modal
-    , checkInForm : CheckInForm
+    , checkInForm : CheckIn.CheckIn
     }
-
-
-type alias CheckInForm =
-    { checked : Bool
-    , watered : Bool
-    , fertilized : Bool
-    , plant : Plant.Plant
-    , notes : String
-    }
-
-
-type PlantCareEvent
-    = Watered
-    | Fertilized
-    | Checked
-    | NoEvent
 
 
 type Msg
@@ -58,9 +43,9 @@ type Msg
     | UpdatePlant (Result Http.Error Plant.Plant)
     | ReceivedCurrentTime Time.Posix
     | ReceivedTimeZone Time.Zone
-    | CheckboxSelected PlantCareEvent
+    | CheckboxSelected CheckIn.Event
     | UserTypedCheckInNotes String
-    | ReceivedPlantCheckInResponse (Result Http.Error {})
+    | ReceivedPlantCheckInResponse (Result Http.Error CheckIn.CheckIn)
 
 
 type Modal
@@ -80,9 +65,9 @@ initialModel user =
     Model [] user initialTime Time.utc ModalClosed initialCheckInForm
 
 
-initialCheckInForm : CheckInForm
+initialCheckInForm : CheckIn.CheckIn
 initialCheckInForm =
-    CheckInForm False False False Plant.emptyPlant ""
+    CheckIn.CheckIn False False "" Plant.emptyPlant
 
 
 getCurrentTime : Cmd Msg
@@ -166,10 +151,17 @@ update msg model =
                 |> closeModal
 
         UserSubmittedCheckIn ->
-            ( model, submitPlantCheckIn model.checkInForm )
+            ( model, submitCheckIn model.checkInForm )
 
         ReceivedPlantCheckInResponse (Ok response) ->
-            ( model, Cmd.none )
+            let
+                updatedPlant =
+                    response.plant
+
+                updatedPlantList =
+                    updatePlantsList model.plants updatedPlant
+            in
+            ( { model | plants = updatedPlantList }, Cmd.none )
                 |> updateForm initialCheckInForm
                 |> closeModal
 
@@ -183,38 +175,29 @@ update msg model =
             ( { model | currentTime = time }, Cmd.none )
 
 
-updateFormCheckboxes : CheckInForm -> PlantCareEvent -> CheckInForm
+updateFormCheckboxes : CheckIn.CheckIn -> CheckIn.Event -> CheckIn.CheckIn
 updateFormCheckboxes checkInForm event =
     case event of
         Watered ->
             { checkInForm
                 | watered = not checkInForm.watered
-                , checked = False
             }
 
         Fertilized ->
             { checkInForm
                 | fertilized = not checkInForm.fertilized
-                , checked = False
-            }
-
-        Checked ->
-            { checkInForm
-                | checked = not checkInForm.checked
-                , watered = False
-                , fertilized = False
             }
 
         NoEvent ->
             checkInForm
 
 
-updateForm : CheckInForm -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+updateForm : CheckIn.CheckIn -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 updateForm form ( model, cmd ) =
     ( { model | checkInForm = form }, cmd )
 
 
-updateModal : (CheckInForm -> Html Msg) -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+updateModal : (CheckIn.CheckIn -> Html Msg) -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 updateModal modal ( model, cmd ) =
     ( { model | modal = Modal <| modal model.checkInForm }, cmd )
 
@@ -316,14 +299,9 @@ waterPlant plant =
     Plant.waterPlant UpdatePlant plant
 
 
-submitPlantCheckIn : CheckInForm -> Cmd Msg
-submitPlantCheckIn form =
-    Process.sleep 2000
-        |> Task.perform (\_ -> ReceivedPlantCheckInResponse (Ok fakeCheckInResponse))
-
-
-fakeCheckInResponse =
-    {}
+submitCheckIn : CheckIn.CheckIn -> Cmd Msg
+submitCheckIn form =
+    CheckIn.submitCheckIn form ReceivedPlantCheckInResponse
 
 
 
@@ -340,7 +318,7 @@ viewModal modal =
             div [] []
 
 
-checkInModal : CheckInForm -> Html Msg
+checkInModal : CheckIn.CheckIn -> Html Msg
 checkInModal form =
     div [ class "modal__bg" ]
         [ div [ class "modal__container--large" ]
@@ -354,10 +332,6 @@ checkInModal form =
                 , modalRow
                     [ checkbox Fertilized
                         form.fertilized
-                    ]
-                , modalRow
-                    [ checkbox Checked
-                        form.checked
                     ]
                 , modalRow
                     [ label []
@@ -378,7 +352,7 @@ checkInModal form =
         ]
 
 
-checkbox : PlantCareEvent -> Bool -> Html Msg
+checkbox : CheckIn.Event -> Bool -> Html Msg
 checkbox eventType isChecked =
     label
         [ style "padding" "20px" ]
@@ -392,7 +366,7 @@ checkbox eventType isChecked =
         ]
 
 
-eventToString : PlantCareEvent -> String
+eventToString : CheckIn.Event -> String
 eventToString event =
     case event of
         Watered ->
@@ -400,9 +374,6 @@ eventToString event =
 
         Fertilized ->
             "Fertilized"
-
-        Checked ->
-            "No Action"
 
         NoEvent ->
             "NoEvent"
