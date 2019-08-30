@@ -1,4 +1,13 @@
-module Plant exposing (Plant, createPlant, getPlants, plantDecoder, plantListDecoder, toNewPlant, waterPlant)
+module Plant exposing
+    ( Plant
+    , createPlant
+    , emptyPlant
+    , getPlants
+    , plantDecoder
+    , plantListDecoder
+    , toNewPlant
+    , waterPlant
+    )
 
 import DateAndTime
 import Http
@@ -22,6 +31,11 @@ type alias NewPlant =
     , checkFrequencyUnit : String
     , checkFrequencyScalar : String
     }
+
+
+emptyPlant : Plant
+emptyPlant =
+    Plant 0 "" "" (Time.millisToPosix 0)
 
 
 getPlants : (Result Http.Error (List Plant) -> msg) -> Cmd msg
