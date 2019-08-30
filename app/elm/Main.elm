@@ -7,6 +7,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
 import Pages.NotAuthorized as NotAuthorized
+import Pages.PlantDetails as PlantDetails
 import Pages.PlantForm as PlantForm
 import Pages.PlantList as PlantList
 import Pages.SignIn as SignIn
@@ -53,6 +54,7 @@ init flags url key =
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
+    | PlantDetailsMsg PlantDetails.Msg
     | PlantListMsg PlantList.Msg
     | PlantFormMsg PlantForm.Msg
     | UserFormMsg UserForm.Msg
@@ -66,6 +68,7 @@ type Msg
 type Page
     = PageNone
     | PlantListPage PlantList.Model
+    | PlantDetailsPage PlantDetails.Model
     | PlantFormPage PlantForm.Model
     | UserPage UserForm.Model
     | NotAuthorizedPage NotAuthorized.Model
@@ -210,6 +213,25 @@ loadCurrentPage ( model, cmd ) =
 
                 Routes.NotFoundRoute ->
                     ( PageNone, Cmd.none )
+
+                Routes.PlantRoute id ->
+                    case model.currentUser of
+                        Just user ->
+                            let
+                                ( pageModel, pageCmd ) =
+                                    PlantDetails.init user id
+                            in
+                            ( PlantDetailsPage pageModel
+                            , Cmd.map PlantDetailsMsg
+                                pageCmd
+                            )
+
+                        Nothing ->
+                            let
+                                ( pageModel, pageCmd ) =
+                                    SignIn.init
+                            in
+                            ( SignInPage pageModel, Cmd.map SignInMsg pageCmd )
     in
     ( { model | page = page }, Cmd.batch [ cmd, newCmd ] )
 
@@ -232,6 +254,10 @@ currentPage model =
     let
         page =
             case model.page of
+                PlantDetailsPage pageModel ->
+                    PlantDetails.view pageModel
+                        |> Html.map PlantDetailsMsg
+
                 PlantListPage pageModel ->
                     PlantList.view pageModel
                         |> Html.map PlantListMsg
@@ -287,6 +313,9 @@ headerLink model =
 
         Routes.NotFoundRoute ->
             text ""
+
+        Routes.PlantRoute _ ->
+            signOutButton
 
 
 signUpLink : Html Msg
