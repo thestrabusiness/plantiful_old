@@ -1,3 +1,5 @@
+require "rails_helper"
+
 RSpec.describe Plant do
   describe '#next_watering' do
     around(:each) do |example|

@@ -1,16 +1,14 @@
+require 'spec_helper'
 require File.expand_path('../config/environment', __dir__)
-
-ENV['RAILS_ENV'] ||= 'test'
 
 require 'database_cleaner'
 require 'rspec/rails'
-require 'spec_helper'
 
 Dir[Rails.root.join('spec', 'support', '**', '*.rb')]
   .sort
   .each { |file| require file }
 
-abort('The Rails environment is running in production mode!') if Rails.env.production?
+abort('The Rails environment is not running in test mode!') if !Rails.env.test?
 
 begin
   ActiveRecord::Migration.maintain_test_schema!

@@ -1,3 +1,5 @@
+require 'rails_helper'
+
 RSpec.feature 'UserCanCreatePlants', type: :feature do
   it 'a user can create a new plant with a name and a botanical name' do
     skip
