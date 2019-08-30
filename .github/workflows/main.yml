@@ -13,6 +13,8 @@ jobs:
       uses: actions/setup-ruby@v1
       with:
         ruby-version: 2.6.x
+    - name: Setup PostgreSQL
+      uses: Harmon758/postgresql-action@v1.0.0
     - name: Build and test with RSpec
       run: |
         gem install bundler
