@@ -1,0 +1,109 @@
+$box-shadow-card: rgba(0, 0, 0, 0.2) 2px 2px 5px 1px;
+$black-transparent: rgba(19,23,34,0.7);
+
+.modal__bg {
+  align-items: center;
+  background-color: $black-transparent;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  left: 0;
+  position: fixed;
+  right: 0;
+  top: 0;
+  z-index: 1;
+}
+
+@mixin modal__container {
+  background-color: $base-background-color;
+  box-shadow: $box-shadow-card;
+  width: $spacing-xxx-large * 3;
+}
+
+.modal__container {
+  @include modal__container;
+  height: $spacing-xxx-large * 2;
+}
+
+.modal__container--large {
+  @include modal__container;
+  display: flex;
+  flex-direction: column;
+  height: $spacing-xxx-large * 3;
+  justify-content: space-between;
+}
+
+@mixin modal__header {
+  display: flex;
+  height: $spacing-medium * 2.5;
+  justify-content: center;
+  position: relative;
+  width: 100%;
+}
+
+.modal__header--default {
+  @include modal__header;
+  background-color: $plantiful-green;
+}
+
+.modal__heading {
+  color: $font-color-base;
+  font-size: $font-size-x-large;
+  margin-top: $spacing-base;
+}
+
+.modal__heading--large {
+  color: $font-color-base;
+  font-size: $font-size-x-large;
+  margin-bottom: $spacing-x-small;
+  margin-top: $spacing-base;
+}
+
+.modal__footer {
+  align-items: center;
+  border-top: $border-base;
+  display: flex;
+  height: $spacing-x-large;
+  justify-content: center;
+  width: 100%;
+}
+
+.modal__content {
+  align-items: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-top: $spacing-x-large;
+}
+
+.modal__content--large {
+  height: 100%;
+  overflow: auto;
+  padding: $spacing-small;
+  position: relative;
+}
+
+@mixin modal__row {
+  border-radius: $border-radius-base;
+  display: flex;
+  justify-content: space-between;
+  padding: $spacing-base;
+}
+
+.modal__row {
+  @include modal__row;
+
+  &:hover {
+    background: darken( $white, 5% );
+  }
+}
+
+.modal__row--selected {
+  @include modal__row;
+  background-color: $background-color-hover;
+}
+
+.modal__base-row {
+  display: flex;
+  padding: $spacing-base $spacing-base  0 $spacing-base ;
+}

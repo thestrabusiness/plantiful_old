@@ -1,5 +1,5 @@
 html {
-  color: $base-font-color;
+  color: $font-color-base;
   font-family: $base-font-family;
   font-size: 100%;
   line-height: $base-line-height;
@@ -37,7 +37,7 @@ a {
 }
 
 hr {
-  border-bottom: $base-border;
+  border-bottom: $border-base;
   border-left: 0;
   border-right: 0;
   border-top: 0;

@@ -7,7 +7,7 @@ $base-line-height: 1.5;
 $heading-line-height: 1.2;
 
 // Other Sizes
-$base-border-radius: 3px;
+$border-radius-base: 3px;
 $base-spacing: 1.5em;
 $small-spacing: $base-spacing / 2;
 $base-z-index: 0;
@@ -23,16 +23,20 @@ $error: #fbe3e4;
 $notice: #e5edf8;
 $success: #e6efc2;
 
+$white: #fff;
+$plantiful-green: #dbffce;
+
 // Font Colors
-$base-font-color: $dark-gray;
+$font-color-base: $dark-gray;
 $action-color: $blue;
 
 // Border
-$base-border-color: $light-gray;
-$base-border: 1px solid $base-border-color;
+$border-base-color: $light-gray;
+$border-base: 1px solid $border-base-color;
 
 // Background Colors
-$viewport-background-color: #fff;
+$base-background-color: $white;
+$background-color-hover: $dark-gray;
 
 // Focus
 $focus-outline-color: transparentize($action-color, 0.4);
@@ -43,3 +47,27 @@ $focus-outline-offset: 2px;
 // Animations
 $base-duration: 150ms;
 $base-timing: ease;
+
+// Shadows
+$base-box-shadow: 0 2px 4px darken($base-background-color, 10%);
+
+// Standard Spacing
+$spacing-base: 1.5em;
+$spacing-small: 0.75em;
+$spacing-x-small: 0.5em;
+$spacing-xx-small: 0.25em;
+$spacing-medium: 3em;
+$spacing-x-medium: 2.25em;
+$spacing-xx-medium: 2em;
+$spacing-large: 4.5em;
+$spacing-x-large: 6em;
+$spacing-xx-large: 9em;
+$spacing-xxx-large: 13.5em;
+
+// Font Sizes
+$font-size-base: 1rem;
+$font-size-x-small: 0.5rem;
+$font-size-small: 0.75rem;
+$font-size-medium: 1.25rem;
+$font-size-large: 1.5rem;
+$font-size-x-large: 2rem;

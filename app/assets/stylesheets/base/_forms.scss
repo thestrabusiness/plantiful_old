@@ -32,8 +32,8 @@ textarea {
 #{$all-text-inputs} {
   appearance: none;
   background-color: $_form-background-color;
-  border: $base-border;
-  border-radius: $base-border-radius;
+  border: $border-base;
+  border-radius: $border-radius-base;
   box-shadow: $_form-box-shadow;
   box-sizing: border-box;
   margin-bottom: $small-spacing;
@@ -46,7 +46,7 @@ textarea {
   }
 
   &:hover {
-    border-color: shade($base-border-color, 20%);
+    border-color: shade($border-base-color, 20%);
   }
 
   &:focus {
@@ -60,12 +60,12 @@ textarea {
     cursor: not-allowed;
 
     &:hover {
-      border: $base-border;
+      border: $border-base;
     }
   }
 
   &::placeholder {
-    color: tint($base-font-color, 40%);
+    color: tint($font-color-base, 40%);
   }
 }
 

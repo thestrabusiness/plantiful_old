@@ -6,7 +6,7 @@ $_button-background-color-hover: shade($action-color, 20%);
   appearance: none;
   background-color: $_button-background-color;
   border: 0;
-  border-radius: $base-border-radius;
+  border-radius: $border-radius-base;
   color: contrast-switch($_button-background-color);
   cursor: pointer;
   display: inline-block;
