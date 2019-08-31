@@ -34,3 +34,10 @@
     width: 75%;
   }
 }
+
+.check_in__row {
+  div {
+    display: inline-block;
+    margin: $spacing-small;
+  }
+}

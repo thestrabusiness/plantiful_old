@@ -9,6 +9,7 @@ module Plant exposing
     , toNewPlant
     )
 
+import CheckIn
 import DateAndTime
 import Http
 import HttpBuilder
@@ -21,8 +22,8 @@ import Time exposing (Posix)
 type alias Plant =
     { id : Int
     , name : String
-    , lastWateringDate : String
     , lastWateredAt : Posix
+    , checkIns : List CheckIn.CheckIn
     }
 
 
@@ -35,7 +36,7 @@ type alias NewPlant =
 
 emptyPlant : Plant
 emptyPlant =
-    Plant 0 "" "" (Time.millisToPosix 0)
+    Plant 0 "" (Time.millisToPosix 0) []
 
 
 getPlant : Int -> (Result Http.Error Plant -> msg) -> Cmd msg
@@ -52,12 +53,6 @@ getPlant int msg =
 getPlants : (Result Http.Error (List Plant) -> msg) -> Cmd msg
 getPlants msg =
     HttpBuilder.get "/api/plants"
-        |> HttpBuilder.withHeaders
-            [ ( "Content-Type", "application/json" )
-            , ( "Accept"
-              , "application/json"
-              )
-            ]
         |> HttpBuilder.withExpect (Http.expectJson msg plantListDecoder)
         |> HttpBuilder.request
 
@@ -106,15 +101,5 @@ plantDecoder =
     succeed Plant
         |> required "id" int
         |> required "name" string
-        |> optional "last_watering_date" string "Not Yet Watered"
-        |> optional "last_watered_at" posixDecoder (Time.millisToPosix 0)
-
-
-posixDecoder : Decoder Posix
-posixDecoder =
-    Json.Decode.andThen timeHelper int
-
-
-timeHelper : Int -> Decoder Posix
-timeHelper value =
-    succeed <| DateAndTime.secondsToPosix value
+        |> optional "last_watered_at" DateAndTime.posixDecoder (Time.millisToPosix 0)
+        |> optional "check_ins" CheckIn.checkInListDecoder []

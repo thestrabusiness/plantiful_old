@@ -1,5 +1,11 @@
-module DateAndTime exposing (distanceInDays, monthDayYearTime, secondsToPosix)
+module DateAndTime exposing
+    ( distanceInDays
+    , monthDayYearTime
+    , posixDecoder
+    , secondsToPosix
+    )
 
+import Json.Decode exposing (Decoder, int, succeed)
 import Time exposing (..)
 
 
@@ -27,8 +33,6 @@ monthDayYearTime posix zone =
         ++ (String.fromInt <| Time.toHour zone posix)
         ++ ":"
         ++ (String.padLeft 2 '0' <| String.fromInt <| Time.toMinute zone posix)
-        ++ ":"
-        ++ (String.padLeft 2 '0' <| String.fromInt <| Time.toSecond zone posix)
 
 
 distanceInDays : Time.Posix -> Time.Posix -> String
@@ -143,3 +147,17 @@ findElapsedDuration currentPosix inputPosix =
             Time.posixToMillis inputPosix
     in
     currentTime - inputTime
+
+
+
+-- JSON
+
+
+posixDecoder : Decoder Posix
+posixDecoder =
+    Json.Decode.andThen timeHelper int
+
+
+timeHelper : Int -> Decoder Posix
+timeHelper value =
+    succeed <| secondsToPosix value

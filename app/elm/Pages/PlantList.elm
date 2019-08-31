@@ -31,7 +31,16 @@ type alias Model =
     , currentTime : Posix
     , currentTimeZone : Time.Zone
     , modal : Modal
-    , checkInForm : CheckIn.CheckIn
+    , checkInForm : CheckInForm
+    }
+
+
+type alias CheckInForm =
+    { watered : Bool
+    , fertilized : Bool
+    , notes : String
+    , plantId : Int
+    , plantName : String
     }
 
 
@@ -41,8 +50,6 @@ type Msg
     | UserClosedModal
     | UserSubmittedCheckIn
     | UpdatePlant (Result Http.Error Plant.Plant)
-    | ReceivedCurrentTime Time.Posix
-    | ReceivedTimeZone Time.Zone
     | CheckboxSelected CheckIn.Event
     | UserTypedCheckInNotes String
     | ReceivedPlantCheckInResponse (Result Http.Error CheckIn.CheckIn)
@@ -53,36 +60,19 @@ type Modal
     | ModalClosed
 
 
-init : User -> ( Model, Cmd Msg )
-init user =
-    ( initialModel user
-    , Cmd.batch [ getCurrentTime, getTimeZone, getPlants ]
-    )
+init : User -> Time.Posix -> Time.Zone -> ( Model, Cmd Msg )
+init user currentTime timeZone =
+    ( initialModel user currentTime timeZone, getPlants )
 
 
-initialModel : User -> Model
-initialModel user =
-    Model [] user initialTime Time.utc ModalClosed initialCheckInForm
+initialModel : User -> Time.Posix -> Time.Zone -> Model
+initialModel user currentTime timeZone =
+    Model [] user currentTime timeZone ModalClosed initialCheckInForm
 
 
-initialCheckInForm : CheckIn.CheckIn
+initialCheckInForm : CheckInForm
 initialCheckInForm =
-    CheckIn.CheckIn False False "" Plant.emptyPlant
-
-
-getCurrentTime : Cmd Msg
-getCurrentTime =
-    Task.perform ReceivedCurrentTime Time.now
-
-
-getTimeZone : Cmd Msg
-getTimeZone =
-    Task.perform ReceivedTimeZone Time.here
-
-
-initialTime : Posix
-initialTime =
-    Time.millisToPosix 0
+    CheckInForm False False "" 0 ""
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -99,11 +89,8 @@ update msg model =
             ( model, Cmd.none )
 
         UpdatePlant (Ok updatedPlant) ->
-            let
-                newPlantsList =
-                    updatePlantsList model.plants updatedPlant
-            in
-            ( { model | plants = newPlantsList }, Cmd.none )
+            ( model, Cmd.none )
+                |> updatePlantsList updatedPlant
 
         UpdatePlant (Err error) ->
             let
@@ -118,7 +105,7 @@ update msg model =
                     model.checkInForm
 
                 newCheckInForm =
-                    { checkInForm | plant = plant }
+                    { checkInForm | plantId = plant.id, plantName = plant.name }
             in
             ( model, Cmd.none )
                 |> updateForm newCheckInForm
@@ -156,26 +143,23 @@ update msg model =
         ReceivedPlantCheckInResponse (Ok response) ->
             let
                 updatedPlant =
-                    response.plant
-
-                updatedPlantList =
-                    updatePlantsList model.plants updatedPlant
+                    findPlantById response.plantId model.plants
             in
-            ( { model | plants = updatedPlantList }, Cmd.none )
-                |> updateForm initialCheckInForm
-                |> closeModal
+            case updatedPlant of
+                Just plant ->
+                    ( model, Cmd.none )
+                        |> updatePlantsList plant
+                        |> updateForm initialCheckInForm
+                        |> closeModal
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         ReceivedPlantCheckInResponse (Err error) ->
             ( model, Cmd.none )
 
-        ReceivedTimeZone zone ->
-            ( { model | currentTimeZone = zone }, Cmd.none )
 
-        ReceivedCurrentTime time ->
-            ( { model | currentTime = time }, Cmd.none )
-
-
-updateFormCheckboxes : CheckIn.CheckIn -> CheckIn.Event -> CheckIn.CheckIn
+updateFormCheckboxes : CheckInForm -> CheckIn.Event -> CheckInForm
 updateFormCheckboxes checkInForm event =
     case event of
         Watered ->
@@ -192,12 +176,12 @@ updateFormCheckboxes checkInForm event =
             checkInForm
 
 
-updateForm : CheckIn.CheckIn -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+updateForm : CheckInForm -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 updateForm form ( model, cmd ) =
     ( { model | checkInForm = form }, cmd )
 
 
-updateModal : (CheckIn.CheckIn -> Html Msg) -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+updateModal : (CheckInForm -> Html Msg) -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 updateModal modal ( model, cmd ) =
     ( { model | modal = Modal <| modal model.checkInForm }, cmd )
 
@@ -207,8 +191,16 @@ closeModal ( model, cmd ) =
     ( { model | modal = ModalClosed }, cmd )
 
 
-updatePlantsList : List Plant.Plant -> Plant.Plant -> List Plant.Plant
-updatePlantsList currentPlantList updatedPlant =
+findPlantById : Int -> List Plant.Plant -> Maybe Plant.Plant
+findPlantById id plantList =
+    List.head (List.filter (\plant -> plant.id == id) plantList)
+
+
+updatePlantsList :
+    Plant.Plant
+    -> ( Model, Cmd Msg )
+    -> ( Model, Cmd Msg )
+updatePlantsList updatedPlant ( model, cmd ) =
     let
         updatePlant plant =
             if plant.id == updatedPlant.id then
@@ -216,8 +208,11 @@ updatePlantsList currentPlantList updatedPlant =
 
             else
                 plant
+
+        newPlantList =
+            List.map updatePlant model.plants
     in
-    List.map updatePlant currentPlantList
+    ( { model | plants = newPlantList }, cmd )
 
 
 
@@ -259,9 +254,11 @@ cardImageUrl =
 card : Posix -> Plant.Plant -> Html Msg
 card currentTime plant =
     div [ class "card" ]
-        [ div [ class "card-image" ]
-            [ img [ src cardImageUrl ] [] ]
-        , div [ class "card-header" ] [ text plant.name ]
+        [ a [ href <| Routes.plantPath plant.id ]
+            [ div [ class "card-image" ]
+                [ img [ src cardImageUrl ] [] ]
+            , div [ class "card-header" ] [ text plant.name ]
+            ]
         , div [ class "card-copy" ]
             [ ul []
                 [ li [] [ text "Botanical Name" ]
@@ -294,7 +291,7 @@ getPlants =
     Plant.getPlants NewPlants
 
 
-submitCheckIn : CheckIn.CheckIn -> Cmd Msg
+submitCheckIn : CheckInForm -> Cmd Msg
 submitCheckIn form =
     CheckIn.submitCheckIn form ReceivedPlantCheckInResponse
 
@@ -313,11 +310,11 @@ viewModal modal =
             div [] []
 
 
-checkInModal : CheckIn.CheckIn -> Html Msg
+checkInModal : CheckInForm -> Html Msg
 checkInModal form =
     div [ class "modal__bg" ]
         [ div [ class "modal__container--large" ]
-            [ modalHeader <| "Check-in: " ++ form.plant.name
+            [ modalHeader <| "Check-in: " ++ form.plantName
             , div [ class "modal__content--large" ]
                 [ modalRow [ h2 [] [ text "Today I:" ] ]
                 , modalRow

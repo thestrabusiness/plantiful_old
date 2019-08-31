@@ -1,4 +1,13 @@
-module Routes exposing (Route(..), extractRoute, matchRoute, newPlantPath, pathFor, plantsPath, signInPath)
+module Routes exposing
+    ( Route(..)
+    , extractRoute
+    , matchRoute
+    , newPlantPath
+    , pathFor
+    , plantPath
+    , plantsPath
+    , signInPath
+    )
 
 import Url exposing (Url)
 import Url.Parser exposing (..)

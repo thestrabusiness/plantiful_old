@@ -13,6 +13,8 @@ import Pages.PlantList as PlantList
 import Pages.SignIn as SignIn
 import Pages.UserForm as UserForm
 import Routes exposing (Route)
+import Task
+import Time
 import Url
 import User exposing (User)
 
@@ -26,6 +28,8 @@ type alias Model =
     , page : Page
     , route : Route
     , currentUser : Maybe User
+    , currentTime : Time.Posix
+    , timeZone : Time.Zone
     }
 
 
@@ -41,10 +45,27 @@ init flags url key =
             , page = PageNone
             , route = Routes.extractRoute url
             , currentUser = Nothing
+            , currentTime = Time.millisToPosix 0
+            , timeZone = Time.utc
             }
     in
-    ( model, User.getCurrentUser <| ReceivedCurrentUserResponse model.route )
+    ( model, Cmd.batch [ getCurrentTime, getTimeZone, getCurrentUser model.route ] )
         |> loadCurrentPage
+
+
+getCurrentUser : Routes.Route -> Cmd Msg
+getCurrentUser route =
+    User.getCurrentUser <| ReceivedCurrentUserResponse route
+
+
+getCurrentTime : Cmd Msg
+getCurrentTime =
+    Task.perform ReceivedCurrentTime Time.now
+
+
+getTimeZone : Cmd Msg
+getTimeZone =
+    Task.perform ReceivedTimeZone Time.here
 
 
 
@@ -63,6 +84,8 @@ type Msg
     | UserClickedSignOutButton
     | ReceivedUserSignOutResponse (Result Http.Error ())
     | ReceivedCurrentUserResponse Route (Result Http.Error User)
+    | ReceivedCurrentTime Time.Posix
+    | ReceivedTimeZone Time.Zone
 
 
 type Page
@@ -95,6 +118,12 @@ update msg model =
             in
             ( { model | route = newRoute }, Cmd.none )
                 |> loadCurrentPage
+
+        ( ReceivedCurrentTime time, _ ) ->
+            ( { model | currentTime = time }, Cmd.none )
+
+        ( ReceivedTimeZone zone, _ ) ->
+            ( { model | timeZone = zone }, Cmd.none )
 
         ( UserClickedSignOutButton, _ ) ->
             ( model, User.signOut ReceivedUserSignOutResponse )
@@ -181,6 +210,8 @@ loadCurrentPage ( model, cmd ) =
                             let
                                 ( pageModel, pageCmd ) =
                                     PlantList.init user
+                                        model.currentTime
+                                        model.timeZone
                             in
                             ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
 
@@ -212,6 +243,8 @@ loadCurrentPage ( model, cmd ) =
                             let
                                 ( pageModel, pageCmd ) =
                                     PlantList.init user
+                                        model.currentTime
+                                        model.timeZone
                             in
                             ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
 
@@ -230,7 +263,9 @@ loadCurrentPage ( model, cmd ) =
                         Just user ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    PlantDetails.init user id
+                                    PlantDetails.init id
+                                        user
+                                        model.timeZone
                             in
                             ( PlantDetailsPage pageModel
                             , Cmd.map PlantDetailsMsg
