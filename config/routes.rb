@@ -2,7 +2,7 @@ Rails.application.routes.draw do
   root 'application#index'
 
   namespace :api do
-    resources :plants, only: [:create, :index] do
+    resources :plants, only: [:create, :index, :show] do
       resources :check_ins, only: :create
     end
     resources :users, only: [:create]

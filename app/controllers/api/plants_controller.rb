@@ -15,6 +15,12 @@ module Api
       end
     end
 
+    def show
+      plant = current_user.plants.find(params[:id])
+
+      render json: plant, status: :ok
+    end
+
     private
 
     def plant_params

@@ -294,11 +294,6 @@ getPlants =
     Plant.getPlants NewPlants
 
 
-waterPlant : Plant.Plant -> Cmd Msg
-waterPlant plant =
-    Plant.waterPlant UpdatePlant plant
-
-
 submitCheckIn : CheckIn.CheckIn -> Cmd Msg
 submitCheckIn form =
     CheckIn.submitCheckIn form ReceivedPlantCheckInResponse

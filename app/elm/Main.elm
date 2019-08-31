@@ -155,6 +155,17 @@ update msg model =
             , Cmd.map SignInMsg newCmd
             )
 
+        ( PlantDetailsMsg subMsg, PlantDetailsPage pageModel ) ->
+            let
+                ( newPageModel, newCmd ) =
+                    PlantDetails.update subMsg pageModel
+            in
+            ( { model
+                | page = PlantDetailsPage newPageModel
+              }
+            , Cmd.map PlantDetailsMsg newCmd
+            )
+
         ( _, _ ) ->
             ( model, Cmd.none )
 

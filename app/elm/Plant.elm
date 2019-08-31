@@ -2,11 +2,11 @@ module Plant exposing
     ( Plant
     , createPlant
     , emptyPlant
+    , getPlant
     , getPlants
     , plantDecoder
     , plantListDecoder
     , toNewPlant
-    , waterPlant
     )
 
 import DateAndTime
@@ -38,9 +38,20 @@ emptyPlant =
     Plant 0 "" "" (Time.millisToPosix 0)
 
 
+getPlant : Int -> (Result Http.Error Plant -> msg) -> Cmd msg
+getPlant int msg =
+    let
+        url =
+            "/api/plants/" ++ String.fromInt int
+    in
+    HttpBuilder.get url
+        |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
+        |> HttpBuilder.request
+
+
 getPlants : (Result Http.Error (List Plant) -> msg) -> Cmd msg
 getPlants msg =
-    HttpBuilder.get "api/plants"
+    HttpBuilder.get "/api/plants"
         |> HttpBuilder.withHeaders
             [ ( "Content-Type", "application/json" )
             , ( "Accept"
@@ -48,21 +59,6 @@ getPlants msg =
               )
             ]
         |> HttpBuilder.withExpect (Http.expectJson msg plantListDecoder)
-        |> HttpBuilder.request
-
-
-waterPlant : (Result Http.Error Plant -> msg) -> Plant -> Cmd msg
-waterPlant msg plant =
-    let
-        wateringPath =
-            "/api/plants/" ++ String.fromInt plant.id ++ "/plant_care_events"
-
-        params =
-            encodeCareEvent "watering"
-    in
-    HttpBuilder.post wateringPath
-        |> HttpBuilder.withJsonBody params
-        |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
         |> HttpBuilder.request
 
 
