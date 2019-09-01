@@ -32,6 +32,7 @@ type alias Model =
     , currentTimeZone : Time.Zone
     , modal : Modal
     , checkInForm : CheckInForm
+    , loading : Loading
     }
 
 
@@ -55,6 +56,12 @@ type Msg
     | ReceivedPlantCheckInResponse (Result Http.Error CheckIn.CheckIn)
 
 
+type Loading
+    = Loading
+    | Success
+    | Failed
+
+
 type Modal
     = Modal (Html Msg)
     | ModalClosed
@@ -67,7 +74,7 @@ init user currentTime timeZone =
 
 initialModel : User -> Time.Posix -> Time.Zone -> Model
 initialModel user currentTime timeZone =
-    Model [] user currentTime timeZone ModalClosed initialCheckInForm
+    Model [] user currentTime timeZone ModalClosed initialCheckInForm Loading
 
 
 initialCheckInForm : CheckInForm
@@ -79,14 +86,14 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         NewPlants (Ok newPlants) ->
-            ( { model | plants = newPlants }, Cmd.none )
+            ( { model | plants = newPlants, loading = Success }, Cmd.none )
 
         NewPlants (Err error) ->
             let
                 _ =
                     Debug.log "Whoops!" error
             in
-            ( model, Cmd.none )
+            ( { model | loading = Failed }, Cmd.none )
 
         UpdatePlant (Ok updatedPlant) ->
             ( model, Cmd.none )
@@ -221,11 +228,21 @@ updatePlantsList updatedPlant ( model, cmd ) =
 
 view : Model -> Html Msg
 view model =
-    div []
-        [ viewPlantList model
-        , a [ class "add-record-btn", href newPlantPath ] [ text "Add New Plant" ]
-        , viewModal model.modal
-        ]
+    case model.loading of
+        Loading ->
+            div [ class "container__center centered-text" ]
+                [ text "Loading..." ]
+
+        Failed ->
+            div [ class "container__center centered-text" ]
+                [ text "Something went wrong..." ]
+
+        Success ->
+            div []
+                [ viewPlantList model
+                , a [ class "add-record-btn", href newPlantPath ] [ text "Add New Plant" ]
+                , viewModal model.modal
+                ]
 
 
 viewPlantList : Model -> Html Msg

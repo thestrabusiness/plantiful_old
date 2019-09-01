@@ -2,10 +2,11 @@ module Pages.PlantDetails exposing (Model, Msg, init, update, view)
 
 import CheckIn
 import DateAndTime
-import Html exposing (Html, div, h2, text)
-import Html.Attributes exposing (class)
+import Html exposing (Html, a, div, h2, text)
+import Html.Attributes exposing (class, href)
 import Http
 import Plant
+import Routes
 import Time
 import User
 
@@ -51,6 +52,9 @@ view model =
         Just plant ->
             div [ class "container__center" ]
                 [ h2 [ class "centered-text" ] [ text plant.name ]
+                , div [ class "container__center centered-text" ]
+                    [ a [ href Routes.plantsPath ] [ text "Back to Plants" ]
+                    ]
                 , viewCheckInsList plant.checkIns model.timeZone
                 ]
 
