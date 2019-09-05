@@ -2,8 +2,11 @@ module Pages.PlantDetails exposing (Model, Msg, init, update, view)
 
 import CheckIn
 import DateAndTime
-import Html exposing (Html, a, div, h2, text)
-import Html.Attributes exposing (class, href)
+import File
+import File.Select as Select
+import Html exposing (Html, a, div, h2, h3, img, text)
+import Html.Attributes exposing (class, href, src)
+import Html.Events exposing (onClick)
 import Http
 import Plant
 import Routes
@@ -20,6 +23,8 @@ type alias Model =
 
 type Msg
     = ReceivedGetPlantResponse (Result Http.Error Plant.Plant)
+    | UserSelectedUploadNewPhoto
+    | NewImageSelected File.File
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -35,6 +40,12 @@ update msg model =
             in
             ( model, Cmd.none )
 
+        UserSelectedUploadNewPhoto ->
+            ( model, Select.file [ "image/*" ] NewImageSelected )
+
+        NewImageSelected file ->
+            ( model, Cmd.none )
+
 
 init : Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
 init plantId user timeZone =
@@ -46,14 +57,25 @@ getPlant id =
     Plant.getPlant id ReceivedGetPlantResponse
 
 
-view : Model -> Html msg
+plantImageUrl : String
+plantImageUrl =
+    "https://thumbs.dreamstime.com/z/growing-plant-3599470.jpg"
+
+
+view : Model -> Html Msg
 view model =
     case model.plant of
         Just plant ->
             div [ class "container__center" ]
-                [ h2 [ class "centered-text" ] [ text plant.name ]
-                , div [ class "container__center centered-text" ]
-                    [ a [ href Routes.plantsPath ] [ text "Back to Plants" ]
+                [ div [ class "container__center centered-text" ]
+                    [ img
+                        [ class "avatar"
+                        , src plantImageUrl
+                        , onClick UserSelectedUploadNewPhoto
+                        ]
+                        []
+                    , h2 [ class "centered-text" ] [ text plant.name ]
+                    , a [ href Routes.plantsPath ] [ text "Back to Plants" ]
                     ]
                 , viewCheckInsList plant.checkIns model.timeZone
                 ]
@@ -69,7 +91,7 @@ viewCheckInsList checkInsList timeZone =
         checkInRows =
             List.map (viewCheckInRow timeZone) checkInsList
     in
-    div [] checkInRows
+    div [] <| [ h3 [] [ text "Latest Check-ins" ] ] ++ checkInRows
 
 
 viewCheckInRow : Time.Zone -> CheckIn.CheckIn -> Html msg
