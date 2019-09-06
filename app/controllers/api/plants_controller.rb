@@ -21,6 +21,16 @@ module Api
       render json: plant, status: :ok
     end
 
+    def photo
+      plant = current_user.plants.find(params[:id])
+      plant.attach(params[:photo])
+      if plant.valid?
+        render json: plant, status: :updated
+      else
+        render json: plant.errors, status: :unprocessable_entity
+      end
+    end
+
     private
 
     def plant_params

@@ -51,6 +51,7 @@ RSpec.describe 'Check-in request', type: :request do
 
           result = response_json
 
+          binding.pry
           expect(plant.check_ins.count).to eq 1
           expect(result[:plant][:id]).to eq plant.id
           expect(result[:notes]).to eq 'here are some notes'
