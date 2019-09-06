@@ -14,7 +14,7 @@ RSpec.describe 'Check-in request', type: :request do
           result = response_json
 
           expect(plant.check_ins.count).to eq 1
-          expect(result[:plant][:id]).to eq plant.id
+          expect(result[:plant_id]).to eq plant.id
           expect(result[:watered]).to eq true
           expect(result[:fertilized]).to eq false
           expect(response.code).to eq '201'
@@ -32,7 +32,7 @@ RSpec.describe 'Check-in request', type: :request do
           result = response_json
 
           expect(plant.check_ins.count).to eq 1
-          expect(result[:plant][:id]).to eq plant.id
+          expect(result[:plant_id]).to eq plant.id
           expect(result[:watered]).to eq false
           expect(result[:fertilized]).to eq true
           expect(response.code).to eq '201'
@@ -51,9 +51,8 @@ RSpec.describe 'Check-in request', type: :request do
 
           result = response_json
 
-          binding.pry
           expect(plant.check_ins.count).to eq 1
-          expect(result[:plant][:id]).to eq plant.id
+          expect(result[:plant_id]).to eq plant.id
           expect(result[:notes]).to eq 'here are some notes'
           expect(result[:watered]).to eq false
           expect(result[:fertilized]).to eq false
