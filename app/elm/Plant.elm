@@ -89,19 +89,21 @@ createPlant msg newPlant =
         |> HttpBuilder.request
 
 
-uploadPhoto : String -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
+uploadPhoto : File.File -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
 uploadPhoto file plant msg =
     let
         url =
             "/api/plants/" ++ String.fromInt plant.id ++ "/photo"
-
-        params =
-            plantPhotoEncoder file
     in
-    HttpBuilder.post url
-        |> HttpBuilder.withJsonBody params
-        |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
-        |> HttpBuilder.request
+    Http.request
+        { method = "POST"
+        , url = url
+        , body = Http.multipartBody [ Http.filePart "photo" file ]
+        , expect = Http.expectJson msg plantDecoder
+        , headers = []
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 plantPhotoEncoder : String -> Encode.Value

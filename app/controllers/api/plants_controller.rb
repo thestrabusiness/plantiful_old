@@ -23,9 +23,10 @@ module Api
 
     def photo
       plant = current_user.plants.find(params[:id])
+      plant.photo.purge_later
       plant
         .photo
-        .attach(io: StringIO.new(plant_params[:photo]), filename: 'plant.jpeg')
+        .attach(io: request.body, filename: 'plant.jpeg')
 
       if plant.valid?
         render json: plant, status: :updated

@@ -47,12 +47,17 @@ update msg model =
             ( model, Select.file [ "image/*" ] NewImageSelected )
 
         NewImageSelected file ->
-            ( model, loadImage file )
+            case model.plant of
+                Just plant ->
+                    ( model, uploadPhoto file plant )
+
+                Nothing ->
+                    ( model, Cmd.none )
 
         ImageLoaded file ->
             case model.plant of
                 Just plant ->
-                    ( model, uploadPhoto file plant )
+                    ( model, Cmd.none )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -78,7 +83,7 @@ loadImage file =
     Task.perform ImageLoaded (File.toUrl file)
 
 
-uploadPhoto : String -> Plant.Plant -> Cmd Msg
+uploadPhoto : File.File -> Plant.Plant -> Cmd Msg
 uploadPhoto file plant =
     Plant.uploadPhoto file plant ReceivedUploadPhotoResponse
 
