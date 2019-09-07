@@ -10,6 +10,7 @@ import Html.Events exposing (onClick)
 import Http
 import Plant
 import Routes
+import Task
 import Time
 import User
 
@@ -25,6 +26,8 @@ type Msg
     = ReceivedGetPlantResponse (Result Http.Error Plant.Plant)
     | UserSelectedUploadNewPhoto
     | NewImageSelected File.File
+    | ImageLoaded String
+    | ReceivedUploadPhotoResponse (Result Http.Error Plant.Plant)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -44,12 +47,40 @@ update msg model =
             ( model, Select.file [ "image/*" ] NewImageSelected )
 
         NewImageSelected file ->
+            ( model, loadImage file )
+
+        ImageLoaded file ->
+            case model.plant of
+                Just plant ->
+                    ( model, uploadPhoto file plant )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        ReceivedUploadPhotoResponse (Ok plant) ->
+            ( { model | plant = Just plant }, Cmd.none )
+
+        ReceivedUploadPhotoResponse (Err error) ->
+            let
+                _ =
+                    Debug.log "Error" error
+            in
             ( model, Cmd.none )
 
 
 init : Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
 init plantId user timeZone =
     ( Model Nothing user timeZone, getPlant plantId )
+
+
+loadImage : File.File -> Cmd Msg
+loadImage file =
+    Task.perform ImageLoaded (File.toUrl file)
+
+
+uploadPhoto : String -> Plant.Plant -> Cmd Msg
+uploadPhoto file plant =
+    Plant.uploadPhoto file plant ReceivedUploadPhotoResponse
 
 
 getPlant : Int -> Cmd Msg
@@ -70,7 +101,7 @@ view model =
                 [ div [ class "container__center centered-text" ]
                     [ img
                         [ class "avatar"
-                        , src plantImageUrl
+                        , src plant.photoUrl
                         , onClick UserSelectedUploadNewPhoto
                         ]
                         []

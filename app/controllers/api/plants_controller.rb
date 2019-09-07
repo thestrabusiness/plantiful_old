@@ -23,7 +23,10 @@ module Api
 
     def photo
       plant = current_user.plants.find(params[:id])
-      plant.attach(params[:photo])
+      plant
+        .photo
+        .attach(io: StringIO.new(plant_params[:photo]), filename: 'plant.jpeg')
+
       if plant.valid?
         render json: plant, status: :updated
       else
@@ -37,7 +40,8 @@ module Api
       params.require(:plant).permit(
         :name,
         :check_frequency_unit,
-        :check_frequency_scalar
+        :check_frequency_scalar,
+        :photo
       )
     end
   end

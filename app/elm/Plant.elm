@@ -7,10 +7,12 @@ module Plant exposing
     , plantDecoder
     , plantListDecoder
     , toNewPlant
+    , uploadPhoto
     )
 
 import CheckIn
 import DateAndTime
+import File
 import Http
 import HttpBuilder
 import Json.Decode exposing (Decoder, int, string, succeed)
@@ -24,6 +26,7 @@ type alias Plant =
     , name : String
     , lastWateredAt : Posix
     , checkIns : List CheckIn.CheckIn
+    , photoUrl : String
     }
 
 
@@ -36,7 +39,7 @@ type alias NewPlant =
 
 emptyPlant : Plant
 emptyPlant =
-    Plant 0 "" (Time.millisToPosix 0) []
+    Plant 0 "" (Time.millisToPosix 0) [] ""
 
 
 getPlant : Int -> (Result Http.Error Plant -> msg) -> Cmd msg
@@ -86,6 +89,31 @@ createPlant msg newPlant =
         |> HttpBuilder.request
 
 
+uploadPhoto : String -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
+uploadPhoto file plant msg =
+    let
+        url =
+            "/api/plants/" ++ String.fromInt plant.id ++ "/photo"
+
+        params =
+            plantPhotoEncoder file
+    in
+    HttpBuilder.post url
+        |> HttpBuilder.withJsonBody params
+        |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
+        |> HttpBuilder.request
+
+
+plantPhotoEncoder : String -> Encode.Value
+plantPhotoEncoder file =
+    Encode.object
+        [ ( "plant"
+          , Encode.object
+                [ ( "photo", Encode.string file ) ]
+          )
+        ]
+
+
 toNewPlant : { a | name : String, checkFrequencyUnit : String, checkFrequencyScalar : String } -> NewPlant
 toNewPlant { name, checkFrequencyUnit, checkFrequencyScalar } =
     NewPlant name checkFrequencyUnit checkFrequencyScalar
@@ -96,6 +124,11 @@ plantListDecoder =
     Json.Decode.list plantDecoder
 
 
+placeholderImage : String
+placeholderImage =
+    "https://thumbs.dreamstime.com/z/growing-plant-3599470.jpg"
+
+
 plantDecoder : Decoder Plant
 plantDecoder =
     succeed Plant
@@ -103,3 +136,4 @@ plantDecoder =
         |> required "name" string
         |> optional "last_watered_at" DateAndTime.posixDecoder (Time.millisToPosix 0)
         |> optional "check_ins" CheckIn.checkInListDecoder []
+        |> optional "photo" string placeholderImage

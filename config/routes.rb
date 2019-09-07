@@ -12,5 +12,7 @@ Rails.application.routes.draw do
     delete "/sign_out" => "sessions#destroy", as: "sign_out"
   end
 
-  get '*destination', to: 'application#index'
+  get '*destination', to: 'application#index', constraints: lambda { |req|
+    req.path.exclude? '/rails/active_storage'
+  }
 end

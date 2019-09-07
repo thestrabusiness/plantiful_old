@@ -11,7 +11,7 @@ class Plant < ApplicationRecord
   has_many :fertilizings, -> { fertilized }, class_name: 'CheckIn'
   has_many :waterings, -> { watered }, class_name: 'CheckIn'
 
-  has_one_attached :photo
+  has_one_base64_attached :photo
 
   validates :user, :name, presence: true
   validates :check_frequency_scalar, presence: true, numericality: true
