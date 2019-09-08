@@ -1,4 +1,10 @@
-module Pages.PlantDetails exposing (Model, Msg, init, update, view)
+module Pages.PlantDetails exposing
+    ( Model
+    , Msg
+    , init
+    , update
+    , view
+    )
 
 import CheckIn
 import DateAndTime
@@ -19,7 +25,15 @@ type alias Model =
     { plant : Maybe Plant.Plant
     , currentUser : User.User
     , timeZone : Time.Zone
+    , upload : Upload
     }
+
+
+type Upload
+    = None
+    | Uploading Float
+    | Done
+    | Fail
 
 
 type Msg
@@ -27,6 +41,12 @@ type Msg
     | UserSelectedUploadNewPhoto
     | NewImageSelected File.File
     | ReceivedUploadPhotoResponse (Result Http.Error Plant.Plant)
+    | GotUploadProgress Http.Progress
+
+
+init : Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
+init plantId user timeZone =
+    ( Model Nothing user timeZone None, getPlant plantId )
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -48,13 +68,17 @@ update msg model =
         NewImageSelected file ->
             case model.plant of
                 Just plant ->
-                    ( model, uploadPhoto file plant )
+                    ( { model
+                        | upload = Uploading 0
+                      }
+                    , uploadPhoto file plant
+                    )
 
                 Nothing ->
                     ( model, Cmd.none )
 
         ReceivedUploadPhotoResponse (Ok plant) ->
-            ( { model | plant = Just plant }, Cmd.none )
+            ( { model | upload = Done, plant = Just plant }, Cmd.none )
 
         ReceivedUploadPhotoResponse (Err error) ->
             let
@@ -63,10 +87,18 @@ update msg model =
             in
             ( model, Cmd.none )
 
+        GotUploadProgress progress ->
+            case progress of
+                Http.Sending p ->
+                    ( { model | upload = Uploading (Http.fractionSent p) }, Cmd.none )
 
-init : Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
-init plantId user timeZone =
-    ( Model Nothing user timeZone, getPlant plantId )
+                Http.Receiving _ ->
+                    ( model, Cmd.none )
+
+
+subscriptions : Sub Msg
+subscriptions =
+    Http.track "photoUpload" GotUploadProgress
 
 
 uploadPhoto file plant =

@@ -102,7 +102,7 @@ uploadPhoto file plant msg =
         , expect = Http.expectJson msg plantDecoder
         , headers = []
         , timeout = Nothing
-        , tracker = Nothing
+        , tracker = Just "photoUpload"
         }
 
 
