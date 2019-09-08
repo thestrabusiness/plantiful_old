@@ -98,22 +98,12 @@ uploadPhoto file plant msg =
     Http.request
         { method = "POST"
         , url = url
-        , body = Http.multipartBody [ Http.filePart "photo" file ]
+        , body = Http.multipartBody [ Http.filePart "plant[photo]" file ]
         , expect = Http.expectJson msg plantDecoder
         , headers = []
         , timeout = Nothing
         , tracker = Nothing
         }
-
-
-plantPhotoEncoder : String -> Encode.Value
-plantPhotoEncoder file =
-    Encode.object
-        [ ( "plant"
-          , Encode.object
-                [ ( "photo", Encode.string file ) ]
-          )
-        ]
 
 
 toNewPlant : { a | name : String, checkFrequencyUnit : String, checkFrequencyScalar : String } -> NewPlant

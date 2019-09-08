@@ -23,13 +23,10 @@ module Api
 
     def photo
       plant = current_user.plants.find(params[:id])
-      plant.photo.purge_later
-      plant
-        .photo
-        .attach(io: request.body, filename: 'plant.jpeg')
+      plant.photo.attach(plant_params[:photo])
 
       if plant.valid?
-        render json: plant, status: :updated
+        render json: plant, status: :ok
       else
         render json: plant.errors, status: :unprocessable_entity
       end

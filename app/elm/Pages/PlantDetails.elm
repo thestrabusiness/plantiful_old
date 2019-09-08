@@ -26,7 +26,6 @@ type Msg
     = ReceivedGetPlantResponse (Result Http.Error Plant.Plant)
     | UserSelectedUploadNewPhoto
     | NewImageSelected File.File
-    | ImageLoaded String
     | ReceivedUploadPhotoResponse (Result Http.Error Plant.Plant)
 
 
@@ -54,14 +53,6 @@ update msg model =
                 Nothing ->
                     ( model, Cmd.none )
 
-        ImageLoaded file ->
-            case model.plant of
-                Just plant ->
-                    ( model, Cmd.none )
-
-                Nothing ->
-                    ( model, Cmd.none )
-
         ReceivedUploadPhotoResponse (Ok plant) ->
             ( { model | plant = Just plant }, Cmd.none )
 
@@ -78,12 +69,6 @@ init plantId user timeZone =
     ( Model Nothing user timeZone, getPlant plantId )
 
 
-loadImage : File.File -> Cmd Msg
-loadImage file =
-    Task.perform ImageLoaded (File.toUrl file)
-
-
-uploadPhoto : File.File -> Plant.Plant -> Cmd Msg
 uploadPhoto file plant =
     Plant.uploadPhoto file plant ReceivedUploadPhotoResponse
 
@@ -91,11 +76,6 @@ uploadPhoto file plant =
 getPlant : Int -> Cmd Msg
 getPlant id =
     Plant.getPlant id ReceivedGetPlantResponse
-
-
-plantImageUrl : String
-plantImageUrl =
-    "https://thumbs.dreamstime.com/z/growing-plant-3599470.jpg"
 
 
 view : Model -> Html Msg

@@ -2,7 +2,6 @@ module Pages.PlantList exposing
     ( Model
     , Msg(..)
     , card
-    , cardImageUrl
     , getPlants
     , init
     , update
@@ -263,17 +262,11 @@ noPlantsMessage =
     "You dont have any plants yet! Add some new friends with the + button."
 
 
-cardImageUrl : String
-cardImageUrl =
-    "https://thumbs.dreamstime.com/z/growing-plant-3599470.jpg"
-
-
-card : Posix -> Plant.Plant -> Html Msg
 card currentTime plant =
     div [ class "card" ]
         [ a [ href <| Routes.plantPath plant.id ]
             [ div [ class "card-image" ]
-                [ img [ src cardImageUrl ] [] ]
+                [ img [ src plant.photoUrl ] [] ]
             , div [ class "card-header" ] [ text plant.name ]
             ]
         , div [ class "card-copy" ]
