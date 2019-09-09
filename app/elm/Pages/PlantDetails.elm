@@ -2,6 +2,7 @@ module Pages.PlantDetails exposing
     ( Model
     , Msg
     , init
+    , subscriptions
     , update
     , view
     )
@@ -90,7 +91,11 @@ update msg model =
         GotUploadProgress progress ->
             case progress of
                 Http.Sending p ->
-                    ( { model | upload = Uploading (Http.fractionSent p) }, Cmd.none )
+                    let
+                        fractionSent =
+                            Http.fractionSent p
+                    in
+                    ( { model | upload = Uploading fractionSent }, Cmd.none )
 
                 Http.Receiving _ ->
                     ( model, Cmd.none )

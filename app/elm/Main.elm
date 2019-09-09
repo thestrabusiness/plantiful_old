@@ -389,7 +389,7 @@ signInLink =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.batch [ Sub.map PlantDetailsMsg PlantDetails.subscriptions ]
 
 
 
