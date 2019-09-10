@@ -7,6 +7,7 @@
 .container__center {
   margin-left: auto;
   margin-right: auto;
+  width: 768px;
 }
 
 .container__shadow {
@@ -18,7 +19,6 @@
 }
 
 .form {
-  width: 768px;
   text-align: center;
   padding: 20px;
 
@@ -34,3 +34,16 @@
     width: 75%;
   }
 }
+
+.check_in__row {
+  div {
+    display: inline-block;
+    margin: $spacing-small;
+  }
+}
+
+.avatar {
+  width: 15em;
+  cursor: pointer;
+}
+

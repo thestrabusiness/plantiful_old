@@ -1,4 +1,13 @@
-module Routes exposing (Route(..), extractRoute, matchRoute, newPlantPath, pathFor, plantsPath, signInPath)
+module Routes exposing
+    ( Route(..)
+    , extractRoute
+    , matchRoute
+    , newPlantPath
+    , pathFor
+    , plantPath
+    , plantsPath
+    , signInPath
+    )
 
 import Url exposing (Url)
 import Url.Parser exposing (..)
@@ -6,6 +15,7 @@ import Url.Parser exposing (..)
 
 type Route
     = PlantsRoute
+    | PlantRoute Int
     | NotFoundRoute
     | NewPlantRoute
     | NewUserRoute
@@ -27,6 +37,7 @@ matchRoute =
     oneOf
         [ map SignInRoute top
         , map PlantsRoute (s "plants")
+        , map PlantRoute (s "plants" </> int)
         , map NewPlantRoute (s "plants" </> s "new")
         , map NewUserRoute (s "sign_up")
         , map SignInRoute (s "sign_in")
@@ -36,6 +47,9 @@ matchRoute =
 pathFor : Route -> String
 pathFor route =
     case route of
+        PlantRoute id ->
+            "/plants/" ++ String.fromInt id
+
         PlantsRoute ->
             "/plants"
 
@@ -50,6 +64,11 @@ pathFor route =
 
         NotFoundRoute ->
             "/"
+
+
+plantPath : Int -> String
+plantPath id =
+    pathFor <| PlantRoute id
 
 
 plantsPath : String

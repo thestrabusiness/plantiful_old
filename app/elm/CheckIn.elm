@@ -1,17 +1,28 @@
-module CheckIn exposing (CheckIn, Event(..), submitCheckIn)
+module CheckIn exposing (CheckIn, Event(..), checkInListDecoder, submitCheckIn)
 
+import DateAndTime
 import Http
 import HttpBuilder
 import Json.Decode exposing (Decoder, bool, int, string, succeed)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
-import Plant
 import Process
 import Task
+import Time exposing (Posix)
 
 
 type alias CheckIn =
-    { watered : Bool, fertilized : Bool, notes : String, plant : Plant.Plant }
+    { id : Int
+    , createdAt : Posix
+    , watered : Bool
+    , fertilized : Bool
+    , notes : String
+    , plantId : Int
+    }
+
+
+type alias NewCheckIn =
+    { watered : Bool, fertilized : Bool, notes : String, plantId : Int }
 
 
 type Event
@@ -20,17 +31,25 @@ type Event
     | NoEvent
 
 
-submitCheckIn : CheckIn -> (Result Http.Error CheckIn -> a) -> Cmd a
+submitCheckIn :
+    { watered : Bool
+    , fertilized : Bool
+    , notes : String
+    , plantId : Int
+    , plantName : String
+    }
+    -> (Result Http.Error CheckIn -> a)
+    -> Cmd a
 submitCheckIn form a =
     let
         plantId =
-            form.plant.id
+            form.plantId
 
         url =
             "api/plants/" ++ String.fromInt plantId ++ "/check_ins"
 
         params =
-            encodeCheckInForm form
+            encodeCheckInForm <| checkInFromForm form
     in
     HttpBuilder.post url
         |> HttpBuilder.withJsonBody params
@@ -38,7 +57,19 @@ submitCheckIn form a =
         |> HttpBuilder.request
 
 
-encodeCheckInForm : CheckIn -> Encode.Value
+checkInFromForm :
+    { watered : Bool
+    , fertilized : Bool
+    , notes : String
+    , plantId : Int
+    , plantName : String
+    }
+    -> NewCheckIn
+checkInFromForm form =
+    NewCheckIn form.watered form.fertilized form.notes form.plantId
+
+
+encodeCheckInForm : NewCheckIn -> Encode.Value
 encodeCheckInForm form =
     Encode.object
         [ ( "watered", Encode.bool form.watered )
@@ -50,7 +81,14 @@ encodeCheckInForm form =
 checkInDecoder : Decoder CheckIn
 checkInDecoder =
     succeed CheckIn
+        |> required "id" int
+        |> required "created_at" DateAndTime.posixDecoder
         |> required "watered" bool
         |> required "fertilized" bool
         |> optional "notes" string ""
-        |> required "plant" Plant.plantDecoder
+        |> required "plant_id" int
+
+
+checkInListDecoder : Decoder (List CheckIn)
+checkInListDecoder =
+    Json.Decode.list checkInDecoder

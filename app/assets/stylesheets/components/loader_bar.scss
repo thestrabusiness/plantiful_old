@@ -1,0 +1,41 @@
+.with_loader {
+  position: relative;
+}
+
+.loader_bar__overlay {
+  background: rgba(205, 205, 205, 0.5);
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: center;
+}
+
+.loader_bar__container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.loader_bar__background {
+  position: relative;
+  width: 100%;
+  top: 50%;
+}
+
+.loader_bar__foreground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 24px;
+  background-color: $plantiful-green;
+}
+
+.loader_bar__text {
+  position: absolute;
+  top: 0;
+  left: 0;
+  text-align: center;
+  width: 100%;
+}

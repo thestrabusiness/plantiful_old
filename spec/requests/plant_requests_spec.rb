@@ -1,3 +1,5 @@
+require 'rails_helper'
+
 RSpec.describe 'Plant requests', type: :request do
   describe 'GET /api/plants' do
     context 'when a user is signed in' do
@@ -76,5 +78,24 @@ RSpec.describe 'Plant requests', type: :request do
         expect(result.keys).to match_array %i[name check_frequency_scalar check_frequency_unit]
       end
     end
+  end
+
+  describe 'POST /api/plants/:id/photo' do
+    it 'attaches a new photo to the plant' do
+      plant = create(:plant)
+      photo = fixture_file_upload('plant.jpg')
+
+      api_sign_in(plant.user)
+      expect { post_photo(plant, photo) }
+        .to change { ActiveStorage::Blob.count }.from(0).to(1)
+
+      result = response_json
+
+      expect(result[:photo]).to be
+    end
+  end
+
+  def post_photo(plant, photo)
+    post photo_api_plant_path(plant), params: { plant: { photo: photo } }
   end
 end

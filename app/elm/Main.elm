@@ -7,11 +7,14 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
 import Pages.NotAuthorized as NotAuthorized
+import Pages.PlantDetails as PlantDetails
 import Pages.PlantForm as PlantForm
 import Pages.PlantList as PlantList
 import Pages.SignIn as SignIn
 import Pages.UserForm as UserForm
 import Routes exposing (Route)
+import Task
+import Time
 import Url
 import User exposing (User)
 
@@ -25,6 +28,8 @@ type alias Model =
     , page : Page
     , route : Route
     , currentUser : Maybe User
+    , currentTime : Time.Posix
+    , timeZone : Time.Zone
     }
 
 
@@ -40,10 +45,27 @@ init flags url key =
             , page = PageNone
             , route = Routes.extractRoute url
             , currentUser = Nothing
+            , currentTime = Time.millisToPosix 0
+            , timeZone = Time.utc
             }
     in
-    ( model, User.getCurrentUser <| ReceivedCurrentUserResponse model.route )
+    ( model, Cmd.batch [ getCurrentTime, getTimeZone, getCurrentUser model.route ] )
         |> loadCurrentPage
+
+
+getCurrentUser : Routes.Route -> Cmd Msg
+getCurrentUser route =
+    User.getCurrentUser <| ReceivedCurrentUserResponse route
+
+
+getCurrentTime : Cmd Msg
+getCurrentTime =
+    Task.perform ReceivedCurrentTime Time.now
+
+
+getTimeZone : Cmd Msg
+getTimeZone =
+    Task.perform ReceivedTimeZone Time.here
 
 
 
@@ -53,6 +75,7 @@ init flags url key =
 type Msg
     = LinkClicked Browser.UrlRequest
     | UrlChanged Url.Url
+    | PlantDetailsMsg PlantDetails.Msg
     | PlantListMsg PlantList.Msg
     | PlantFormMsg PlantForm.Msg
     | UserFormMsg UserForm.Msg
@@ -61,11 +84,14 @@ type Msg
     | UserClickedSignOutButton
     | ReceivedUserSignOutResponse (Result Http.Error ())
     | ReceivedCurrentUserResponse Route (Result Http.Error User)
+    | ReceivedCurrentTime Time.Posix
+    | ReceivedTimeZone Time.Zone
 
 
 type Page
     = PageNone
     | PlantListPage PlantList.Model
+    | PlantDetailsPage PlantDetails.Model
     | PlantFormPage PlantForm.Model
     | UserPage UserForm.Model
     | NotAuthorizedPage NotAuthorized.Model
@@ -92,6 +118,12 @@ update msg model =
             in
             ( { model | route = newRoute }, Cmd.none )
                 |> loadCurrentPage
+
+        ( ReceivedCurrentTime time, _ ) ->
+            ( { model | currentTime = time }, Cmd.none )
+
+        ( ReceivedTimeZone zone, _ ) ->
+            ( { model | timeZone = zone }, Cmd.none )
 
         ( UserClickedSignOutButton, _ ) ->
             ( model, User.signOut ReceivedUserSignOutResponse )
@@ -152,6 +184,17 @@ update msg model =
             , Cmd.map SignInMsg newCmd
             )
 
+        ( PlantDetailsMsg subMsg, PlantDetailsPage pageModel ) ->
+            let
+                ( newPageModel, newCmd ) =
+                    PlantDetails.update subMsg pageModel
+            in
+            ( { model
+                | page = PlantDetailsPage newPageModel
+              }
+            , Cmd.map PlantDetailsMsg newCmd
+            )
+
         ( _, _ ) ->
             ( model, Cmd.none )
 
@@ -167,6 +210,8 @@ loadCurrentPage ( model, cmd ) =
                             let
                                 ( pageModel, pageCmd ) =
                                     PlantList.init user
+                                        model.currentTime
+                                        model.timeZone
                             in
                             ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
 
@@ -198,6 +243,8 @@ loadCurrentPage ( model, cmd ) =
                             let
                                 ( pageModel, pageCmd ) =
                                     PlantList.init user
+                                        model.currentTime
+                                        model.timeZone
                             in
                             ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
 
@@ -210,6 +257,27 @@ loadCurrentPage ( model, cmd ) =
 
                 Routes.NotFoundRoute ->
                     ( PageNone, Cmd.none )
+
+                Routes.PlantRoute id ->
+                    case model.currentUser of
+                        Just user ->
+                            let
+                                ( pageModel, pageCmd ) =
+                                    PlantDetails.init id
+                                        user
+                                        model.timeZone
+                            in
+                            ( PlantDetailsPage pageModel
+                            , Cmd.map PlantDetailsMsg
+                                pageCmd
+                            )
+
+                        Nothing ->
+                            let
+                                ( pageModel, pageCmd ) =
+                                    SignIn.init
+                            in
+                            ( SignInPage pageModel, Cmd.map SignInMsg pageCmd )
     in
     ( { model | page = page }, Cmd.batch [ cmd, newCmd ] )
 
@@ -232,6 +300,10 @@ currentPage model =
     let
         page =
             case model.page of
+                PlantDetailsPage pageModel ->
+                    PlantDetails.view pageModel
+                        |> Html.map PlantDetailsMsg
+
                 PlantListPage pageModel ->
                     PlantList.view pageModel
                         |> Html.map PlantListMsg
@@ -288,6 +360,9 @@ headerLink model =
         Routes.NotFoundRoute ->
             text ""
 
+        Routes.PlantRoute _ ->
+            signOutButton
+
 
 signUpLink : Html Msg
 signUpLink =
@@ -314,7 +389,7 @@ signInLink =
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.none
+    Sub.batch [ Sub.map PlantDetailsMsg PlantDetails.subscriptions ]
 
 
 

@@ -15,13 +15,31 @@ module Api
       end
     end
 
+    def show
+      plant = current_user.plants.find(params[:id])
+
+      render json: plant, status: :ok
+    end
+
+    def photo
+      plant = current_user.plants.find(params[:id])
+      plant.photo.attach(plant_params[:photo])
+
+      if plant.valid?
+        render json: plant, status: :ok
+      else
+        render json: plant.errors, status: :unprocessable_entity
+      end
+    end
+
     private
 
     def plant_params
       params.require(:plant).permit(
         :name,
         :check_frequency_unit,
-        :check_frequency_scalar
+        :check_frequency_scalar,
+        :photo
       )
     end
   end

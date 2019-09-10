@@ -10,6 +10,6 @@ class CheckIn < ApplicationRecord
   default_scope -> { order(created_at: :desc) }
 
   def created_at_date
-    l(created_at, format: :month_date_year)
+    l(created_at, format: :month_day_year)
   end
 end
