@@ -12,7 +12,7 @@ import DateAndTime
 import File
 import File.Select as Select
 import Html exposing (Html, a, div, h2, h3, img, text)
-import Html.Attributes exposing (class, href, src)
+import Html.Attributes exposing (class, href, src, style)
 import Html.Events exposing (onClick)
 import Http
 import Plant
@@ -121,12 +121,15 @@ view model =
         Just plant ->
             div [ class "container__center" ]
                 [ div [ class "container__center centered-text" ]
-                    [ img
-                        [ class "avatar"
-                        , src plant.photoUrl
-                        , onClick UserSelectedUploadNewPhoto
+                    [ div
+                        [ class "container__center avatar with_loader" ]
+                        [ img
+                            [ src plant.photoUrl
+                            , onClick UserSelectedUploadNewPhoto
+                            ]
+                            []
+                        , loadingOverlay model.upload
                         ]
-                        []
                     , h2 [ class "centered-text" ] [ text plant.name ]
                     , a [ href Routes.plantsPath ] [ text "Back to Plants" ]
                     ]
@@ -136,6 +139,35 @@ view model =
         Nothing ->
             div [ class "container__center centered-text" ]
                 [ div [] [ text "Loading..." ] ]
+
+
+loadingOverlay : Upload -> Html Msg
+loadingOverlay loading =
+    case loading of
+        Uploading fraction ->
+            let
+                percentage =
+                    round (fraction * 100)
+
+                percentageString =
+                    String.fromInt percentage ++ "%"
+
+                uploadingText =
+                    "Uploading: " ++ percentageString
+            in
+            div [ class "loader_bar__overlay" ]
+                [ div [ class "loader_bar__container" ]
+                    [ div [ class "loader_bar__background" ]
+                        [ div
+                            [ class "loader_bar__foreground", style "width" percentageString ]
+                            []
+                        , div [ class "loader_bar__text" ] [ text uploadingText ]
+                        ]
+                    ]
+                ]
+
+        _ ->
+            text ""
 
 
 viewCheckInsList : List CheckIn.CheckIn -> Time.Zone -> Html msg
