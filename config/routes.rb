@@ -3,7 +3,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     resources :plants, only: [:create, :index, :show] do
-      post :photo, on: :member
+      post :avatar, on: :member
       resources :check_ins, only: :create
     end
     resources :users, only: [:create]

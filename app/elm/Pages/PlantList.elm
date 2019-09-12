@@ -266,7 +266,7 @@ card currentTime plant =
     div [ class "card" ]
         [ a [ href <| Routes.plantPath plant.id ]
             [ div [ class "card-image" ]
-                [ img [ src plant.photoUrl ] [] ]
+                [ img [ src plant.avatarUrl ] [] ]
             , div [ class "card-header" ] [ text plant.name ]
             ]
         , div [ class "card-copy" ]

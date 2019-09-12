@@ -80,22 +80,22 @@ RSpec.describe 'Plant requests', type: :request do
     end
   end
 
-  describe 'POST /api/plants/:id/photo' do
-    it 'attaches a new photo to the plant' do
+  describe 'POST /api/plants/:id/avatar' do
+    it 'attaches a new avatar to the plant' do
       plant = create(:plant)
-      photo = fixture_file_upload('plant.jpg')
+      avatar = fixture_file_upload('plant.jpg')
 
       api_sign_in(plant.user)
-      expect { post_photo(plant, photo) }
+      expect { post_avatar(plant, avatar) }
         .to change { ActiveStorage::Blob.count }.from(0).to(1)
 
       result = response_json
 
-      expect(result[:photo]).to be
+      expect(result[:avatar]).to be
     end
   end
 
-  def post_photo(plant, photo)
-    post photo_api_plant_path(plant), params: { plant: { photo: photo } }
+  def post_avatar(plant, avatar)
+    post avatar_api_plant_path(plant), params: { plant: { avatar: avatar } }
   end
 end

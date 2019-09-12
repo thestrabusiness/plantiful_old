@@ -21,9 +21,9 @@ module Api
       render json: plant, status: :ok
     end
 
-    def photo
+    def avatar
       plant = current_user.plants.find(params[:id])
-      plant.photo.attach(plant_params[:photo])
+      plant.avatar.attach(plant_params[:avatar])
 
       if plant.valid?
         render json: plant, status: :ok
@@ -39,7 +39,7 @@ module Api
         :name,
         :check_frequency_unit,
         :check_frequency_scalar,
-        :photo
+        :avatar
       )
     end
   end

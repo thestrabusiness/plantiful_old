@@ -1,18 +1,15 @@
 class PlantSerializer < ActiveModel::Serializer
-  attributes :id, :name, :last_watered_at, :next_check_date, :check_ins, :photo
+  attributes :id, :name, :last_watered_at, :next_check_date, :check_ins, :avatar
+  include Rails.application.routes.url_helpers
 
   has_many :check_ins do
     object.check_ins.limit(5)
   end
 
-  def photo
-    return unless object.photo.attached?
+  def avatar
+    return unless object.avatar.attached?
 
-    Rails
-      .application
-      .routes
-      .url_helpers
-      .rails_blob_path(object.photo, only_path: true)
+    rails_representation_url(object.avatar.variant(resize: '300x300').processed)
   end
 
   def last_watered_at

@@ -26,7 +26,7 @@ type alias Plant =
     , name : String
     , lastWateredAt : Posix
     , checkIns : List CheckIn.CheckIn
-    , photoUrl : String
+    , avatarUrl : String
     }
 
 
@@ -93,12 +93,12 @@ uploadPhoto : File.File -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
 uploadPhoto file plant msg =
     let
         url =
-            "/api/plants/" ++ String.fromInt plant.id ++ "/photo"
+            "/api/plants/" ++ String.fromInt plant.id ++ "/avatar"
     in
     Http.request
         { method = "POST"
         , url = url
-        , body = Http.multipartBody [ Http.filePart "plant[photo]" file ]
+        , body = Http.multipartBody [ Http.filePart "plant[avatar]" file ]
         , expect = Http.expectJson msg plantDecoder
         , headers = []
         , timeout = Nothing
@@ -128,4 +128,4 @@ plantDecoder =
         |> required "name" string
         |> optional "last_watered_at" DateAndTime.posixDecoder (Time.millisToPosix 0)
         |> optional "check_ins" CheckIn.checkInListDecoder []
-        |> optional "photo" string placeholderImage
+        |> optional "avatar" string placeholderImage

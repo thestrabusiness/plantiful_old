@@ -124,7 +124,7 @@ view model =
                     [ div
                         [ class "container__center avatar with_loader" ]
                         [ img
-                            [ src plant.photoUrl
+                            [ src plant.avatarUrl
                             , onClick UserSelectedUploadNewPhoto
                             ]
                             []
