@@ -10,9 +10,9 @@ class Plant < ApplicationRecord
   has_many :checks, -> { check_in }, class_name: 'CheckIn'
   has_many :fertilizings, -> { fertilized }, class_name: 'CheckIn'
   has_many :waterings, -> { watered }, class_name: 'CheckIn'
+  has_many :photos, through: :check_ins
 
   has_one_attached :avatar
-  has_many_attached :photos
 
   validates :user, :name, presence: true
   validates :check_frequency_scalar, presence: true, numericality: true

@@ -14,7 +14,7 @@ module Api
     private
 
     def check_in_params
-      params.require(:check_in).permit(:notes, :watered, :fertilized)
+      params.require(:check_in).permit(:notes, :watered, :fertilized, :photo)
     end
   end
 end

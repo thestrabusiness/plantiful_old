@@ -1,6 +1,7 @@
 module CheckIn exposing (CheckIn, Event(..), checkInListDecoder, submitCheckIn)
 
 import DateAndTime
+import File
 import Http
 import HttpBuilder
 import Json.Decode exposing (Decoder, bool, int, string, succeed)
@@ -22,7 +23,12 @@ type alias CheckIn =
 
 
 type alias NewCheckIn =
-    { watered : Bool, fertilized : Bool, notes : String, plantId : Int }
+    { watered : Bool
+    , fertilized : Bool
+    , notes : String
+    , photo : Maybe File.File
+    , plantId : Int
+    }
 
 
 type Event
@@ -35,6 +41,7 @@ submitCheckIn :
     { watered : Bool
     , fertilized : Bool
     , notes : String
+    , photo : Maybe File.File
     , plantId : Int
     , plantName : String
     }
@@ -51,22 +58,65 @@ submitCheckIn form a =
         params =
             encodeCheckInForm <| checkInFromForm form
     in
-    HttpBuilder.post url
-        |> HttpBuilder.withJsonBody params
-        |> HttpBuilder.withExpect (Http.expectJson a checkInDecoder)
-        |> HttpBuilder.request
+    Http.request
+        { method = "POST"
+        , url = url
+        , body = checkInRequestBody <| checkInFromForm form
+        , expect = Http.expectJson a checkInDecoder
+        , headers = []
+        , timeout = Nothing
+        , tracker = Nothing
+        }
+
+
+checkInRequestBody : NewCheckIn -> Http.Body
+checkInRequestBody checkIn =
+    checkIn
+        |> addFilePartToBody
+        |> addStringPartsToBody
+        |> Http.multipartBody
+
+
+addFilePartToBody : NewCheckIn -> ( NewCheckIn, List Http.Part )
+addFilePartToBody checkIn =
+    case checkIn.photo of
+        Just photo ->
+            ( checkIn, [ Http.filePart "check_in[photo]" photo ] )
+
+        Nothing ->
+            ( checkIn, [] )
+
+
+addStringPartsToBody : ( NewCheckIn, List Http.Part ) -> List Http.Part
+addStringPartsToBody ( checkIn, partList ) =
+    partList
+        ++ [ Http.stringPart "check_in[watered]" (boolToString checkIn.watered)
+           , Http.stringPart "check_in[fertilized]" (boolToString checkIn.fertilized)
+           , Http.stringPart "check_in[notes]" checkIn.notes
+           ]
+
+
+boolToString : Bool -> String
+boolToString bool =
+    case bool of
+        True ->
+            "true"
+
+        False ->
+            "false"
 
 
 checkInFromForm :
     { watered : Bool
     , fertilized : Bool
     , notes : String
+    , photo : Maybe File.File
     , plantId : Int
     , plantName : String
     }
     -> NewCheckIn
 checkInFromForm form =
-    NewCheckIn form.watered form.fertilized form.notes form.plantId
+    NewCheckIn form.watered form.fertilized form.notes form.photo form.plantId
 
 
 encodeCheckInForm : NewCheckIn -> Encode.Value

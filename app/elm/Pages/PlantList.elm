@@ -12,10 +12,13 @@ module Pages.PlantList exposing
 
 import CheckIn exposing (Event(..))
 import DateAndTime
+import File
+import File.Select as Select
 import Html exposing (..)
 import Html.Attributes exposing (..)
-import Html.Events exposing (onClick, onInput)
+import Html.Events exposing (on, onClick, onInput)
 import Http
+import Json.Decode exposing (Decoder, succeed)
 import Plant
 import Process
 import Routes exposing (newPlantPath)
@@ -39,6 +42,7 @@ type alias CheckInForm =
     { watered : Bool
     , fertilized : Bool
     , notes : String
+    , photo : Maybe File.File
     , plantId : Int
     , plantName : String
     }
@@ -53,6 +57,8 @@ type Msg
     | CheckboxSelected CheckIn.Event
     | UserTypedCheckInNotes String
     | ReceivedPlantCheckInResponse (Result Http.Error CheckIn.CheckIn)
+    | UserClickedFileSelect
+    | NewImageSelected File.File
 
 
 type Loading
@@ -78,7 +84,7 @@ initialModel user currentTime timeZone =
 
 initialCheckInForm : CheckInForm
 initialCheckInForm =
-    CheckInForm False False "" 0 ""
+    CheckInForm False False "" Nothing 0 ""
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -125,6 +131,19 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm newCheckInForm
                 |> updateModal checkInModal
+
+        UserClickedFileSelect ->
+            ( model, Select.file [ "image/*" ] NewImageSelected )
+
+        NewImageSelected file ->
+            let
+                checkInForm =
+                    model.checkInForm
+
+                updatedForm =
+                    { checkInForm | photo = Just file }
+            in
+            ( { model | checkInForm = updatedForm }, Cmd.none )
 
         UserTypedCheckInNotes notes ->
             let
@@ -334,6 +353,11 @@ checkInModal form =
                 , modalRow
                     [ checkbox Fertilized
                         form.fertilized
+                    ]
+                , modalRow
+                    [ button [ onClick UserClickedFileSelect ]
+                        [ text "Add a photo"
+                        ]
                     ]
                 , modalRow
                     [ label []

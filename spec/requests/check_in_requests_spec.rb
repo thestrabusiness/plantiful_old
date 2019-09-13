@@ -60,6 +60,21 @@ RSpec.describe 'Check-in request', type: :request do
         end
       end
 
+      context 'adds a photo to the check-in' do
+        it 'creates a check-in with a photo' do
+          plant = create(:plant)
+          photo = fixture_file_upload('plant.jpg')
+
+          api_sign_in(plant.user)
+          expect {
+            post api_plant_check_ins_path(plant),
+                 params: { check_in: { watered: false,
+                                       fertilized: false,
+                                       photo: photo } }
+          }.to change { ActiveStorage::Blob.count }.from(0).to(1)
+        end
+      end
+
       context 'with missing required data' do
         context 'such as a missing "watered" key' do
           it 'creates the check-in with watered false' do

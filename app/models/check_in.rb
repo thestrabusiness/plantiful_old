@@ -1,6 +1,8 @@
 class CheckIn < ApplicationRecord
   belongs_to :plant
 
+  has_one_attached :photo
+
   validates :plant, presence: true
 
   scope :check_in, -> { where(fertilized: false, watered: false) }
