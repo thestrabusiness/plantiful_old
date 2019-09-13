@@ -1,5 +1,6 @@
 module User exposing (Errors, NewUser, User, createUser, getCurrentUser, signIn, signOut, toCredentials)
 
+import Api
 import Http
 import HttpBuilder
 import Json.Decode exposing (Decoder, int, list, string, succeed)
@@ -41,13 +42,10 @@ type alias Errors =
 createUser : (Result Http.Error User -> msg) -> NewUser -> Cmd msg
 createUser msg newUser =
     let
-        url =
-            "/api/users"
-
         params =
             encodeUser newUser
     in
-    HttpBuilder.post url
+    HttpBuilder.post Api.usersEndpoint
         |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg userDecoder)
         |> HttpBuilder.request
@@ -56,13 +54,10 @@ createUser msg newUser =
 signIn : (Result Http.Error User -> msg) -> Credentials -> Cmd msg
 signIn msg credentials =
     let
-        url =
-            "/api/sessions"
-
         params =
             encodeCredentials credentials
     in
-    HttpBuilder.post url
+    HttpBuilder.post Api.signInEndpoint
         |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg userDecoder)
         |> HttpBuilder.request
@@ -70,22 +65,14 @@ signIn msg credentials =
 
 signOut : (Result Http.Error () -> msg) -> Cmd msg
 signOut msg =
-    let
-        url =
-            "/api/sign_out"
-    in
-    HttpBuilder.delete url
+    HttpBuilder.delete Api.signOutEndpoint
         |> HttpBuilder.withExpect (Http.expectWhatever msg)
         |> HttpBuilder.request
 
 
 getCurrentUser : (Result Http.Error User -> msg) -> Cmd msg
 getCurrentUser msg =
-    let
-        url =
-            "/api/current_user"
-    in
-    HttpBuilder.get url
+    HttpBuilder.get Api.currentUserEndpoint
         |> HttpBuilder.withExpect (Http.expectJson msg userDecoder)
         |> HttpBuilder.request
 

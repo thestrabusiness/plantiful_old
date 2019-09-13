@@ -1,5 +1,6 @@
 module CheckIn exposing (CheckIn, Event(..), checkInListDecoder, submitCheckIn)
 
+import Api
 import DateAndTime
 import File
 import Http
@@ -52,15 +53,12 @@ submitCheckIn form a =
         plantId =
             form.plantId
 
-        url =
-            "api/plants/" ++ String.fromInt plantId ++ "/check_ins"
-
         params =
             encodeCheckInForm <| checkInFromForm form
     in
     Http.request
         { method = "POST"
-        , url = url
+        , url = Api.checkInEndpoint plantId
         , body = checkInRequestBody <| checkInFromForm form
         , expect = Http.expectJson a checkInDecoder
         , headers = []

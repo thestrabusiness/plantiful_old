@@ -10,6 +10,7 @@ module Plant exposing
     , uploadPhoto
     )
 
+import Api
 import CheckIn
 import DateAndTime
 import File
@@ -43,19 +44,15 @@ emptyPlant =
 
 
 getPlant : Int -> (Result Http.Error Plant -> msg) -> Cmd msg
-getPlant int msg =
-    let
-        url =
-            "/api/plants/" ++ String.fromInt int
-    in
-    HttpBuilder.get url
+getPlant plantId msg =
+    HttpBuilder.get (Api.plantEndpoint plantId)
         |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
         |> HttpBuilder.request
 
 
 getPlants : (Result Http.Error (List Plant) -> msg) -> Cmd msg
 getPlants msg =
-    HttpBuilder.get "/api/plants"
+    HttpBuilder.get Api.plantsEndpoint
         |> HttpBuilder.withExpect (Http.expectJson msg plantListDecoder)
         |> HttpBuilder.request
 
@@ -77,13 +74,10 @@ encodePlant plant =
 createPlant : (Result Http.Error Plant -> msg) -> NewPlant -> Cmd msg
 createPlant msg newPlant =
     let
-        url =
-            "/api/plants"
-
         params =
             encodePlant newPlant
     in
-    HttpBuilder.post url
+    HttpBuilder.post Api.plantsEndpoint
         |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
         |> HttpBuilder.request
@@ -91,13 +85,9 @@ createPlant msg newPlant =
 
 uploadPhoto : File.File -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
 uploadPhoto file plant msg =
-    let
-        url =
-            "/api/plants/" ++ String.fromInt plant.id ++ "/avatar"
-    in
     Http.request
         { method = "POST"
-        , url = url
+        , url = Api.plantAvatarEndpoint plant.id
         , body = Http.multipartBody [ Http.filePart "plant[avatar]" file ]
         , expect = Http.expectJson msg plantDecoder
         , headers = []
