@@ -1,0 +1,53 @@
+name: Ruby
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:10.8
+        env:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: ""
+            POSTGRES_DB: postgres
+
+        ports:
+          - 5432/tcp
+
+        options: --health-cmd pg_isready --health-interval 10s --health-timeout 5s --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v1
+
+      - name: Set up Ruby 2.6
+        uses: actions/setup-ruby@v1
+        with:
+          ruby-version: 2.6.3
+
+      - name: Set up Postgres
+        run: sudo apt-get install libpq-dev
+
+      - name: Set up Rails and db
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          RAILS_ENV: test
+        run: |
+          yarn install --check-files
+          gem install bundler
+          bundle install --jobs 4 --retry 3
+          bin/rails db:setup
+
+      - name: Run tests
+        env:
+          PGHOST: localhost
+          PGUSER: postgres
+          PGPORT: ${{ job.services.postgres.ports[5432] }}
+          RAILS_ENV: test
+        run: |
+          bundle exec rspec
+
