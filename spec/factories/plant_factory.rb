@@ -11,12 +11,8 @@ FactoryBot.define do
     end
 
     trait :with_waterings do
-      transient do
-        number { 2 }
-      end
-
       after :create do |plant, _evaluator|
-        create_list(:watering, number, plant: plant)
+        create_list(:check_in, 5, :watered, plant: plant)
       end
     end
   end

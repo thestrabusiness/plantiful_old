@@ -27,7 +27,7 @@ jobs:
         with:
           ruby-version: 2.6.3
 
-      - name: Set up Postgres
+      - name: Set up PG
         run: sudo apt-get install libpq-dev
 
       - name: Set up Rails and db

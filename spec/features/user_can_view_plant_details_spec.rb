@@ -1,30 +1,22 @@
 require 'rails_helper'
 
-RSpec.feature 'User can view plant details' do
+RSpec.feature 'User can view plant details', js: true do
   it 'user can see the plants details' do
-    skip
-    plant = Plant.create(
-      name: 'Planthony',
-      botanical_name: 'Planthonius Moffa'
-    )
+    plant = create(:plant, name: 'Planthony')
+    create(:check_in, :watered, plant: plant)
 
-    visit plant_path(plant)
+    visit plant_path(plant, plant.user)
 
     expect(page).to have_content plant.name
-    expect(page).to have_content plant.botanical_name
+    expect(page).to have_content 'Watered: Yes'
+    expect(page).to have_content 'Fertilized: No'
   end
 
-  it 'user can see the last 5 waterings' do
-    skip
-    plant = Plant.create(
-      name: 'Planthony',
-      botanical_name: 'Planthonius Moffa'
-    )
+  it 'user can see the last 5 check-ins' do
+    plant = create(:plant, :with_waterings, name: 'Planthony')
 
-    5.times { plant.waterings.create! }
+    visit plant_path(plant, plant.user)
 
-    visit plant_path(plant)
-
-    expect(page).to have_selector('.watering', count: 5)
+    expect(page).to have_selector('.check_in__row', count: 5)
   end
 end

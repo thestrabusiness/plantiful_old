@@ -4,7 +4,7 @@ import Api exposing (networkError, somethingWentWrongError, unauthorizedError)
 import Browser.Navigation as Nav
 import Form exposing (errorsForField, onEnter)
 import Html exposing (..)
-import Html.Attributes exposing (class, selected, type_, value)
+import Html.Attributes exposing (class, id, name, selected, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Plant
@@ -105,11 +105,12 @@ view model =
     div [ class "form container__center container__shadow" ]
         [ h2 [] [ text "Add a Plant" ]
         , textField Name model.errors "Name" model.name
-        , label []
+        , label [ id "check_frequency" ]
             [ text "Check Frequency"
             , div [ class "clearfix" ] []
             , input
                 [ type_ "number"
+                , name "check_frequency_scalar"
                 , class "input__number input__check"
                 , value model.checkFrequencyScalar
                 , onInput <| UserEditedField CheckFrequencyScalar
@@ -140,6 +141,7 @@ checkFrequencySelect model =
     in
     select
         [ class "input__select input__check"
+        , name "check_frequency_unit"
         , onInput <| UserEditedField CheckFrequencyUnit
         ]
         [ selectOption dayLabel "day" selectedUnit

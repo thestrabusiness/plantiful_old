@@ -5,7 +5,7 @@ module Pages.PlantList exposing
     , getPlants
     , init
     , update
-    , updatePlantsList
+    , updatePlantWateredAt
     , view
     , viewPlantList
     )
@@ -53,7 +53,6 @@ type Msg
     | UserOpenedCheckInModal Plant.Plant
     | UserClosedModal
     | UserSubmittedCheckIn
-    | UpdatePlant (Result Http.Error Plant.Plant)
     | CheckboxSelected CheckIn.Event
     | UserTypedCheckInNotes String
     | ReceivedPlantCheckInResponse (Result Http.Error CheckIn.CheckIn)
@@ -99,17 +98,6 @@ update msg model =
                     Debug.log "Whoops!" error
             in
             ( { model | loading = Failed }, Cmd.none )
-
-        UpdatePlant (Ok updatedPlant) ->
-            ( model, Cmd.none )
-                |> updatePlantsList updatedPlant
-
-        UpdatePlant (Err error) ->
-            let
-                _ =
-                    Debug.log "Whoops!" error
-            in
-            ( model, Cmd.none )
 
         UserOpenedCheckInModal plant ->
             let
@@ -165,19 +153,24 @@ update msg model =
         UserSubmittedCheckIn ->
             ( model, submitCheckIn model.checkInForm )
 
-        ReceivedPlantCheckInResponse (Ok response) ->
-            let
-                updatedPlant =
-                    findPlantById response.plantId model.plants
-            in
-            case updatedPlant of
-                Just plant ->
-                    ( model, Cmd.none )
-                        |> updatePlantsList plant
-                        |> updateForm initialCheckInForm
-                        |> closeModal
+        ReceivedPlantCheckInResponse (Ok checkIn) ->
+            case checkIn.watered of
+                True ->
+                    let
+                        updatedPlant =
+                            findPlantById checkIn.plantId model.plants
+                    in
+                    case updatedPlant of
+                        Just plant ->
+                            ( model, Cmd.none )
+                                |> updatePlantWateredAt plant checkIn.createdAt
+                                |> updateForm initialCheckInForm
+                                |> closeModal
 
-                Nothing ->
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                False ->
                     ( model, Cmd.none )
 
         ReceivedPlantCheckInResponse (Err error) ->
@@ -221,15 +214,16 @@ findPlantById id plantList =
     List.head (List.filter (\plant -> plant.id == id) plantList)
 
 
-updatePlantsList :
+updatePlantWateredAt :
     Plant.Plant
+    -> Time.Posix
     -> ( Model, Cmd Msg )
     -> ( Model, Cmd Msg )
-updatePlantsList updatedPlant ( model, cmd ) =
+updatePlantWateredAt updatedPlant wateredAt ( model, cmd ) =
     let
         updatePlant plant =
             if plant.id == updatedPlant.id then
-                { plant | lastWateredAt = updatedPlant.lastWateredAt }
+                { plant | lastWateredAt = wateredAt }
 
             else
                 plant

@@ -3,6 +3,7 @@ require File.expand_path('../config/environment', __dir__)
 
 require 'database_cleaner'
 require 'rspec/rails'
+require 'clearance/rspec'
 
 Dir[Rails.root.join('spec', 'support', '**', '*.rb')]
   .sort
@@ -17,6 +18,8 @@ rescue ActiveRecord::PendingMigrationError => e
   exit 1
 end
 
+Capybara.javascript_driver = :selenium_headless
+
 RSpec.configure do |config|
   config.fixture_path = "#{::Rails.root}/spec/fixtures"
   config.use_transactional_fixtures = true
@@ -26,10 +29,12 @@ RSpec.configure do |config|
 
   config.include ApiRequestHelpers
   config.include JsonHelpers
+  config.include FrontEndRouteHelpers
 
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)
+    `bin/webpack`
   end
 
   config.around(:each) do |example|
