@@ -11,7 +11,7 @@ import CheckIn
 import DateAndTime
 import File
 import File.Select as Select
-import Html exposing (Html, a, button, div, h2, h3, img, text)
+import Html exposing (Html, a, button, div, h2, h3, h4, img, p, text)
 import Html.Attributes exposing (class, href, id, src, style)
 import Html.Events exposing (onClick)
 import Http
@@ -158,9 +158,9 @@ view model =
     case model.plant of
         Just plant ->
             div [ class "container__center" ]
-                [ div [ class "container__center centered-text" ]
+                [ div [ class "container__flex" ]
                     [ div
-                        [ class "container__center avatar with_loader" ]
+                        [ class "avatar with_loader" ]
                         [ img
                             [ src plant.avatarUrl
                             , onClick UserSelectedUploadNewPhoto
@@ -168,8 +168,7 @@ view model =
                             []
                         , loadingOverlay model.upload
                         ]
-                    , h2 [ class "centered-text" ] [ text plant.name ]
-                    , a [ href Routes.plantsPath ] [ text "Back to Plants" ]
+                    , viewPlantDetails plant
                     ]
                 , viewCheckInsList plant.checkIns model.timeZone
                 , viewModal model.modal
@@ -178,6 +177,16 @@ view model =
         Nothing ->
             div [ class "container__center centered-text" ]
                 [ div [] [ text "Loading..." ] ]
+
+
+viewPlantDetails : Plant.Plant -> Html Msg
+viewPlantDetails plant =
+    div [ class "details__container" ]
+        [ h2 [ class "details__name" ] [ text plant.name ]
+        , h4 [ class "details__botanical-name" ] [ text "Botanical Name" ]
+        , p [ class "details__copy" ] [ text lorem ]
+        , a [ href Routes.plantsPath ] [ text "Back to Plants" ]
+        ]
 
 
 loadingOverlay : Upload -> Html Msg
@@ -215,23 +224,42 @@ viewCheckInsList checkInsList timeZone =
         checkInRows =
             List.map (viewCheckInRow timeZone) checkInsList
     in
-    div [] <| [ h3 [] [ text "Latest Check-ins" ] ] ++ checkInRows
+    div [ class "check_in__container" ] checkInRows
 
 
 viewCheckInRow : Time.Zone -> CheckIn.CheckIn -> Html msg
 viewCheckInRow timeZone checkIn =
-    div [ class "check_in__row" ]
-        [ div []
-            [ text <|
-                "Checked-in on "
-                    ++ DateAndTime.monthDayYearTime
-                        checkIn.createdAt
-                        Time.utc
-            ]
-        , div [] [ text <| "Watered: " ++ yesOrNo checkIn.watered ]
-        , div [] [ text <| "Fertilized: " ++ yesOrNo checkIn.fertilized ]
-        , div [] [ text checkIn.notes ]
+    div [ class "check_in__item" ]
+        [ div [ class "check_in__item-header" ] (checkInRowHeader checkIn)
+        , div [ class "check_in__item-body" ] [ text checkIn.notes ]
+        , div [ class "check_in__item-footer" ] [ text "tags" ]
         ]
+
+
+checkInRowHeader : CheckIn.CheckIn -> List (Html msg)
+checkInRowHeader checkIn =
+    [ div [ class "check_in__item-calendar" ]
+        [ div [ class "month" ] [ text <| monthText checkIn.createdAt ]
+        , div [ class "day" ] [ text <| dayText checkIn.createdAt ]
+        ]
+    , div [ class "check_in__item-actions" ]
+        [ div [] [ text <| "Watered: " ++ yesOrNo checkIn.watered ]
+        , div [] [ text <| "Fertilized: " ++ yesOrNo checkIn.fertilized ]
+        ]
+    ]
+
+
+monthText : Time.Posix -> String
+monthText time =
+    Time.toMonth Time.utc time
+        |> DateAndTime.englishMonthAbbreviation
+        |> String.toUpper
+
+
+dayText : Time.Posix -> String
+dayText time =
+    Time.toDay Time.utc time
+        |> String.fromInt
 
 
 yesOrNo : Bool -> String
@@ -241,6 +269,16 @@ yesOrNo bool =
 
     else
         "No"
+
+
+lorem : String
+lorem =
+    "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc convallis"
+        ++ "laoreet risus, vel condimentum ligula iaculis id. Suspendisse mi turpis,"
+        ++ "aliquet id dignissim non, iaculis in risus. Mauris mattis augue in quam"
+        ++ "ultrices, sed mattis urna laoreet. Quisque blandit ac nunc sit amet"
+        ++ "ullamcorper. Pellentesque ultrices felis quis lorem eleifend, et placerat"
+        ++ "nulla molestie. "
 
 
 

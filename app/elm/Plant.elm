@@ -108,7 +108,7 @@ plantListDecoder =
 
 placeholderImage : String
 placeholderImage =
-    "https://thumbs.dreamstime.com/z/growing-plant-3599470.jpg"
+    "https://cdn.shopify.com/s/files/1/0662/5489/products/Zamioculcas_zamiifolia_-_ZZ_Plant_-_pistils_nursery_1024x1024.jpg?v=1553629568"
 
 
 plantDecoder : Decoder Plant
