@@ -1,5 +1,10 @@
 .with_loader {
+  display: flex;
   position: relative;
+  align-items: center;
+  align-content: center;
+  flex-grow: 1;
+  flex-basis: 100%;
 }
 
 .loader_bar__overlay {
@@ -7,8 +12,6 @@
   width: 100%;
   height: 100%;
   position: absolute;
-  top: 0;
-  left: 0;
   text-align: center;
 }
 
@@ -26,8 +29,6 @@
 
 .loader_bar__foreground {
   position: absolute;
-  top: 0;
-  left: 0;
   height: 24px;
   background-color: $plantiful-green;
 }

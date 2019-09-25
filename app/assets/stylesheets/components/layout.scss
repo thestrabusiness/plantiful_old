@@ -42,16 +42,20 @@
 
 .avatar {
   cursor: pointer;
-  flex-grow: 2;
+  margin: 0 auto;
 }
 
 .details__container {
+  margin-bottom: $spacing-large;
+}
+
+.details__section {
   display: flex;
   flex-direction: column;
-  flex-grow: 2;
+  flex-grow: 3;
 
   padding-top: $spacing-x-medium;
-  padding-left: $spacing-x-large;
+  padding-left: $spacing-large;
 
   margin-bottom: $spacing-x-large;
 }

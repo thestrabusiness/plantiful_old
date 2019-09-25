@@ -158,12 +158,13 @@ view model =
     case model.plant of
         Just plant ->
             div [ class "container__center" ]
-                [ div [ class "container__flex" ]
+                [ div [ class "details__container container__flex" ]
                     [ div
-                        [ class "avatar with_loader" ]
+                        [ class "with_loader" ]
                         [ img
                             [ src plant.avatarUrl
                             , onClick UserSelectedUploadNewPhoto
+                            , class "avatar"
                             ]
                             []
                         , loadingOverlay model.upload
@@ -181,7 +182,7 @@ view model =
 
 viewPlantDetails : Plant.Plant -> Html Msg
 viewPlantDetails plant =
-    div [ class "details__container" ]
+    div [ class "details__section" ]
         [ h2 [ class "details__name" ] [ text plant.name ]
         , h4 [ class "details__botanical-name" ] [ text "Botanical Name" ]
         , p [ class "details__copy" ] [ text lorem ]
