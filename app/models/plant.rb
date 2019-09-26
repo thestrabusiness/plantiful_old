@@ -12,7 +12,7 @@ class Plant < ApplicationRecord
   has_many :waterings, -> { watered }, class_name: 'CheckIn'
   has_many :photos, through: :check_ins
 
-  has_one_attached :avatar
+  has_one_base64_attached :avatar
 
   validates :user, :name, presence: true
   validates :check_frequency_scalar, presence: true, numericality: true

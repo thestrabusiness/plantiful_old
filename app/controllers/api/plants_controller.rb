@@ -23,7 +23,7 @@ module Api
 
     def avatar
       plant = current_user.plants.find(params[:id])
-      plant.avatar.attach(plant_params[:avatar])
+      plant.avatar.attach(data: plant_params[:avatar])
 
       if plant.valid?
         render json: plant, status: :ok

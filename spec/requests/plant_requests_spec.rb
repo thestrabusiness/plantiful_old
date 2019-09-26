@@ -1,4 +1,5 @@
 require 'rails_helper'
+require 'base64'
 
 RSpec.describe 'Plant requests', type: :request do
   describe 'GET /api/plants' do
@@ -83,14 +84,14 @@ RSpec.describe 'Plant requests', type: :request do
   describe 'POST /api/plants/:id/avatar' do
     it 'attaches a new avatar to the plant' do
       plant = create(:plant)
-      avatar = fixture_file_upload('plant.jpg')
+      image_path = Rails.root.join('spec', 'fixtures', 'plant.jpg')
+      base64_avatar = 'data:image/jpg;base64,' + Base64.strict_encode64(File.read(image_path))
 
       api_sign_in(plant.user)
-      expect { post_avatar(plant, avatar) }
+
+      expect { post_avatar(plant, base64_avatar) }
         .to change { ActiveStorage::Blob.count }.from(0).to(1)
-
       result = response_json
-
       expect(result[:avatar]).to be
     end
   end

@@ -1895,6 +1895,11 @@ create-hmac@^1.1.0, create-hmac@^1.1.2, create-hmac@^1.1.4:
     safe-buffer "^5.0.1"
     sha.js "^2.4.8"
 
+croppie@^2.6.4:
+  version "2.6.4"
+  resolved "https://registry.yarnpkg.com/croppie/-/croppie-2.6.4.tgz#7477b8c5af560c09841f7c84f55066ba128544da"
+  integrity sha512-dK2gP7nmAuzMP8TU+JNPOmZJkMyp5VPMJxE/uvmiOC7Vzwon333eo2i9T40D5rqm9NrBJU/ovAyg7xDX2Swaiw==
+
 cross-spawn@4.0.0:
   version "4.0.0"
   resolved "https://registry.yarnpkg.com/cross-spawn/-/cross-spawn-4.0.0.tgz#8254774ab4786b8c5b3cf4dfba66ce563932c252"

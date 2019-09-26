@@ -83,12 +83,12 @@ createPlant msg newPlant =
         |> HttpBuilder.request
 
 
-uploadPhoto : File.File -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
-uploadPhoto file plant msg =
+uploadPhoto : String -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
+uploadPhoto base64Photo plant msg =
     Http.request
         { method = "POST"
         , url = Api.plantAvatarEndpoint plant.id
-        , body = Http.multipartBody [ Http.filePart "plant[avatar]" file ]
+        , body = Http.multipartBody [ Http.stringPart "plant[avatar]" base64Photo ]
         , expect = Http.expectJson msg plantDecoder
         , headers = []
         , timeout = Nothing

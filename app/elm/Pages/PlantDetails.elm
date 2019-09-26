@@ -1,4 +1,4 @@
-module Pages.PlantDetails exposing
+port module Pages.PlantDetails exposing
     ( Model
     , Msg
     , init
@@ -12,9 +12,10 @@ import DateAndTime
 import File
 import File.Select as Select
 import Html exposing (Html, a, div, h2, h3, img, text)
-import Html.Attributes exposing (class, href, src, style)
+import Html.Attributes exposing (class, href, id, src, style)
 import Html.Events exposing (onClick)
 import Http
+import Json.Encode
 import Plant
 import Routes
 import Task
@@ -43,6 +44,8 @@ type Msg
     | NewImageSelected File.File
     | ReceivedUploadPhotoResponse (Result Http.Error Plant.Plant)
     | GotUploadProgress Http.Progress
+    | PhotoLoaded String
+    | GotCroppedPhoto String
 
 
 init : Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
@@ -50,9 +53,33 @@ init plantId user timeZone =
     ( Model Nothing user timeZone None, getPlant plantId )
 
 
+port initJsCropper : String -> Cmd msg
+
+
+port sendCroppedImage : (String -> msg) -> Sub msg
+
+
+fileToBase64 : File.File -> Cmd Msg
+fileToBase64 file =
+    Task.perform PhotoLoaded (File.toUrl file)
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GotCroppedPhoto photo ->
+            case model.plant of
+                Just plant ->
+                    ( { model | upload = Uploading 0 }
+                    , uploadPhoto photo plant
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        PhotoLoaded base64Url ->
+            ( model, initJsCropper base64Url )
+
         ReceivedGetPlantResponse (Ok plant) ->
             ( { model | plant = Just plant }, Cmd.none )
 
@@ -69,11 +96,7 @@ update msg model =
         NewImageSelected file ->
             case model.plant of
                 Just plant ->
-                    ( { model
-                        | upload = Uploading 0
-                      }
-                    , uploadPhoto file plant
-                    )
+                    ( model, fileToBase64 file )
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -103,11 +126,14 @@ update msg model =
 
 subscriptions : Sub Msg
 subscriptions =
-    Http.track "photoUpload" GotUploadProgress
+    Sub.batch
+        [ Http.track "photoUpload" GotUploadProgress
+        , sendCroppedImage GotCroppedPhoto
+        ]
 
 
-uploadPhoto file plant =
-    Plant.uploadPhoto file plant ReceivedUploadPhotoResponse
+uploadPhoto base64Photo plant =
+    Plant.uploadPhoto base64Photo plant ReceivedUploadPhotoResponse
 
 
 getPlant : Int -> Cmd Msg
@@ -132,6 +158,8 @@ view model =
                         ]
                     , h2 [ class "centered-text" ] [ text plant.name ]
                     , a [ href Routes.plantsPath ] [ text "Back to Plants" ]
+                    , div [ id "croppie" ] []
+                    , Html.button [ id "croppie_button" ] [ text "Result" ]
                     ]
                 , viewCheckInsList plant.checkIns model.timeZone
                 ]
