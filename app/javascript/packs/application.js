@@ -11,7 +11,11 @@ document.addEventListener('DOMContentLoaded', () => {
   app.ports.initJsCropper.subscribe(function(data){
     const croppieButton = document.getElementById('croppie_button')
     const croppieTarget = document.getElementById('croppie')
-    const opts = { url: data, viewport: { height: 768, width: 768 } }
+    const opts = {
+      url: data,
+      viewport: { height: 300, width: 300 },
+      boundary: { height: 400, width: 400 },
+    }
     let croppie = new Croppie(croppieTarget, opts )
     croppieButton.addEventListener("click", function(){
       croppie.result({format: 'jpeg', type: 'base64'}).then(function(result){

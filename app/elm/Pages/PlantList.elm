@@ -19,6 +19,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (on, onClick, onInput)
 import Http
 import Json.Decode exposing (Decoder, succeed)
+import Modal exposing (..)
 import Plant
 import Process
 import Routes exposing (newPlantPath)
@@ -32,7 +33,7 @@ type alias Model =
     , currentUser : User
     , currentTime : Posix
     , currentTimeZone : Time.Zone
-    , modal : Modal
+    , modal : Modal.Modal Msg
     , checkInForm : CheckInForm
     , loading : Loading
     }
@@ -64,11 +65,6 @@ type Loading
     = Loading
     | Success
     | Failed
-
-
-type Modal
-    = Modal (Html Msg)
-    | ModalClosed
 
 
 init : User -> Time.Posix -> Time.Zone -> ( Model, Cmd Msg )
@@ -323,7 +319,7 @@ submitCheckIn form =
 -- MODAL
 
 
-viewModal : Modal -> Html Msg
+viewModal : Modal.Modal Msg -> Html Msg
 viewModal modal =
     case modal of
         Modal content ->
@@ -337,23 +333,23 @@ checkInModal : CheckInForm -> Html Msg
 checkInModal form =
     div [ class "modal__bg" ]
         [ div [ class "modal__container--large" ]
-            [ modalHeader <| "Check-in: " ++ form.plantName
+            [ Modal.modalHeader <| "Check-in: " ++ form.plantName
             , div [ class "modal__content--large" ]
-                [ modalRow [ h2 [] [ text "Today I:" ] ]
-                , modalRow
+                [ Modal.modalRow [ h2 [] [ text "Today I:" ] ]
+                , Modal.modalRow
                     [ checkbox Watered
                         form.watered
                     ]
-                , modalRow
+                , Modal.modalRow
                     [ checkbox Fertilized
                         form.fertilized
                     ]
-                , modalRow
+                , Modal.modalRow
                     [ button [ onClick UserClickedFileSelect ]
                         [ text "Add a photo"
                         ]
                     ]
-                , modalRow
+                , Modal.modalRow
                     [ label []
                         [ text "Notes"
                         , textarea
@@ -364,7 +360,7 @@ checkInModal form =
                         ]
                     ]
                 ]
-            , modalFooter
+            , Modal.modalFooter
                 [ button [ class "secondary", onClick UserClosedModal ] [ text "Cancel" ]
                 , button [ onClick UserSubmittedCheckIn ] [ text "Submit" ]
                 ]
@@ -397,21 +393,3 @@ eventToString event =
 
         NoEvent ->
             "NoEvent"
-
-
-modalHeader : String -> Html Msg
-modalHeader headerText =
-    div [ class "modal__header--default" ]
-        [ h1 [ class "modal__heading" ]
-            [ text headerText ]
-        ]
-
-
-modalFooter : List (Html a) -> Html a
-modalFooter children =
-    div [ class "modal__footer" ] children
-
-
-modalRow : List (Html a) -> Html a
-modalRow children =
-    div [ class "modal-row" ] children
