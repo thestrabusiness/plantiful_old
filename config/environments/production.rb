@@ -1,4 +1,5 @@
 Rails.application.configure do
+  Rails.application.routes.default_url_options[:host] = 'plantiful.herokuapp.com'
   config.cache_classes = true
   config.eager_load = true
   config.consider_all_requests_local       = false
