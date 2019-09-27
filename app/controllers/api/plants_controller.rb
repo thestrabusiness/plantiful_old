@@ -4,6 +4,7 @@ module Api
       render json: current_user
         .plants
         .includes(:last_watering, :last_check_in)
+        .sort_by(&:next_check_time)
     end
 
     def create
@@ -17,7 +18,6 @@ module Api
 
     def show
       plant = current_user.plants.find(params[:id])
-
       render json: plant, status: :ok
     end
 

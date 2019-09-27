@@ -20,4 +20,13 @@ RSpec.feature 'User can view a list of plants' do
 
     expect(page).to have_content 'Today'
   end
+
+  it 'user can see when a plant is overdue for watering' do
+    user = create(:user)
+    _plant_without_watering = create(:plant, name: 'plant', user: user)
+
+    visit plants_path(user)
+
+    expect(page).to have_selector '.plant__list-indicator'
+  end
 end

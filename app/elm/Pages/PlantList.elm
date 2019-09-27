@@ -1,7 +1,6 @@
 module Pages.PlantList exposing
     ( Model
     , Msg(..)
-    , card
     , getPlants
     , init
     , update
@@ -20,6 +19,7 @@ import Html.Events exposing (on, onClick, onInput)
 import Http
 import Json.Decode exposing (Decoder, succeed)
 import Modal exposing (..)
+import Octicons exposing (defaultOptions)
 import Plant
 import Process
 import Routes exposing (newPlantPath)
@@ -254,7 +254,7 @@ view model =
                 [ text "Something went wrong..." ]
 
         Success ->
-            div []
+            div [ class "container__center-wide" ]
                 [ viewPlantList model
                 , a [ class "add-record-btn", href newPlantPath ] [ text "Add New Plant" ]
                 , viewModal model.modal
@@ -265,10 +265,10 @@ viewPlantList : Model -> Html Msg
 viewPlantList model =
     let
         listOfPlants =
-            List.map (card model.currentTime) model.plants
+            List.map (plantListItem model.currentTime) model.plants
     in
     if List.length model.plants > 0 then
-        div [ class "cards" ] listOfPlants
+        div [ class "plant__list" ] listOfPlants
 
     else
         div [ class "container__center centered-text" ] [ text noPlantsMessage ]
@@ -279,25 +279,39 @@ noPlantsMessage =
     "You dont have any plants yet! Add some new friends with the + button."
 
 
-card currentTime plant =
-    div [ class "card" ]
+plantListItem currentTime plant =
+    div [ class "plant__list-item" ]
         [ a [ href <| Routes.plantPath plant.id ]
-            [ div [ class "card-image" ]
-                [ img [ src plant.avatarUrl ] [] ]
-            , div [ class "card-header" ] [ text plant.name ]
-            ]
-        , div [ class "card-copy" ]
+            [ img [ class "plant__list-image", src plant.avatarUrl ] [] ]
+        , div [ class "plant__list-details" ]
             [ ul []
-                [ li [] [ text "Botanical Name" ]
+                [ li [] [ text plant.name ]
+                , li [] [ text "Botanical Name" ]
                 , li [] [ text <| distanceInDays currentTime plant.lastWateredAt ]
-                , li []
-                    [ button
-                        [ onClick (UserOpenedCheckInModal plant) ]
-                        [ text "Check In" ]
-                    ]
                 ]
+            , button
+                [ class "plant__list-button", onClick (UserOpenedCheckInModal plant) ]
+                [ text "Check In" ]
             ]
+        , overdueIndicator plant
         ]
+
+
+clockIcon : Html msg
+clockIcon =
+    defaultOptions
+        |> Octicons.size 20
+        |> Octicons.color "#999"
+        |> Octicons.watch
+
+
+overdueIndicator : Plant.Plant -> Html msg
+overdueIndicator plant =
+    if plant.overdueForCheckIn then
+        div [ class " plant__list-indicator" ] [ clockIcon ]
+
+    else
+        div [] []
 
 
 distanceInDays : Posix -> Posix -> String

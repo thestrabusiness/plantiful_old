@@ -1,6 +1,8 @@
 class PlantSerializer < ActiveModel::Serializer
-  attributes :id, :name, :last_watered_at, :next_check_date, :check_ins, :avatar
   include Rails.application.routes.url_helpers
+
+  attributes :avatar, :check_ins, :id, :last_watered_at, :name,
+             :next_check_date, :overdue_for_check_in
 
   has_many :check_ins do
     object.check_ins.limit(5)
@@ -14,5 +16,9 @@ class PlantSerializer < ActiveModel::Serializer
 
   def last_watered_at
     object.last_watered_at.to_i
+  end
+
+  def overdue_for_check_in
+    object.needs_care?
   end
 end

@@ -16,7 +16,7 @@ import DateAndTime
 import File
 import Http
 import HttpBuilder
-import Json.Decode exposing (Decoder, int, string, succeed)
+import Json.Decode exposing (Decoder, bool, int, string, succeed)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
 import Time exposing (Posix)
@@ -28,6 +28,7 @@ type alias Plant =
     , lastWateredAt : Posix
     , checkIns : List CheckIn.CheckIn
     , avatarUrl : String
+    , overdueForCheckIn : Bool
     }
 
 
@@ -40,7 +41,7 @@ type alias NewPlant =
 
 emptyPlant : Plant
 emptyPlant =
-    Plant 0 "" (Time.millisToPosix 0) [] ""
+    Plant 0 "" (Time.millisToPosix 0) [] "" False
 
 
 getPlant : Int -> (Result Http.Error Plant -> msg) -> Cmd msg
@@ -109,7 +110,7 @@ plantListDecoder =
 
 placeholderImage : String
 placeholderImage =
-    "https://cdn.shopify.com/s/files/1/0662/5489/products/Zamioculcas_zamiifolia_-_ZZ_Plant_-_pistils_nursery_1024x1024.jpg?v=1553629568"
+    "https://raw.githubusercontent.com/thestrabusiness/plantiful/change-plant-list-styling/app/assets/images/default_plant.jpg"
 
 
 plantDecoder : Decoder Plant
@@ -120,3 +121,4 @@ plantDecoder =
         |> optional "last_watered_at" DateAndTime.posixDecoder (Time.millisToPosix 0)
         |> optional "check_ins" CheckIn.checkInListDecoder []
         |> optional "avatar" string placeholderImage
+        |> required "overdue_for_check_in" bool

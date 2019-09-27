@@ -26,6 +26,10 @@ class Plant < ApplicationRecord
       )
   end
 
+  def check_frequency
+    check_frequency_scalar.public_send(check_frequency_unit)
+  end
+
   def last_watered_at
     last_watering&.created_at
   end
@@ -34,16 +38,17 @@ class Plant < ApplicationRecord
     last_watering&.created_at_date
   end
 
+  def needs_care?
+    next_check_time.to_date <= Time.current.to_date
+  end
+
   def next_check_date
     l(next_check_time, format: :month_day_year)
   end
 
-  def check_frequency
-    check_frequency_scalar.public_send(check_frequency_unit)
-  end
-
-  def needs_care?
-    next_check_time <= Time.current
+  def next_check_time
+    time_from_check_in = recent_check_in.created_at + check_frequency
+    [time_from_check_in, Time.current].max
   end
 
   private
@@ -54,10 +59,5 @@ class Plant < ApplicationRecord
 
   def recent_check_in
     last_check_in || NullCheckIn.new(self)
-  end
-
-  def next_check_time
-    time_from_check_in = recent_check_in.created_at + check_frequency
-    [time_from_check_in, Time.current].max
   end
 end

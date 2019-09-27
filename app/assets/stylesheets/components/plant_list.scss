@@ -1,0 +1,51 @@
+.plant__list {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.plant__list-item {
+  border-radius: 10px;
+  filter: drop-shadow(0 0 5px #ccc);
+  margin: 1.5rem;
+  position: relative;
+
+  a {
+    text-decoration: none;
+    color: black;
+  }
+}
+
+.plant__list-item {
+  .plant__list-indicator {
+    align-items: center;
+    background-color: white;
+    border-radius: 3px;
+    display: flex;
+    filter: drop-shadow(0 0 5px #ccc);
+    height: 35px;
+    justify-content: center;
+    left: -10px;
+    position: absolute;
+    top: -10px;
+    width: 35px;
+  }
+}
+
+
+.plant__list-image {
+  border-radius: 10px;
+}
+
+.plant__list-details {
+  display: grid;
+  grid-template: 1fr / repeat(2, 1fr);
+  padding: 1em;
+}
+
+.plant__list-button {
+  margin: 0;
+  justify-self: end;
+  width: min-content;
+}
+
