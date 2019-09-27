@@ -17,6 +17,6 @@ RSpec.feature 'User can view plant details', js: true do
 
     visit plant_path(plant, plant.user)
 
-    expect(page).to have_selector('.check_in__row', count: 5)
+    expect(page).to have_selector('.check_in__item', count: 5)
   end
 end

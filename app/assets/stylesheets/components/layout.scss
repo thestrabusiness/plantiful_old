@@ -7,7 +7,15 @@
 .container__center {
   margin-left: auto;
   margin-right: auto;
-  width: 768px;
+  width: 65rem;
+}
+
+.container__grid {
+  display: grid;
+  align-items: center;
+  grid-gap: 2rem;
+  grid-template: 1fr / repeat(4, 1fr);
+  min-height: 20rem;
 }
 
 .container__shadow {
@@ -27,7 +35,7 @@
   }
 
   .input__check {
-    display: inline-block;
+    display: flex;
   }
 
   .input__select {
@@ -35,16 +43,26 @@
   }
 }
 
-.check_in__row {
-  div {
-    display: inline-block;
-    margin: $spacing-small;
-  }
+.avatar {
+  cursor: pointer;
 }
 
-.avatar {
-  width: 15em;
-  cursor: pointer;
+.details__container {
+  margin-bottom: $spacing-large;
+}
+
+.details__section {
+  display: flex;
+  flex-direction: column;
+  grid-area: 1 / 2 / span 1 / span 3;
+}
+
+.details__name {
+  font-size: $font-size-x-large;
+}
+
+.details__botanical-name {
+  font-size: $font-size-large;
 }
 
 #croppie{

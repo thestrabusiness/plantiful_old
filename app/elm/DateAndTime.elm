@@ -1,5 +1,6 @@
 module DateAndTime exposing
     ( distanceInDays
+    , englishMonthAbbreviation
     , monthDayYearTime
     , posixDecoder
     , secondsToPosix
@@ -122,6 +123,11 @@ englishMonthName month =
 
         Time.Dec ->
             "December"
+
+
+englishMonthAbbreviation : Time.Month -> String
+englishMonthAbbreviation month =
+    String.slice 0 3 <| englishMonthName month
 
 
 

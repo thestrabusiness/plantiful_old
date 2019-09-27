@@ -6,6 +6,7 @@ ruby '2.6.3'
 gem 'active_model_serializers'
 gem 'active_storage_base64'
 gem 'aws-sdk-s3', require: false
+gem 'betterlorem'
 gem 'bitters'
 gem 'bootsnap', '>= 1.1.0', require: false
 gem 'bourbon'

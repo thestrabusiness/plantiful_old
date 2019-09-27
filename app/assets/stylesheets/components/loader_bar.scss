@@ -1,4 +1,9 @@
 .with_loader {
+  align-content: center;
+  align-items: center;
+  display: flex;
+  height: min-content;
+  grid-area: auto / 1 / auto / span 1;
   position: relative;
 }
 
@@ -7,8 +12,6 @@
   width: 100%;
   height: 100%;
   position: absolute;
-  top: 0;
-  left: 0;
   text-align: center;
 }
 
@@ -26,8 +29,6 @@
 
 .loader_bar__foreground {
   position: absolute;
-  top: 0;
-  left: 0;
   height: 24px;
   background-color: $plantiful-green;
 }

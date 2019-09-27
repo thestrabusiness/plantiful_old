@@ -1,0 +1,52 @@
+.check_in__container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.check_in__item {
+  width: 45%;
+  margin: $spacing-small;
+}
+
+.check_in__item-header {
+  display: flex;
+  align-items: stretch;
+  margin-bottom: $spacing-small;
+}
+
+
+.check_in__item-calendar {
+  background-color: $light-gray;
+  padding-left: $spacing-small;
+  padding-right: $spacing-small;
+  border-radius: 5px;
+  text-align: center;
+
+  .month {
+    font-size: $font-size-large;
+  }
+
+  .day{
+    font-size: $font-size-x-large;
+  }
+
+  .month, .day {
+    line-height: 1.25em;
+  }
+}
+
+.check_in__item-actions {
+  display: flex;
+  flex-direction: column;
+  flex-grow: 2;
+  justify-content: center;
+  margin-left: $spacing-small;
+}
+
+.check_in__item-body{
+  margin-bottom: $spacing-small;
+}
+
+.check_in__item-footer{
+  display: flex;
+}
