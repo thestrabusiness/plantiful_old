@@ -1,10 +1,13 @@
 .with_loader {
-  display: flex;
-  position: relative;
-  align-items: center;
   align-content: center;
+  align-items: center;
+  display: flex;
   flex-grow: 1;
   flex-basis: 100%;
+  height: min-content;
+  grid-column-start: 1;
+  grid-column-end: 1;
+  position: relative;
 }
 
 .loader_bar__overlay {

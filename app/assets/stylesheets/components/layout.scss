@@ -10,9 +10,12 @@
   width: 1024px;
 }
 
-.container__flex {
-  display: flex;
-  width: 1024px;
+.container__grid {
+  display: grid;
+  align-items: center;
+  grid-gap: 2rem;
+  grid-template: 1fr / repeat(4, 1fr);
+  min-height: 20rem;
 }
 
 .container__shadow {
@@ -52,12 +55,10 @@
 .details__section {
   display: flex;
   flex-direction: column;
-  flex-grow: 3;
-
-  padding-top: $spacing-x-medium;
-  padding-left: $spacing-large;
-
-  margin-bottom: $spacing-x-large;
+  grid-column-start: 2;
+  grid-column-end: 5;
+  grid-row-start: 1;
+  grid-row-end: 1;
 }
 
 .details__name {

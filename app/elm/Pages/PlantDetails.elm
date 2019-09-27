@@ -158,7 +158,7 @@ view model =
     case model.plant of
         Just plant ->
             div [ class "container__center" ]
-                [ div [ class "details__container container__flex" ]
+                [ div [ class "details__container container__grid" ]
                     [ div
                         [ class "with_loader" ]
                         [ img
