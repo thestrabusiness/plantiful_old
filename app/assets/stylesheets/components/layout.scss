@@ -7,7 +7,7 @@
 .container__center {
   margin-left: auto;
   margin-right: auto;
-  width: 1024px;
+  width: 65rem;
 }
 
 .container__grid {
@@ -54,10 +54,7 @@
 .details__section {
   display: flex;
   flex-direction: column;
-  grid-column-start: 2;
-  grid-column-end: 5;
-  grid-row-start: 1;
-  grid-row-end: 1;
+  grid-area: 1 / 2 / span 1 / span 3;
 }
 
 .details__name {

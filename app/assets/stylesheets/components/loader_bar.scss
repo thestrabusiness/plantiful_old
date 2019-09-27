@@ -3,8 +3,7 @@
   align-items: center;
   display: flex;
   height: min-content;
-  grid-column-start: 1;
-  grid-column-end: 1;
+  grid-area: auto / 1 / auto / span 1;
   position: relative;
 }
 
