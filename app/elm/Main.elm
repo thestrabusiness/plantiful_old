@@ -27,10 +27,16 @@ type alias Model =
     { key : Nav.Key
     , page : Page
     , route : Route
-    , currentUser : Maybe User
+    , currentUser : Loadable User
     , currentTime : Time.Posix
     , timeZone : Time.Zone
     }
+
+
+type Loadable a
+    = Loading
+    | Success a
+    | None
 
 
 
@@ -44,7 +50,7 @@ init flags url key =
             { key = key
             , page = PageNone
             , route = Routes.extractRoute url
-            , currentUser = Nothing
+            , currentUser = Loading
             , currentTime = Time.millisToPosix 0
             , timeZone = Time.utc
             }
@@ -96,6 +102,7 @@ type Page
     | UserPage UserForm.Model
     | NotAuthorizedPage NotAuthorized.Model
     | SignInPage SignIn.Model
+    | LoadingPage
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -129,18 +136,18 @@ update msg model =
             ( model, User.signOut ReceivedUserSignOutResponse )
 
         ( ReceivedUserSignOutResponse (Ok _), _ ) ->
-            ( { model | currentUser = Nothing }, Nav.pushUrl model.key Routes.signInPath )
+            ( { model | currentUser = None }, Nav.pushUrl model.key Routes.signInPath )
 
         ( ReceivedUserSignOutResponse (Err _), _ ) ->
             ( model, Cmd.none )
 
         ( ReceivedCurrentUserResponse route (Ok user), _ ) ->
-            ( { model | currentUser = Just user }
+            ( { model | currentUser = Success user }
             , Nav.pushUrl model.key (Routes.pathFor route)
             )
 
         ( ReceivedCurrentUserResponse _ (Err error), _ ) ->
-            ( { model | currentUser = Nothing }, Cmd.none )
+            ( { model | currentUser = None }, Cmd.none )
 
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let
@@ -164,10 +171,18 @@ update msg model =
             let
                 ( newPageModel, newCmd, currentUser ) =
                     UserForm.update subMsg pageModel model.key
+
+                loadableUser =
+                    case currentUser of
+                        Just user ->
+                            Success user
+
+                        Nothing ->
+                            None
             in
             ( { model
                 | page = UserPage newPageModel
-                , currentUser = currentUser
+                , currentUser = loadableUser
               }
             , Cmd.map UserFormMsg newCmd
             )
@@ -176,10 +191,18 @@ update msg model =
             let
                 ( newPageModel, newCmd, currentUser ) =
                     SignIn.update subMsg pageModel model.key
+
+                loadableUser =
+                    case currentUser of
+                        Just user ->
+                            Success user
+
+                        Nothing ->
+                            None
             in
             ( { model
                 | page = SignInPage newPageModel
-                , currentUser = currentUser
+                , currentUser = loadableUser
               }
             , Cmd.map SignInMsg newCmd
             )
@@ -206,7 +229,7 @@ loadCurrentPage ( model, cmd ) =
             case model.route of
                 Routes.PlantsRoute ->
                     case model.currentUser of
-                        Just user ->
+                        Success user ->
                             let
                                 ( pageModel, pageCmd ) =
                                     PlantList.init user
@@ -215,19 +238,25 @@ loadCurrentPage ( model, cmd ) =
                             in
                             ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
 
-                        Nothing ->
+                        Loading ->
+                            ( LoadingPage, Cmd.none )
+
+                        None ->
                             ( NotAuthorizedPage {}, Cmd.map NotAuthorizedMsg Cmd.none )
 
                 Routes.NewPlantRoute ->
                     case model.currentUser of
-                        Just user ->
+                        Success user ->
                             let
                                 ( formModel, formCmd ) =
                                     PlantForm.init user
                             in
                             ( PlantFormPage formModel, Cmd.map PlantFormMsg formCmd )
 
-                        Nothing ->
+                        Loading ->
+                            ( LoadingPage, Cmd.none )
+
+                        None ->
                             ( NotAuthorizedPage {}, Cmd.map NotAuthorizedMsg Cmd.none )
 
                 Routes.NewUserRoute ->
@@ -239,16 +268,19 @@ loadCurrentPage ( model, cmd ) =
 
                 Routes.SignInRoute ->
                     case model.currentUser of
-                        Just user ->
+                        Success user ->
                             let
                                 ( pageModel, pageCmd ) =
                                     PlantList.init user
                                         model.currentTime
                                         model.timeZone
                             in
-                            ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
+                            ( PlantListPage pageModel, Nav.pushUrl model.key Routes.plantsPath )
 
-                        Nothing ->
+                        Loading ->
+                            ( LoadingPage, Cmd.none )
+
+                        None ->
                             let
                                 ( pageModel, pageCmd ) =
                                     SignIn.init
@@ -260,7 +292,7 @@ loadCurrentPage ( model, cmd ) =
 
                 Routes.PlantRoute id ->
                     case model.currentUser of
-                        Just user ->
+                        Success user ->
                             let
                                 ( pageModel, pageCmd ) =
                                     PlantDetails.init id
@@ -272,7 +304,10 @@ loadCurrentPage ( model, cmd ) =
                                 pageCmd
                             )
 
-                        Nothing ->
+                        Loading ->
+                            ( LoadingPage, Cmd.none )
+
+                        None ->
                             let
                                 ( pageModel, pageCmd ) =
                                     SignIn.init
@@ -289,9 +324,7 @@ loadCurrentPage ( model, cmd ) =
 view : Model -> Browser.Document Msg
 view model =
     { title = "Plantiful"
-    , body =
-        [ currentPage model
-        ]
+    , body = [ currentPage model ]
     }
 
 
@@ -326,6 +359,10 @@ currentPage model =
 
                 PageNone ->
                     text "Page Not Found"
+
+                LoadingPage ->
+                    div [ class "container__center centered-text" ]
+                        [ text "Loading..." ]
     in
     div []
         [ nav model
