@@ -46,7 +46,7 @@ type Msg
     | NewImageSelected File.File
     | ReceivedUploadPhotoResponse (Result Http.Error Plant.Plant)
     | GotUploadProgress Http.Progress
-    | PhotoLoaded String
+    | PhotoConvertedToBase64 String
     | GotCroppedPhoto String
     | UserCroppedPhoto
 
@@ -62,27 +62,14 @@ port initJsCropper : String -> Cmd msg
 port sendCroppedImage : (String -> msg) -> Sub msg
 
 
-fileToBase64 : File.File -> Cmd Msg
-fileToBase64 file =
-    Task.perform PhotoLoaded (File.toUrl file)
+photoToBase64 : File.File -> Cmd Msg
+photoToBase64 photo =
+    Task.perform PhotoConvertedToBase64 (File.toUrl photo)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        GotCroppedPhoto photo ->
-            case model.plant of
-                Just plant ->
-                    ( { model | upload = Uploading 0 }
-                    , uploadPhoto photo plant
-                    )
-
-                Nothing ->
-                    ( model, Cmd.none )
-
-        PhotoLoaded base64Url ->
-            ( model, initJsCropper base64Url )
-
         ReceivedGetPlantResponse (Ok plant) ->
             ( { model | plant = Just plant }, Cmd.none )
 
@@ -96,11 +83,31 @@ update msg model =
         UserSelectedUploadNewPhoto ->
             ( model, Select.file [ "image/*" ] NewImageSelected )
 
-        NewImageSelected file ->
+        NewImageSelected photo ->
             case model.plant of
                 Just plant ->
                     ( { model | modal = Modal.Modal <| cropperModal model }
-                    , fileToBase64 file
+                    , photoToBase64 photo
+                    )
+
+                Nothing ->
+                    ( model, Cmd.none )
+
+        PhotoConvertedToBase64 base64Url ->
+            ( model, initJsCropper base64Url )
+
+        UserCroppedPhoto ->
+            ( { model | modal = ModalClosed }, Cmd.none )
+
+        GotCroppedPhoto photo ->
+            case model.plant of
+                Just plant ->
+                    let
+                        updatedPlant =
+                            { plant | avatarUrl = photo }
+                    in
+                    ( { model | upload = Uploading 0 }
+                    , uploadPhoto photo plant
                     )
 
                 Nothing ->
@@ -127,9 +134,6 @@ update msg model =
 
                 Http.Receiving _ ->
                     ( model, Cmd.none )
-
-        UserCroppedPhoto ->
-            ( { model | modal = ModalClosed }, Cmd.none )
 
 
 subscriptions : Sub Msg
