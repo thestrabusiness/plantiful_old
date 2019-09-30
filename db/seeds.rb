@@ -1,3 +1,15 @@
+PLANT_1_IMAGE_PATH = Rails.root.join('spec', 'fixtures', 'plant_stock1.jpg')
+PLANT_2_IMAGE_PATH = Rails.root.join('spec', 'fixtures', 'plant_stock2.jpg')
+PLANT_3_IMAGE_PATH = Rails.root.join('spec', 'fixtures', 'plant_stock3.jpg')
+PLANT_4_IMAGE_PATH = Rails.root.join('spec', 'fixtures', 'plant_stock4.jpg')
+
+plant_image_paths = [ 
+  PLANT_1_IMAGE_PATH,
+  PLANT_2_IMAGE_PATH,
+  PLANT_3_IMAGE_PATH,
+  PLANT_4_IMAGE_PATH
+]
+
 user = User.create!(
   first_name: "Uncle",
   last_name: "Tony",
@@ -6,12 +18,19 @@ user = User.create!(
 )
 
 12.times do |i|
-  Plant.create!(
+  plant = Plant.create!(
     user: user,
     name: "Plant #{i}",
     botanical_name: "Newus Plantus #{i}",
     check_frequency_scalar: 1,
     check_frequency_unit: 'week'
+  )
+
+  plant
+    .avatar
+    .attach(
+      io: File.open(plant_image_paths.sample),
+      filename: "plant#{i}.jpg"
   )
 end
 
