@@ -3,7 +3,11 @@ module Api
     skip_before_action :require_login
 
     def show
-      render json: current_user
+      if current_user.present?
+        render status: :ok, json: current_user
+      else
+        head :unauthorized
+      end
     end
   end
 end

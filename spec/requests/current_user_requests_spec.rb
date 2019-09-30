@@ -1,3 +1,5 @@
+require 'rails_helper'
+
 RSpec.describe 'Current user requests', type: :request do
   describe 'GET /api/current_user' do
     context 'when a user is logged in' do
@@ -18,14 +20,13 @@ RSpec.describe 'Current user requests', type: :request do
     end
 
     context 'when a user is not logged in' do
-      it 'returns an empty JSON response' do
+      it 'returns head unauthorized' do
         create(:user)
 
         get api_current_user_path
 
-        user_response = response_json
-
-        expect(user_response).to be nil
+        expect(response.code).to eq '401'
+        expect(response.body).to be_empty
       end
     end
   end

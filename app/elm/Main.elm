@@ -147,7 +147,25 @@ update msg model =
             )
 
         ( ReceivedCurrentUserResponse _ (Err error), _ ) ->
-            ( { model | currentUser = None }, Cmd.none )
+            let
+                ( signInModel, _ ) =
+                    SignIn.init
+
+                ( userFormModel, _ ) =
+                    UserForm.init
+
+                page =
+                    case model.route of
+                        Routes.SignInRoute ->
+                            SignInPage signInModel
+
+                        Routes.NewUserRoute ->
+                            UserPage userFormModel
+
+                        _ ->
+                            NotAuthorizedPage {}
+            in
+            ( { model | currentUser = None, page = page }, Cmd.none )
 
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let
