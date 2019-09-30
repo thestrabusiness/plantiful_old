@@ -30,6 +30,7 @@ type alias Model =
     , timeZone : Time.Zone
     , upload : Upload
     , modal : Modal.Modal Msg
+    , csrfToken : String
     }
 
 
@@ -51,9 +52,9 @@ type Msg
     | UserCroppedPhoto
 
 
-init : Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
-init plantId user timeZone =
-    ( Model Nothing user timeZone None Modal.ModalClosed, getPlant plantId )
+init : String -> Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
+init csrfToken plantId user timeZone =
+    ( Model Nothing user timeZone None Modal.ModalClosed csrfToken, getPlant plantId )
 
 
 port initJsCropper : String -> Cmd msg
@@ -107,7 +108,7 @@ update msg model =
                             { plant | avatarUrl = photo }
                     in
                     ( { model | upload = Uploading 0 }
-                    , uploadPhoto photo plant
+                    , uploadPhoto model.csrfToken photo plant
                     )
 
                 Nothing ->
@@ -144,8 +145,9 @@ subscriptions =
         ]
 
 
-uploadPhoto base64Photo plant =
-    Plant.uploadPhoto base64Photo plant ReceivedUploadPhotoResponse
+uploadPhoto : String -> String -> Plant.Plant -> Cmd Msg
+uploadPhoto csrfToken base64Photo plant =
+    Plant.uploadPhoto csrfToken base64Photo plant ReceivedUploadPhotoResponse
 
 
 getPlant : Int -> Cmd Msg

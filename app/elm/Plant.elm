@@ -71,26 +71,27 @@ encodePlant plant =
         ]
 
 
-createPlant : (Result Http.Error Plant -> msg) -> NewPlant -> Cmd msg
-createPlant msg newPlant =
+createPlant : String -> (Result Http.Error Plant -> msg) -> NewPlant -> Cmd msg
+createPlant csrfToken msg newPlant =
     let
         params =
             encodePlant newPlant
     in
     HttpBuilder.post Api.plantsEndpoint
+        |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
         |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
         |> HttpBuilder.request
 
 
-uploadPhoto : String -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
-uploadPhoto base64Photo plant msg =
+uploadPhoto : String -> String -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
+uploadPhoto csrfToken base64Photo plant msg =
     Http.request
         { method = "POST"
         , url = Api.plantAvatarEndpoint plant.id
         , body = Http.multipartBody [ Http.stringPart "plant[avatar]" base64Photo ]
         , expect = Http.expectJson msg plantDecoder
-        , headers = []
+        , headers = [ Http.header "X-CSRF-Token" csrfToken ]
         , timeout = Nothing
         , tracker = Just "photoUpload"
         }

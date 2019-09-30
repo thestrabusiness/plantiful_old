@@ -17,6 +17,7 @@ type alias Model =
     , password : String
     , errors : List Error
     , apiError : String
+    , csrfToken : String
     }
 
 
@@ -35,9 +36,9 @@ type alias Error =
     ( Field, String )
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Model "" "" [] "", Cmd.none )
+init : String -> ( Model, Cmd Msg )
+init csrfToken =
+    ( Model "" "" [] "" csrfToken, Cmd.none )
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Maybe User )
@@ -54,7 +55,7 @@ update msg model key =
                             fromValid validatedModel
                     in
                     ( { validModel | errors = [] }
-                    , User.signIn ReceivedSignInResponse (User.toCredentials model)
+                    , User.signIn model.csrfToken ReceivedSignInResponse (User.toCredentials model)
                     , Nothing
                     )
 

@@ -31,6 +31,20 @@ RSpec.configure do |config|
   config.include JsonHelpers
   config.include FrontEndRouteHelpers
 
+  config.define_derived_metadata(file_path: Regexp.new('/spec/features')) do |metadata|
+    metadata[:allow_forgery_protection] = true
+  end
+
+  config.around(:each, allow_forgery_protection: true) do |example|
+    original_forgery_protection = ActionController::Base.allow_forgery_protection
+    ActionController::Base.allow_forgery_protection = true
+    begin
+      example.run
+    ensure
+      ActionController::Base.allow_forgery_protection = original_forgery_protection
+    end
+  end
+
   config.before(:suite) do
     DatabaseCleaner.strategy = :transaction
     DatabaseCleaner.clean_with(:truncation)

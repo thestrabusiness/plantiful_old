@@ -39,33 +39,36 @@ type alias Errors =
     }
 
 
-createUser : (Result Http.Error User -> msg) -> NewUser -> Cmd msg
-createUser msg newUser =
+createUser : String -> (Result Http.Error User -> msg) -> NewUser -> Cmd msg
+createUser csrfToken msg newUser =
     let
         params =
             encodeUser newUser
     in
     HttpBuilder.post Api.usersEndpoint
+        |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
         |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg userDecoder)
         |> HttpBuilder.request
 
 
-signIn : (Result Http.Error User -> msg) -> Credentials -> Cmd msg
-signIn msg credentials =
+signIn : String -> (Result Http.Error User -> msg) -> Credentials -> Cmd msg
+signIn csrfToken msg credentials =
     let
         params =
             encodeCredentials credentials
     in
     HttpBuilder.post Api.signInEndpoint
+        |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
         |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg userDecoder)
         |> HttpBuilder.request
 
 
-signOut : (Result Http.Error () -> msg) -> Cmd msg
-signOut msg =
+signOut : String -> (Result Http.Error () -> msg) -> Cmd msg
+signOut csrfToken msg =
     HttpBuilder.delete Api.signOutEndpoint
+        |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
         |> HttpBuilder.withExpect (Http.expectWhatever msg)
         |> HttpBuilder.request
 

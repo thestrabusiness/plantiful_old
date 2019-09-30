@@ -39,16 +39,18 @@ type Event
 
 
 submitCheckIn :
-    { watered : Bool
-    , fertilized : Bool
-    , notes : String
-    , photo : Maybe File.File
-    , plantId : Int
-    , plantName : String
-    }
+    String
+    ->
+        { watered : Bool
+        , fertilized : Bool
+        , notes : String
+        , photo : Maybe File.File
+        , plantId : Int
+        , plantName : String
+        }
     -> (Result Http.Error CheckIn -> a)
     -> Cmd a
-submitCheckIn form a =
+submitCheckIn csrfToken form a =
     let
         plantId =
             form.plantId
@@ -61,7 +63,7 @@ submitCheckIn form a =
         , url = Api.checkInEndpoint plantId
         , body = checkInRequestBody <| checkInFromForm form
         , expect = Http.expectJson a checkInDecoder
-        , headers = []
+        , headers = [ Http.header "X-CSRF-Token" csrfToken ]
         , timeout = Nothing
         , tracker = Nothing
         }

@@ -20,6 +20,7 @@ type alias Model =
     , currentUser : User
     , errors : List Error
     , apiError : String
+    , csrfToken : String
     }
 
 
@@ -40,9 +41,9 @@ type alias Error =
     ( Field, String )
 
 
-init : User -> ( Model, Cmd Msg )
-init user =
-    ( Model "" "day" "3" user [] "", Cmd.none )
+init : String -> User -> ( Model, Cmd Msg )
+init csrfToken user =
+    ( Model "" "day" "3" user [] "" csrfToken, Cmd.none )
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg )
@@ -202,4 +203,4 @@ modelValidator =
 
 createNewPlant : Model -> Cmd Msg
 createNewPlant model =
-    Plant.createPlant PlantCreated (Plant.toNewPlant model)
+    Plant.createPlant model.csrfToken PlantCreated (Plant.toNewPlant model)

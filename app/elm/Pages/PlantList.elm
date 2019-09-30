@@ -36,6 +36,7 @@ type alias Model =
     , modal : Modal.Modal Msg
     , checkInForm : CheckInForm
     , loading : Loading
+    , csrfToken : String
     }
 
 
@@ -67,14 +68,21 @@ type Loading
     | Failed
 
 
-init : User -> Time.Posix -> Time.Zone -> ( Model, Cmd Msg )
-init user currentTime timeZone =
-    ( initialModel user currentTime timeZone, getPlants )
+init : String -> User -> Time.Posix -> Time.Zone -> ( Model, Cmd Msg )
+init csrfToken user currentTime timeZone =
+    ( initialModel csrfToken user currentTime timeZone, getPlants )
 
 
-initialModel : User -> Time.Posix -> Time.Zone -> Model
-initialModel user currentTime timeZone =
-    Model [] user currentTime timeZone ModalClosed initialCheckInForm Loading
+initialModel : String -> User -> Time.Posix -> Time.Zone -> Model
+initialModel csrfToken user currentTime timeZone =
+    Model []
+        user
+        currentTime
+        timeZone
+        ModalClosed
+        initialCheckInForm
+        Loading
+        csrfToken
 
 
 initialCheckInForm : CheckInForm
@@ -147,7 +155,7 @@ update msg model =
                 |> closeModal
 
         UserSubmittedCheckIn ->
-            ( model, submitCheckIn model.checkInForm )
+            ( model, submitCheckIn model.csrfToken model.checkInForm )
 
         ReceivedPlantCheckInResponse (Ok checkIn) ->
             case checkIn.watered of
@@ -310,9 +318,9 @@ getPlants =
     Plant.getPlants NewPlants
 
 
-submitCheckIn : CheckInForm -> Cmd Msg
-submitCheckIn form =
-    CheckIn.submitCheckIn form ReceivedPlantCheckInResponse
+submitCheckIn : String -> CheckInForm -> Cmd Msg
+submitCheckIn csrfToken form =
+    CheckIn.submitCheckIn csrfToken form ReceivedPlantCheckInResponse
 
 
 

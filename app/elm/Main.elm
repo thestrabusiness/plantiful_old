@@ -30,6 +30,7 @@ type alias Model =
     , currentUser : Loadable User
     , currentTime : Time.Posix
     , timeZone : Time.Zone
+    , csrfToken : String
     }
 
 
@@ -43,7 +44,7 @@ type Loadable a
 -- INIT
 
 
-init : () -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
+init : { csrfToken : String } -> Url.Url -> Nav.Key -> ( Model, Cmd Msg )
 init flags url key =
     let
         model =
@@ -53,9 +54,13 @@ init flags url key =
             , currentUser = Loading
             , currentTime = Time.millisToPosix 0
             , timeZone = Time.utc
+            , csrfToken = flags.csrfToken
             }
+
+        initCmds =
+            [ getCurrentTime, getTimeZone, getCurrentUser model.route ]
     in
-    ( model, Cmd.batch [ getCurrentTime, getTimeZone, getCurrentUser model.route ] )
+    ( model, Cmd.batch initCmds )
         |> loadCurrentPage
 
 
@@ -133,7 +138,7 @@ update msg model =
             ( { model | timeZone = zone }, Cmd.none )
 
         ( UserClickedSignOutButton, _ ) ->
-            ( model, User.signOut ReceivedUserSignOutResponse )
+            ( model, User.signOut model.csrfToken ReceivedUserSignOutResponse )
 
         ( ReceivedUserSignOutResponse (Ok _), _ ) ->
             ( { model | currentUser = None }, Nav.pushUrl model.key Routes.signInPath )
@@ -149,10 +154,10 @@ update msg model =
         ( ReceivedCurrentUserResponse _ (Err error), _ ) ->
             let
                 ( signInModel, _ ) =
-                    SignIn.init
+                    SignIn.init model.csrfToken
 
                 ( userFormModel, _ ) =
-                    UserForm.init
+                    UserForm.init model.csrfToken
 
                 page =
                     case model.route of
@@ -250,7 +255,8 @@ loadCurrentPage ( model, cmd ) =
                         Success user ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    PlantList.init user
+                                    PlantList.init model.csrfToken
+                                        user
                                         model.currentTime
                                         model.timeZone
                             in
@@ -267,7 +273,7 @@ loadCurrentPage ( model, cmd ) =
                         Success user ->
                             let
                                 ( formModel, formCmd ) =
-                                    PlantForm.init user
+                                    PlantForm.init model.csrfToken user
                             in
                             ( PlantFormPage formModel, Cmd.map PlantFormMsg formCmd )
 
@@ -280,7 +286,7 @@ loadCurrentPage ( model, cmd ) =
                 Routes.NewUserRoute ->
                     let
                         ( formModel, formCmd ) =
-                            UserForm.init
+                            UserForm.init model.csrfToken
                     in
                     ( UserPage formModel, Cmd.map UserFormMsg formCmd )
 
@@ -289,7 +295,8 @@ loadCurrentPage ( model, cmd ) =
                         Success user ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    PlantList.init user
+                                    PlantList.init model.csrfToken
+                                        user
                                         model.currentTime
                                         model.timeZone
                             in
@@ -301,7 +308,7 @@ loadCurrentPage ( model, cmd ) =
                         None ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    SignIn.init
+                                    SignIn.init model.csrfToken
                             in
                             ( SignInPage pageModel, Cmd.map SignInMsg pageCmd )
 
@@ -313,7 +320,8 @@ loadCurrentPage ( model, cmd ) =
                         Success user ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    PlantDetails.init id
+                                    PlantDetails.init model.csrfToken
+                                        id
                                         user
                                         model.timeZone
                             in
@@ -328,7 +336,7 @@ loadCurrentPage ( model, cmd ) =
                         None ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    SignIn.init
+                                    SignIn.init model.csrfToken
                             in
                             ( SignInPage pageModel, Cmd.map SignInMsg pageCmd )
     in
@@ -451,7 +459,7 @@ subscriptions model =
 -- MAIN
 
 
-main : Program () Model Msg
+main : Program { csrfToken : String } Model Msg
 main =
     Browser.application
         { init = init

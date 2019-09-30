@@ -2,10 +2,11 @@ import { Elm } from '../../elm/Main';
 import Croppie from 'croppie/croppie';
 
 document.addEventListener('DOMContentLoaded', () => {
+  const csrfToken = document.getElementsByName('csrf-token')[0].content
   const target = document.createElement('div')
   document.body.appendChild(target)
   const app = Elm.Main.init({
-      node: target
+    node: target, flags: { csrfToken },
   })
 
   app.ports.initJsCropper.subscribe(function(data){

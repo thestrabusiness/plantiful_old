@@ -20,6 +20,7 @@ type alias Model =
     , passwordConfirmation : String
     , errors : List Error
     , apiError : String
+    , csrfToken : String
     }
 
 
@@ -41,9 +42,9 @@ type alias Error =
     ( Field, String )
 
 
-init : ( Model, Cmd Msg )
-init =
-    ( Model "" "" "" "" "" [] "", Cmd.none )
+init : String -> ( Model, Cmd Msg )
+init csrfToken =
+    ( Model "" "" "" "" "" [] "" csrfToken, Cmd.none )
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Maybe User )
@@ -56,7 +57,10 @@ update msg model key =
                         validModel =
                             fromValid validatedModel
                     in
-                    ( { validModel | errors = [] }, createUser (toNewUser model), Nothing )
+                    ( { validModel | errors = [] }
+                    , createUser model.csrfToken (toNewUser model)
+                    , Nothing
+                    )
 
                 Err errorList ->
                     ( { model | errors = errorList }, Cmd.none, Nothing )
@@ -149,9 +153,9 @@ textField field errors =
     Form.textField (UserEditedField field) UserSubmittedForm fieldErrors
 
 
-createUser : User.NewUser -> Cmd Msg
-createUser newUser =
-    User.createUser UserCreated newUser
+createUser : String -> User.NewUser -> Cmd Msg
+createUser csrfToken newUser =
+    User.createUser csrfToken UserCreated newUser
 
 
 toNewUser : Model -> User.NewUser
