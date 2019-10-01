@@ -108,17 +108,18 @@ view model =
         , textField Name model.errors "Name" model.name
         , label [ id "check_frequency" ]
             [ text "Check Frequency"
-            , div [ class "clearfix" ] []
-            , input
-                [ type_ "number"
-                , name "check_frequency_scalar"
-                , class "input__number input__check"
-                , value model.checkFrequencyScalar
-                , onInput <| UserEditedField CheckFrequencyScalar
-                , onEnter UserSubmittedForm
+            , div [ class "check_frequency_inputs" ]
+                [ input
+                    [ type_ "number"
+                    , name "check_frequency_scalar"
+                    , class "input__number input__check"
+                    , value model.checkFrequencyScalar
+                    , onInput <| UserEditedField CheckFrequencyScalar
+                    , onEnter UserSubmittedForm
+                    ]
+                    []
+                , checkFrequencySelect model
                 ]
-                []
-            , checkFrequencySelect model
             ]
         , button [ class "secondary", onClick UserCancelledForm ] [ text "Cancel" ]
         , button [ onClick UserSubmittedForm ] [ text "Submit" ]

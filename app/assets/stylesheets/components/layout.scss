@@ -30,16 +30,19 @@
   text-align: center;
   padding: 20px;
 
-  .input__number {
-    width: 10%;
+
+  .check_frequency_inputs {
+    display: grid;
+    grid-gap: 1rem;
+    grid-template: 1fr / repeat(8, 1fr);
   }
 
-  .input__check {
-    display: flex;
+  .input__number {
+    grid-area: 1 / 1 / span 1 / span 1;
   }
 
   .input__select {
-    width: 75%;
+    grid-area: 1 / 2 / span 1 / span 7;
   }
 }
 
