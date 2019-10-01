@@ -152,25 +152,8 @@ update msg model =
             )
 
         ( ReceivedCurrentUserResponse _ (Err error), _ ) ->
-            let
-                ( signInModel, _ ) =
-                    SignIn.init model.csrfToken
-
-                ( userFormModel, _ ) =
-                    UserForm.init model.csrfToken
-
-                page =
-                    case model.route of
-                        Routes.SignInRoute ->
-                            SignInPage signInModel
-
-                        Routes.NewUserRoute ->
-                            UserPage userFormModel
-
-                        _ ->
-                            NotAuthorizedPage {}
-            in
-            ( { model | currentUser = None, page = page }, Cmd.none )
+            ( { model | currentUser = None }, Cmd.none )
+                |> loadCurrentPage
 
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let
