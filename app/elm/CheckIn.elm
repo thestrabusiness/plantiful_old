@@ -27,7 +27,7 @@ type alias NewCheckIn =
     { watered : Bool
     , fertilized : Bool
     , notes : String
-    , photo : Maybe File.File
+    , photos : List String
     , plantId : Int
     }
 
@@ -44,7 +44,7 @@ submitCheckIn :
         { watered : Bool
         , fertilized : Bool
         , notes : String
-        , photo : Maybe File.File
+        , photos : List String
         , plantId : Int
         , plantName : String
         }
@@ -79,12 +79,11 @@ checkInRequestBody checkIn =
 
 addFilePartToBody : NewCheckIn -> ( NewCheckIn, List Http.Part )
 addFilePartToBody checkIn =
-    case checkIn.photo of
-        Just photo ->
-            ( checkIn, [ Http.filePart "check_in[photo]" photo ] )
-
-        Nothing ->
-            ( checkIn, [] )
+    let
+        photoFileParts =
+            List.map (Http.stringPart "check_in[photos][]") checkIn.photos
+    in
+    ( checkIn, photoFileParts )
 
 
 addStringPartsToBody : ( NewCheckIn, List Http.Part ) -> List Http.Part
@@ -110,13 +109,13 @@ checkInFromForm :
     { watered : Bool
     , fertilized : Bool
     , notes : String
-    , photo : Maybe File.File
+    , photos : List String
     , plantId : Int
     , plantName : String
     }
     -> NewCheckIn
 checkInFromForm form =
-    NewCheckIn form.watered form.fertilized form.notes form.photo form.plantId
+    NewCheckIn form.watered form.fertilized form.notes form.photos form.plantId
 
 
 encodeCheckInForm : NewCheckIn -> Encode.Value

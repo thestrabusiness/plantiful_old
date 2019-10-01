@@ -35,7 +35,7 @@ $black-transparent: rgba(19,23,34,0.7);
 
 @mixin modal__header {
   display: flex;
-  height: $spacing-medium * 2.5;
+  height: $spacing-medium * 1.5;
   justify-content: center;
   position: relative;
   width: 100%;
@@ -49,7 +49,7 @@ $black-transparent: rgba(19,23,34,0.7);
 .modal__heading {
   color: $font-color-base;
   font-size: $font-size-x-large;
-  margin-top: $spacing-base;
+  margin-top: $spacing-x-small;
 }
 
 .modal__heading--large {
@@ -106,4 +106,13 @@ $black-transparent: rgba(19,23,34,0.7);
 .modal__base-row {
   display: flex;
   padding: $spacing-base $spacing-base  0 $spacing-base ;
+}
+
+.modal__image-preview {
+  min-height: 100px;
+
+  img {
+    margin: 1rem;
+    height: 100px;
+  }
 }

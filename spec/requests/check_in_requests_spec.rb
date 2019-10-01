@@ -60,18 +60,19 @@ RSpec.describe 'Check-in request', type: :request do
         end
       end
 
-      context 'adds a photo to the check-in' do
-        it 'creates a check-in with a photo' do
+      context 'adds 2 photos to the check-in' do
+        it 'creates a check-in with 2 photos' do
           plant = create(:plant)
-          photo = fixture_file_upload('plant.jpg')
+          image_path = Rails.root.join('spec', 'fixtures', 'plant.jpg')
+          photo = 'data:image/jpg;base64,' + Base64.strict_encode64(File.read(image_path))
 
           api_sign_in(plant.user)
           expect {
             post api_plant_check_ins_path(plant),
                  params: { check_in: { watered: false,
                                        fertilized: false,
-                                       photo: photo } }
-          }.to change { ActiveStorage::Blob.count }.from(0).to(1)
+                                       photos: [photo, photo] } }
+          }.to change { ActiveStorage::Blob.count }.from(0).to(2)
         end
       end
 

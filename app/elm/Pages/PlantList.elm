@@ -44,7 +44,7 @@ type alias CheckInForm =
     { watered : Bool
     , fertilized : Bool
     , notes : String
-    , photo : Maybe File.File
+    , photos : List String
     , plantId : Int
     , plantName : String
     }
@@ -60,6 +60,7 @@ type Msg
     | ReceivedPlantCheckInResponse (Result Http.Error CheckIn.CheckIn)
     | UserClickedFileSelect
     | NewImageSelected File.File
+    | PhotoConvertedToBase64 String
 
 
 type Loading
@@ -87,7 +88,7 @@ initialModel csrfToken user currentTime timeZone =
 
 initialCheckInForm : CheckInForm
 initialCheckInForm =
-    CheckInForm False False "" Nothing 0 ""
+    CheckInForm False False "" [] 0 ""
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -128,14 +129,7 @@ update msg model =
             ( model, Select.file [ "image/*" ] NewImageSelected )
 
         NewImageSelected file ->
-            let
-                checkInForm =
-                    model.checkInForm
-
-                updatedForm =
-                    { checkInForm | photo = Just file }
-            in
-            ( { model | checkInForm = updatedForm }, Cmd.none )
+            ( model, photoToBase64 file )
 
         UserTypedCheckInNotes notes ->
             let
@@ -176,9 +170,27 @@ update msg model =
 
                 False ->
                     ( model, Cmd.none )
+                        |> closeModal
 
         ReceivedPlantCheckInResponse (Err error) ->
             ( model, Cmd.none )
+
+        PhotoConvertedToBase64 base64Photo ->
+            let
+                checkInForm =
+                    model.checkInForm
+
+                updatedForm =
+                    { checkInForm | photos = checkInForm.photos ++ [ base64Photo ] }
+            in
+            ( model, Cmd.none )
+                |> updateForm updatedForm
+                |> updateModal checkInModal
+
+
+photoToBase64 : File.File -> Cmd Msg
+photoToBase64 photo =
+    Task.perform PhotoConvertedToBase64 (File.toUrl photo)
 
 
 updateFormCheckboxes : CheckInForm -> CheckIn.Event -> CheckInForm
@@ -371,6 +383,7 @@ checkInModal form =
                         [ text "Add a photo"
                         ]
                     ]
+                , Modal.modalRow [ photoPreviews form.photos ]
                 , Modal.modalRow
                     [ label []
                         [ text "Notes"
@@ -388,6 +401,20 @@ checkInModal form =
                 ]
             ]
         ]
+
+
+photoPreviews : List String -> Html msg
+photoPreviews photos =
+    let
+        imageTags =
+            List.map toImageTag photos
+    in
+    div [ class "modal__image-preview" ] imageTags
+
+
+toImageTag : String -> Html msg
+toImageTag photoUrl =
+    img [ src photoUrl ] []
 
 
 checkbox : CheckIn.Event -> Bool -> Html Msg

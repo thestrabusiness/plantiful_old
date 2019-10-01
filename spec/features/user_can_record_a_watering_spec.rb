@@ -14,6 +14,7 @@ RSpec.feature 'User can record when a plant is checked on' do
     click_on 'Submit'
 
     expect(page).to have_content 'Today'
+    expect(page).to_not have_selector '.modal__content-large'
     plant = Plant.first
     check_in = plant.check_ins.take
     expect(plant.check_ins.count).to eq 1
