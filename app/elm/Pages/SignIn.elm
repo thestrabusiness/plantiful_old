@@ -100,7 +100,7 @@ view model =
     div [ class "form container__center container__shadow" ]
         [ h2 [] [ text "Sign In" ]
         , div [ class "errors" ] [ text model.apiError ]
-        , textField Email model.errors "Email" model.email
+        , emailField Email model.errors "Email" model.email
         , passwordField Password model.errors "Password" model.password
         , div [ class "hint" ]
             [ text "Don't have an account yet? "
@@ -114,13 +114,13 @@ view model =
         ]
 
 
-textField : Field -> List Error -> String -> String -> Html Msg
-textField field errors =
+emailField : Field -> List Error -> String -> String -> Html Msg
+emailField field errors =
     let
         fieldErrors =
             errorsForField field errors
     in
-    Form.textField (UserEditedField field) UserSubmittedForm fieldErrors
+    Form.emailField (UserEditedField field) UserSubmittedForm fieldErrors
 
 
 passwordField : Field -> List Error -> String -> String -> Html Msg

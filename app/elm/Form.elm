@@ -1,5 +1,6 @@
 module Form exposing
-    ( errorsForField
+    ( emailField
+    , errorsForField
     , onEnter
     , passwordField
     , textField
@@ -31,6 +32,17 @@ passwordField :
     -> Html b
 passwordField inputMsg enterMsg errors name fieldValue =
     fieldNeedsType "password" inputMsg enterMsg errors name fieldValue
+
+
+emailField :
+    (String -> b)
+    -> b
+    -> List ( field, String )
+    -> String
+    -> String
+    -> Html b
+emailField inputMsg enterMsg errors name fieldValue =
+    fieldNeedsType "email" inputMsg enterMsg errors name fieldValue
 
 
 fieldNeedsType :

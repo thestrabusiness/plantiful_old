@@ -4,9 +4,10 @@ import Api exposing (networkError, somethingWentWrongError)
 import Browser.Navigation as Nav
 import Form exposing (errorsForField)
 import Html exposing (..)
-import Html.Attributes exposing (class, placeholder, value)
-import Html.Events exposing (onClick, onInput)
+import Html.Attributes exposing (class, placeholder, type_, value)
+import Html.Events exposing (onInput, preventDefaultOn)
 import Http
+import Json.Decode as Decode
 import Routes
 import User exposing (User)
 import Validate exposing (Validator, fromValid, ifBlank, ifFalse, ifInvalidEmail, validate)
@@ -120,19 +121,34 @@ setField field value model =
 
 view : Model -> Html Msg
 view model =
-    div [ class "form container__center container__shadow" ]
+    form [ class "form container__center container__shadow" ]
         [ h2 [] [ text "Sign Up" ]
         , div [ class "errors" ] [ text model.apiError ]
         , textField FirstName model.errors "First Name" model.firstName
         , textField LastName model.errors "Last Name" model.lastName
-        , textField Email model.errors "Email" model.email
+        , emailField Email model.errors "Email" model.email
         , passwordField Password model.errors "Password" model.password
         , passwordField PasswordConfirmation
             model.errors
             "Confirm Password"
             model.passwordConfirmation
-        , button [ onClick UserSubmittedForm ] [ text "Submit" ]
+        , button
+            [ type_ "submt"
+            , value "LOGIN"
+            , preventDefaultOn "click"
+                (Decode.map alwaysPreventDefault
+                    (Decode.succeed
+                        UserSubmittedForm
+                    )
+                )
+            ]
+            [ text "Submit" ]
         ]
+
+
+alwaysPreventDefault : msg -> ( msg, Bool )
+alwaysPreventDefault msg =
+    ( msg, True )
 
 
 passwordField : Field -> List Error -> String -> String -> Html Msg
@@ -151,6 +167,15 @@ textField field errors =
             errorsForField field errors
     in
     Form.textField (UserEditedField field) UserSubmittedForm fieldErrors
+
+
+emailField : Field -> List Error -> String -> String -> Html Msg
+emailField field errors =
+    let
+        fieldErrors =
+            errorsForField field errors
+    in
+    Form.emailField (UserEditedField field) UserSubmittedForm fieldErrors
 
 
 createUser : String -> User.NewUser -> Cmd Msg
