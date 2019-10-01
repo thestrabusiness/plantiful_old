@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.feature 'User can view a list of plants', js: true do
+RSpec.feature 'User can view a list of plants' do
   it 'user can see a list of plant names' do
     user = create(:user)
     plant1 = create(:plant, name: 'plant', user: user)

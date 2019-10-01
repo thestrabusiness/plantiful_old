@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.feature 'User can record when a plant is checked on', js: true do
+RSpec.feature 'User can record when a plant is checked on' do
   it 'Adds a new check-in record for the given plant' do
     plant = create(:plant)
 

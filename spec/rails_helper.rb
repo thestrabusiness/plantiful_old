@@ -32,6 +32,7 @@ RSpec.configure do |config|
   config.include FrontEndRouteHelpers
 
   config.define_derived_metadata(file_path: Regexp.new('/spec/features')) do |metadata|
+    metadata[:js] = true
     metadata[:allow_forgery_protection] = true
   end
 

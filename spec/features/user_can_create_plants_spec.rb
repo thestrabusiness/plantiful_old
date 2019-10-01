@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.feature 'UserCanCreatePlants', js: true do
+RSpec.feature 'UserCanCreatePlants' do
   it 'a user can create a new plant with a name and check frequency' do
     user = create(:user)
     visit plants_path(user)
