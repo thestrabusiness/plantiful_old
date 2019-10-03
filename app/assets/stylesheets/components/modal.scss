@@ -108,7 +108,8 @@ $black-transparent: rgba(19,23,34,0.7);
   padding: $spacing-base $spacing-base  0 $spacing-base ;
 }
 
-.modal__image-preview {
+.modal__image-preview-container {
+  display: flex;
   min-height: 100px;
 
   img {
@@ -116,3 +117,16 @@ $black-transparent: rgba(19,23,34,0.7);
     height: 100px;
   }
 }
+
+.modal__image-preview {
+  width: fit-content;
+  position: relative;
+}
+
+.modal__image-delete {
+  cursor: pointer;
+  right: -3px;
+  position: absolute;
+  top: -3px;
+}
+

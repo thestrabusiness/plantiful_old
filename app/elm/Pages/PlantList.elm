@@ -18,6 +18,7 @@ import Html.Attributes exposing (..)
 import Html.Events exposing (on, onClick, onInput)
 import Http
 import Json.Decode exposing (Decoder, succeed)
+import List.Extra exposing (removeAt)
 import Modal exposing (..)
 import Octicons exposing (defaultOptions)
 import Plant
@@ -61,6 +62,7 @@ type Msg
     | UserClickedFileSelect
     | NewImageSelected File.File
     | PhotoConvertedToBase64 String
+    | UserRemovedImageFromModal Int
 
 
 type Loading
@@ -182,6 +184,21 @@ update msg model =
 
                 updatedForm =
                     { checkInForm | photos = checkInForm.photos ++ [ base64Photo ] }
+            in
+            ( model, Cmd.none )
+                |> updateForm updatedForm
+                |> updateModal checkInModal
+
+        UserRemovedImageFromModal index ->
+            let
+                checkInForm =
+                    model.checkInForm
+
+                photosWithoutDeleted =
+                    removeAt index checkInForm.photos
+
+                updatedForm =
+                    { checkInForm | photos = photosWithoutDeleted }
             in
             ( model, Cmd.none )
                 |> updateForm updatedForm
@@ -403,18 +420,35 @@ checkInModal form =
         ]
 
 
-photoPreviews : List String -> Html msg
+photoPreviews : List String -> Html Msg
 photoPreviews photos =
     let
+        imagesWithIndex =
+            List.indexedMap Tuple.pair photos
+
         imageTags =
-            List.map toImageTag photos
+            List.map toImageTag imagesWithIndex
     in
-    div [ class "modal__image-preview" ] imageTags
+    div [ class "modal__image-preview-container" ] imageTags
 
 
-toImageTag : String -> Html msg
-toImageTag photoUrl =
-    img [ src photoUrl ] []
+toImageTag : ( Int, String ) -> Html Msg
+toImageTag ( index, photoUrl ) =
+    div [ class "modal__image-preview" ]
+        [ img [ src photoUrl ] []
+        , div
+            [ class "modal__image-delete"
+            , onClick <| UserRemovedImageFromModal index
+            ]
+            [ closeIcon ]
+        ]
+
+
+closeIcon : Html msg
+closeIcon =
+    defaultOptions
+        |> Octicons.size 20
+        |> Octicons.x
 
 
 checkbox : CheckIn.Event -> Bool -> Html Msg
