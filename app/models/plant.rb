@@ -2,7 +2,7 @@ class Plant < ApplicationRecord
   FREQUENCY_UNITS = %w[day week].freeze
 
   belongs_to :user
-  has_many :check_ins
+  has_many :check_ins, dependent: :destroy
   has_one :last_check_in, class_name: 'CheckIn'
   has_one :last_check, -> { check_in }, class_name: 'CheckIn'
   has_one :last_fertilizing, -> { fertilized }, class_name: 'CheckIn'

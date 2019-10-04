@@ -37,6 +37,12 @@ module Api
       end
     end
 
+    def destroy
+      plant = current_user.plants.find(params[:id])
+      plant.destroy!
+      head :ok
+    end
+
     private
 
     def plant_params

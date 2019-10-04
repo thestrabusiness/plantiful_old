@@ -7,6 +7,7 @@ port module Pages.PlantDetails exposing
     , view
     )
 
+import Browser.Navigation as Nav
 import CheckIn
 import DateAndTime
 import File
@@ -32,6 +33,7 @@ type alias Model =
     , upload : Upload
     , modal : Modal.Modal Msg
     , csrfToken : String
+    , key : Nav.Key
     }
 
 
@@ -51,11 +53,13 @@ type Msg
     | PhotoConvertedToBase64 String
     | GotCroppedPhoto String
     | UserCroppedPhoto
+    | UserClickedDeletePlant Int
+    | ReceivedDeletePlantResponse (Result Http.Error ())
 
 
-init : String -> Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
-init csrfToken plantId user timeZone =
-    ( Model Nothing user timeZone None Modal.ModalClosed csrfToken, getPlant plantId )
+init : Nav.Key -> String -> Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
+init key csrfToken plantId user timeZone =
+    ( Model Nothing user timeZone None Modal.ModalClosed csrfToken key, getPlant plantId )
 
 
 port initJsCropper : String -> Cmd msg
@@ -137,6 +141,15 @@ update msg model =
                 Http.Receiving _ ->
                     ( model, Cmd.none )
 
+        UserClickedDeletePlant plantId ->
+            ( model, deletePlant model.csrfToken plantId )
+
+        ReceivedDeletePlantResponse (Ok _) ->
+            ( model, Nav.pushUrl model.key Routes.plantsPath )
+
+        ReceivedDeletePlantResponse (Err _) ->
+            ( model, Cmd.none )
+
 
 subscriptions : Sub Msg
 subscriptions =
@@ -156,6 +169,11 @@ getPlant id =
     Plant.getPlant id ReceivedGetPlantResponse
 
 
+deletePlant : String -> Int -> Cmd Msg
+deletePlant csrfToken id =
+    Plant.deletePlant csrfToken id ReceivedDeletePlantResponse
+
+
 view : Model -> Html Msg
 view model =
     case model.plant of
@@ -168,10 +186,9 @@ view model =
                         ]
                     , div [ class "details__controls details__controls-right" ]
                         [ a [ href Routes.plantsPath ] [ editButton, text "Edit" ]
-                        , a [ href Routes.plantsPath ]
-                            [ deleteButton
-                            , text "Delete"
-                            ]
+                        , div
+                            [ onClick (UserClickedDeletePlant plant.id) ]
+                            [ deleteButton, text "Delete" ]
                         ]
                     , div
                         [ class "details__image with_loader" ]

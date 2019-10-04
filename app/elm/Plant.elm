@@ -1,6 +1,7 @@
 module Plant exposing
     ( Plant
     , createPlant
+    , deletePlant
     , emptyPlant
     , getPlant
     , getPlants
@@ -95,6 +96,19 @@ uploadPhoto csrfToken base64Photo plant msg =
         , headers = [ Http.header "X-CSRF-Token" csrfToken ]
         , timeout = Nothing
         , tracker = Just "photoUpload"
+        }
+
+
+deletePlant : String -> Int -> (Result Http.Error () -> msg) -> Cmd msg
+deletePlant csrfToken plantId msg =
+    Http.request
+        { method = "DELETE"
+        , url = Api.plantEndpoint plantId
+        , body = Http.emptyBody
+        , expect = Http.expectWhatever msg
+        , headers = [ Http.header "X-CSRF-Token" csrfToken ]
+        , timeout = Nothing
+        , tracker = Nothing
         }
 
 

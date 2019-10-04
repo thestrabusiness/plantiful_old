@@ -96,6 +96,17 @@ RSpec.describe 'Plant requests', type: :request do
     end
   end
 
+  describe 'DELETE /api/plants/:id' do
+    it 'destroys the plant with the given ID' do
+      plant = create(:plant)
+
+      api_sign_in(plant.user)
+
+      expect { delete api_plant_path(plant) }.to change { Plant.count }.from(1).to(0)
+      expect(response.status).to eq 200
+    end
+  end
+
   def post_avatar(plant, avatar)
     post avatar_api_plant_path(plant), params: { plant: { avatar: avatar } }
   end

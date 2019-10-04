@@ -303,7 +303,8 @@ loadCurrentPage ( model, cmd ) =
                         Success user ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    PlantDetails.init model.csrfToken
+                                    PlantDetails.init model.key
+                                        model.csrfToken
                                         id
                                         user
                                         model.timeZone

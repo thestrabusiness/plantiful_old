@@ -63,10 +63,12 @@
 }
 
 .details__controls-right {
+  cursor: pointer;
+  display: flex;
   grid-area: 1 / 4 / 2 / 5;
   justify-self: right;
 
-  a {
+  * {
     margin-left: 5px;
   }
 }
