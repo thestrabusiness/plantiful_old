@@ -58,6 +58,31 @@
   border-radius: 10px;
 }
 
+.details__image {
+  grid-area: 2 / 1 / auto / span 1;
+}
+
+.details__controls-right {
+  grid-area: 1 / 4 / 2 / 5;
+  justify-self: right;
+
+  a {
+    margin-left: 5px;
+  }
+}
+
+.details__controls {
+
+  a {
+    text-decoration: none;
+  }
+
+  svg {
+    position: relative;
+    top: 3px;
+  }
+}
+
 .details__container {
   margin-bottom: $spacing-large;
 }
@@ -65,7 +90,7 @@
 .details__section {
   display: flex;
   flex-direction: column;
-  grid-area: 1 / 2 / span 1 / span 3;
+  grid-area: 2 / 2 / span 1 / span 3;
 }
 
 .details__name {

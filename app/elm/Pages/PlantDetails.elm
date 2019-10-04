@@ -17,6 +17,7 @@ import Html.Events exposing (onClick)
 import Http
 import Json.Encode
 import Modal exposing (..)
+import Octicons exposing (defaultOptions)
 import Plant
 import Routes
 import Task
@@ -161,8 +162,19 @@ view model =
         Just plant ->
             div [ class "container__center" ]
                 [ div [ class "details__container container__grid" ]
-                    [ div
-                        [ class "with_loader" ]
+                    [ div [ class "details__controls details__controls-left" ]
+                        [ a [ href Routes.plantsPath ]
+                            [ backButton, text "Back to Plants" ]
+                        ]
+                    , div [ class "details__controls details__controls-right" ]
+                        [ a [ href Routes.plantsPath ] [ editButton, text "Edit" ]
+                        , a [ href Routes.plantsPath ]
+                            [ deleteButton
+                            , text "Delete"
+                            ]
+                        ]
+                    , div
+                        [ class "details__image with_loader" ]
                         [ img
                             [ src plant.avatarUrl
                             , onClick UserSelectedUploadNewPhoto
@@ -188,7 +200,6 @@ viewPlantDetails plant =
         [ h2 [ class "details__name" ] [ text plant.name ]
         , h4 [ class "details__botanical-name" ] [ text "Botanical Name" ]
         , p [ class "details__copy" ] [ text lorem ]
-        , a [ href Routes.plantsPath ] [ text "Back to Plants" ]
         ]
 
 
@@ -332,3 +343,25 @@ cropperModal model =
                 ]
             ]
         ]
+
+
+
+-- ICONS
+
+
+backButton : Html Msg
+backButton =
+    defaultOptions
+        |> Octicons.chevronLeft
+
+
+editButton : Html Msg
+editButton =
+    defaultOptions
+        |> Octicons.pencil
+
+
+deleteButton : Html Msg
+deleteButton =
+    defaultOptions
+        |> Octicons.trashcan
