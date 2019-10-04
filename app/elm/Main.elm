@@ -256,7 +256,9 @@ loadCurrentPage ( model, cmd ) =
                         Success user ->
                             let
                                 ( formModel, formCmd ) =
-                                    PlantForm.init model.csrfToken user
+                                    PlantForm.init model.csrfToken
+                                        user
+                                        Nothing
                             in
                             ( PlantFormPage formModel, Cmd.map PlantFormMsg formCmd )
 
@@ -323,6 +325,23 @@ loadCurrentPage ( model, cmd ) =
                                     SignIn.init model.csrfToken
                             in
                             ( SignInPage pageModel, Cmd.map SignInMsg pageCmd )
+
+                Routes.EditPlantRoute id ->
+                    case model.currentUser of
+                        Success user ->
+                            let
+                                ( formModel, formCmd ) =
+                                    PlantForm.init model.csrfToken
+                                        user
+                                        (Just id)
+                            in
+                            ( PlantFormPage formModel, Cmd.map PlantFormMsg formCmd )
+
+                        Loading ->
+                            ( LoadingPage, Cmd.none )
+
+                        None ->
+                            ( NotAuthorizedPage {}, Cmd.map NotAuthorizedMsg Cmd.none )
     in
     ( { model | page = page }, Cmd.batch [ cmd, newCmd ] )
 
@@ -408,6 +427,9 @@ headerLink model =
             text ""
 
         Routes.PlantRoute _ ->
+            signOutButton
+
+        Routes.EditPlantRoute _ ->
             signOutButton
 
 

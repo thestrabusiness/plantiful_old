@@ -19,10 +19,10 @@ module Api
 
     def show
       plant = current_user
-        .plants
-        .with_attached_avatar
-        .includes(check_ins: :photos_attachments)
-        .find(params[:id])
+              .plants
+              .with_attached_avatar
+              .includes(check_ins: :photos_attachments)
+              .find(params[:id])
       render json: plant, status: :ok
     end
 
@@ -41,6 +41,16 @@ module Api
       plant = current_user.plants.find(params[:id])
       plant.destroy!
       head :ok
+    end
+
+    def update
+      plant = current_user.plants.find(params[:id])
+
+      if plant.update(plant_params)
+        render json: plant, status: :ok
+      else
+        render json: plant.errors, status: :unprocessable_entity
+      end
     end
 
     private

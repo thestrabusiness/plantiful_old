@@ -14,13 +14,13 @@ import Validate exposing (Validator, fromValid, ifBlank, ifNotInt, validate)
 
 
 type alias Model =
-    { name : String
-    , checkFrequencyUnit : String
-    , checkFrequencyScalar : String
+    { plant : PlantForm
     , currentUser : User
     , errors : List Error
     , apiError : String
     , csrfToken : String
+    , formAction : Form.FormAction
+    , plantId : Maybe Int
     }
 
 
@@ -28,7 +28,9 @@ type Msg
     = UserEditedField Field String
     | UserSubmittedForm
     | UserCancelledForm
-    | PlantCreated (Result Http.Error Plant.Plant)
+    | ReceivedCreatePlantResponse (Result Http.Error Plant.Plant)
+    | ReceivedGetPlantResponse (Result Http.Error Plant.Plant)
+    | ReceivedUpdatePlantResponse (Result Http.Error Plant.Plant)
 
 
 type Field
@@ -41,9 +43,43 @@ type alias Error =
     ( Field, String )
 
 
-init : String -> User -> ( Model, Cmd Msg )
-init csrfToken user =
-    ( Model "" "day" "3" user [] "" csrfToken, Cmd.none )
+type alias PlantForm =
+    { name : String
+    , checkFrequencyUnit : String
+    , checkFrequencyScalar : String
+    }
+
+
+init : String -> User -> Maybe Int -> ( Model, Cmd Msg )
+init csrfToken user maybeId =
+    let
+        formAction =
+            case maybeId of
+                Just _ ->
+                    Form.Update
+
+                Nothing ->
+                    Form.Create
+
+        initialModel =
+            Model emptyPlantForm user [] "" csrfToken formAction maybeId
+    in
+    ( initialModel, loadPlant maybeId )
+
+
+emptyPlantForm : PlantForm
+emptyPlantForm =
+    { name = "", checkFrequencyScalar = "", checkFrequencyUnit = "" }
+
+
+loadPlant : Maybe Int -> Cmd Msg
+loadPlant maybeId =
+    case maybeId of
+        Just id ->
+            Plant.getPlant id ReceivedGetPlantResponse
+
+        Nothing ->
+            Cmd.none
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg )
@@ -53,34 +89,77 @@ update msg model key =
             ( setField field value model, Cmd.none )
 
         UserSubmittedForm ->
-            case validate modelValidator model of
-                Ok validatedModel ->
-                    ( fromValid validatedModel, createNewPlant model )
+            let
+                validateForm =
+                    validate formValidator model.plant
+            in
+            case ( validateForm, model.formAction, model.plantId ) of
+                ( Ok validatedForm, Form.Create, _ ) ->
+                    let
+                        validPlant =
+                            fromValid validatedForm
+                    in
+                    ( model, createNewPlant model.csrfToken validPlant )
 
-                Err errorList ->
+                ( Ok validatedForm, Form.Update, Just plantId ) ->
+                    let
+                        validPlant =
+                            fromValid validatedForm
+                    in
+                    ( model, updatePlant model.csrfToken plantId validPlant )
+
+                ( Ok _, _, _ ) ->
+                    ( model, Cmd.none )
+
+                ( Err errorList, _, _ ) ->
                     ( { model | errors = errorList }, Cmd.none )
 
         UserCancelledForm ->
+            case ( model.formAction, model.plantId ) of
+                ( Form.Create, _ ) ->
+                    ( model, goBackToPlantsList key )
+
+                ( Form.Update, Just plantId ) ->
+                    ( model, goBackToPlantDetails key plantId )
+
+                ( _, _ ) ->
+                    ( model, Cmd.none )
+
+        ReceivedCreatePlantResponse (Ok plant) ->
             ( model, goBackToPlantsList key )
 
-        PlantCreated (Ok plant) ->
-            ( model, goBackToPlantsList key )
+        ReceivedCreatePlantResponse (Err error) ->
+            handleErrorResponse model error key
 
-        PlantCreated (Err error) ->
-            case error of
-                Http.BadStatus code ->
-                    case code of
-                        401 ->
-                            ( model, Nav.pushUrl key Routes.signInPath )
+        ReceivedGetPlantResponse (Ok plant) ->
+            ( { model | plant = plantToForm plant }, Cmd.none )
 
-                        _ ->
-                            ( { model | apiError = somethingWentWrongError }, Cmd.none )
+        ReceivedGetPlantResponse (Err error) ->
+            handleErrorResponse model error key
 
-                Http.NetworkError ->
-                    ( { model | apiError = networkError }, Cmd.none )
+        ReceivedUpdatePlantResponse (Ok plant) ->
+            ( model, goBackToPlantDetails key plant.id )
+
+        ReceivedUpdatePlantResponse (Err error) ->
+            handleErrorResponse model error key
+
+
+handleErrorResponse : Model -> Http.Error -> Nav.Key -> ( Model, Cmd Msg )
+handleErrorResponse model error key =
+    case error of
+        Http.BadStatus code ->
+            case code of
+                401 ->
+                    ( model, Nav.pushUrl key Routes.signInPath )
 
                 _ ->
                     ( { model | apiError = somethingWentWrongError }, Cmd.none )
+
+        Http.NetworkError ->
+            ( { model | apiError = networkError }, Cmd.none )
+
+        _ ->
+            ( { model | apiError = somethingWentWrongError }, Cmd.none )
 
 
 goBackToPlantsList : Nav.Key -> Cmd Msg
@@ -88,24 +167,48 @@ goBackToPlantsList key =
     Nav.pushUrl key Routes.plantsPath
 
 
+goBackToPlantDetails : Nav.Key -> Int -> Cmd Msg
+goBackToPlantDetails key plantId =
+    Nav.pushUrl key (Routes.plantPath plantId)
+
+
+plantToForm : Plant.Plant -> PlantForm
+plantToForm plant =
+    { name = plant.name
+    , checkFrequencyUnit = plant.checkFrequencyUnit
+    , checkFrequencyScalar = plant.checkFrequencyScalar
+    }
+
+
 setField : Field -> String -> Model -> Model
 setField field value model =
-    case field of
-        Name ->
-            { model | name = value }
+    let
+        plant =
+            model.plant
 
-        CheckFrequencyUnit ->
-            { model | checkFrequencyUnit = value }
+        updatedPlant =
+            case field of
+                Name ->
+                    { plant | name = value }
 
-        CheckFrequencyScalar ->
-            { model | checkFrequencyScalar = value }
+                CheckFrequencyUnit ->
+                    { plant | checkFrequencyUnit = value }
+
+                CheckFrequencyScalar ->
+                    { plant | checkFrequencyScalar = value }
+    in
+    { model | plant = updatedPlant }
 
 
 view : Model -> Html Msg
 view model =
+    let
+        form =
+            model.plant
+    in
     div [ class "form container__center container__shadow" ]
-        [ h2 [] [ text "Add a Plant" ]
-        , textField Name model.errors "Name" model.name
+        [ viewHeaderText model.formAction
+        , textField Name model.errors "Name" form.name
         , label [ id "check_frequency" ]
             [ text "Check Frequency"
             , div [ class "check_frequency_inputs" ]
@@ -113,12 +216,12 @@ view model =
                     [ type_ "number"
                     , name "check_frequency_scalar"
                     , class "input__number input__check"
-                    , value model.checkFrequencyScalar
+                    , value form.checkFrequencyScalar
                     , onInput <| UserEditedField CheckFrequencyScalar
                     , onEnter UserSubmittedForm
                     ]
                     []
-                , checkFrequencySelect model
+                , checkFrequencySelect form
                 ]
             ]
         , button [ class "secondary", onClick UserCancelledForm ] [ text "Cancel" ]
@@ -126,14 +229,28 @@ view model =
         ]
 
 
-checkFrequencySelect : Model -> Html Msg
-checkFrequencySelect model =
+viewHeaderText : Form.FormAction -> Html Msg
+viewHeaderText formAction =
+    let
+        headerText =
+            case formAction of
+                Form.Create ->
+                    "Add a plant"
+
+                Form.Update ->
+                    "Edit plant"
+    in
+    h2 [] [ text headerText ]
+
+
+checkFrequencySelect : PlantForm -> Html Msg
+checkFrequencySelect form =
     let
         selectedUnit =
-            model.checkFrequencyUnit
+            form.checkFrequencyUnit
 
         selectedScalar =
-            model.checkFrequencyScalar
+            form.checkFrequencyScalar
 
         dayLabel =
             daySelectLabel <| String.toInt selectedScalar
@@ -193,8 +310,8 @@ textField field errors =
     Form.textField (UserEditedField field) UserSubmittedForm fieldErrors
 
 
-modelValidator : Validator Error Model
-modelValidator =
+formValidator : Validator Error PlantForm
+formValidator =
     Validate.all
         [ ifBlank .name ( Name, "Name can't be blank" )
         , ifBlank .checkFrequencyScalar ( CheckFrequencyScalar, "Can't be blank" )
@@ -202,6 +319,11 @@ modelValidator =
         ]
 
 
-createNewPlant : Model -> Cmd Msg
-createNewPlant model =
-    Plant.createPlant model.csrfToken PlantCreated (Plant.toNewPlant model)
+createNewPlant : String -> PlantForm -> Cmd Msg
+createNewPlant csrfToken plantForm =
+    Plant.createPlant csrfToken ReceivedCreatePlantResponse plantForm
+
+
+updatePlant : String -> Int -> PlantForm -> Cmd Msg
+updatePlant csrfToken plantId plantForm =
+    Plant.updatePlant csrfToken ReceivedUpdatePlantResponse plantId plantForm

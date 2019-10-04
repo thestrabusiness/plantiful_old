@@ -1,5 +1,6 @@
 module Plant exposing
-    ( Plant
+    ( NewPlant
+    , Plant
     , createPlant
     , deletePlant
     , emptyPlant
@@ -8,6 +9,7 @@ module Plant exposing
     , plantDecoder
     , plantListDecoder
     , toNewPlant
+    , updatePlant
     , uploadPhoto
     )
 
@@ -30,6 +32,8 @@ type alias Plant =
     , checkIns : List CheckIn.CheckIn
     , avatarUrl : String
     , overdueForCheckIn : Bool
+    , checkFrequencyUnit : String
+    , checkFrequencyScalar : String
     }
 
 
@@ -42,7 +46,7 @@ type alias NewPlant =
 
 emptyPlant : Plant
 emptyPlant =
-    Plant 0 "" (Time.millisToPosix 0) [] "" False
+    Plant 0 "" (Time.millisToPosix 0) [] "" False "" ""
 
 
 getPlant : Int -> (Result Http.Error Plant -> msg) -> Cmd msg
@@ -80,6 +84,19 @@ createPlant csrfToken msg newPlant =
             encodePlant newPlant
     in
     HttpBuilder.post Api.plantsEndpoint
+        |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
+        |> HttpBuilder.withJsonBody params
+        |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
+        |> HttpBuilder.request
+
+
+updatePlant : String -> (Result Http.Error Plant -> msg) -> Int -> NewPlant -> Cmd msg
+updatePlant csrfToken msg plantId plantForm =
+    let
+        params =
+            encodePlant plantForm
+    in
+    HttpBuilder.put (Api.plantEndpoint plantId)
         |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
         |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
@@ -136,3 +153,10 @@ plantDecoder =
         |> optional "check_ins" CheckIn.checkInListDecoder []
         |> optional "avatar" string placeholderImage
         |> required "overdue_for_check_in" bool
+        |> required "check_frequency_unit" string
+        |> required "check_frequency_scalar" intToString
+
+
+intToString : Decoder String
+intToString =
+    Json.Decode.map String.fromInt int

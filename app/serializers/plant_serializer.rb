@@ -1,6 +1,7 @@
 class PlantSerializer < BaseSerializer
-  attributes :avatar, :check_ins, :id, :last_watered_at, :name,
-             :next_check_date, :overdue_for_check_in
+  attributes :avatar, :check_frequency_scalar, :check_frequency_unit,
+             :check_ins, :id, :last_watered_at, :name, :next_check_date,
+             :overdue_for_check_in
 
   has_many :check_ins do
     object.check_ins.limit(5)

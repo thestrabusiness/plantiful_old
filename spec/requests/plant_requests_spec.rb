@@ -56,9 +56,9 @@ RSpec.describe 'Plant requests', type: :request do
 
         result = response_json
 
-        expect(result[:name]).to eq 'Bobby'
-        expect(result[:last_watering_date]).to be nil
-        expect(result[:next_check_date]).to eq I18n.l(Time.current, format: :month_day_year)
+        expect(result[:name]).to eq plant_params[:plant][:name]
+        expect(result[:check_frequency_unit]).to eq plant_params[:plant][:check_frequency_unit]
+        expect(result[:check_frequency_scalar]).to eq plant_params[:plant][:check_frequency_scalar]
       end
     end
 
@@ -104,6 +104,57 @@ RSpec.describe 'Plant requests', type: :request do
 
       expect { delete api_plant_path(plant) }.to change { Plant.count }.from(1).to(0)
       expect(response.status).to eq 200
+    end
+  end
+
+  describe 'PUT /api/plants/:id' do
+    context 'with valid input' do
+      it 'returns the created plant' do
+        plant = create(:plant,
+                       name: 'Planthony',
+                       check_frequency_scalar: 3,
+                       check_frequency_unit: 'week')
+        plant_params = { plant:
+          { name: 'Bobby',
+            check_frequency_scalar: 1,
+            check_frequency_unit: 'day' } }
+
+        api_sign_in(plant.user)
+        put api_plant_path(plant.id), params: plant_params
+
+        result = response_json
+
+        expect(result[:name]).to eq plant_params[:plant][:name]
+        expect(result[:check_frequency_unit]).to eq plant_params[:plant][:check_frequency_unit]
+        expect(result[:check_frequency_scalar]).to eq plant_params[:plant][:check_frequency_scalar]
+      end
+    end
+
+    context 'with an invalid input' do
+      it 'returns a 422 - Unprocessable Entity' do
+        plant = create(:plant,
+                       name: 'Planthony',
+                       check_frequency_scalar: 3,
+                       check_frequency_unit: 'week')
+        plant_params = { plant:
+          { name: nil,
+            check_frequency_scalar: nil,
+            check_frequency_unit: nil } }
+
+        api_sign_in(plant.user)
+        put api_plant_path(plant.id), params: plant_params
+
+        result = response_json
+
+        expect(response.code).to eq '422'
+        expect(result.keys).to match_array %i[name check_frequency_scalar check_frequency_unit]
+      end
+    end
+
+    context 'with a valid input' do
+      it 'updates the plant with the given attributes' do
+
+      end
     end
   end
 

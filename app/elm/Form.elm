@@ -1,5 +1,6 @@
 module Form exposing
-    ( errorsForField
+    ( FormAction(..)
+    , errorsForField
     , onEnter
     , passwordField
     , textField
@@ -9,6 +10,11 @@ import Html exposing (Html, input, label, li, text, ul)
 import Html.Attributes exposing (class, type_, value)
 import Html.Events exposing (keyCode, on, onInput)
 import Json.Decode
+
+
+type FormAction
+    = Create
+    | Update
 
 
 textField :

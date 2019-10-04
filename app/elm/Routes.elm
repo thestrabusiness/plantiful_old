@@ -1,5 +1,6 @@
 module Routes exposing
     ( Route(..)
+    , editPlantPath
     , extractRoute
     , matchRoute
     , newPlantPath
@@ -20,6 +21,7 @@ type Route
     | NewPlantRoute
     | NewUserRoute
     | SignInRoute
+    | EditPlantRoute Int
 
 
 extractRoute : Url -> Route
@@ -41,6 +43,7 @@ matchRoute =
         , map NewPlantRoute (s "plants" </> s "new")
         , map NewUserRoute (s "sign_up")
         , map SignInRoute (s "sign_in")
+        , map EditPlantRoute (s "plants" </> int </> s "edit")
         ]
 
 
@@ -65,6 +68,9 @@ pathFor route =
         NotFoundRoute ->
             "/"
 
+        EditPlantRoute id ->
+            pathFor (PlantRoute id) ++ "/edit"
+
 
 plantPath : Int -> String
 plantPath id =
@@ -84,3 +90,8 @@ newPlantPath =
 signInPath : String
 signInPath =
     pathFor SignInRoute
+
+
+editPlantPath : Int -> String
+editPlantPath id =
+    pathFor <| EditPlantRoute id

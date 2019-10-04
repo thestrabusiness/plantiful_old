@@ -55,6 +55,7 @@ type Msg
     | UserCroppedPhoto
     | UserClickedDeletePlant Int
     | ReceivedDeletePlantResponse (Result Http.Error ())
+    | UserClickedEditPlant Int
 
 
 init : Nav.Key -> String -> Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
@@ -150,6 +151,9 @@ update msg model =
         ReceivedDeletePlantResponse (Err _) ->
             ( model, Cmd.none )
 
+        UserClickedEditPlant plantId ->
+            ( model, Cmd.none )
+
 
 subscriptions : Sub Msg
 subscriptions =
@@ -185,7 +189,10 @@ view model =
                             [ backButton, text "Back to Plants" ]
                         ]
                     , div [ class "details__controls details__controls-right" ]
-                        [ a [ href Routes.plantsPath ] [ editButton, text "Edit" ]
+                        [ a
+                            [ href <| Routes.editPlantPath plant.id
+                            ]
+                            [ editButton, text "Edit" ]
                         , div
                             [ onClick (UserClickedDeletePlant plant.id) ]
                             [ deleteButton, text "Delete" ]
