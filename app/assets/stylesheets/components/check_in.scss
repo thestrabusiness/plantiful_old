@@ -4,22 +4,30 @@
 }
 
 .check_in__item {
+  display: flex;
+  flex-direction: column;
+  margin: $spacing-base;
+  min-height: 11rem;
   width: 45%;
-  margin: $spacing-small;
 }
 
 .check_in__item-header {
-  display: flex;
   align-items: stretch;
+  display: flex;
   margin-bottom: $spacing-small;
+  max-height: 70px;
+
+  *::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 
 .check_in__item-calendar {
   background-color: $light-gray;
+  border-radius: 5px;
   padding-left: $spacing-small;
   padding-right: $spacing-small;
-  border-radius: 5px;
   text-align: center;
 
   .month {
@@ -38,13 +46,31 @@
 .check_in__item-actions {
   display: flex;
   flex-direction: column;
-  flex-grow: 2;
   justify-content: center;
   margin-left: $spacing-small;
+  margin-right: $spacing-xx-medium;
+  min-width: fit-content;
+}
+
+.check_in__item-photos {
+  align-items: baseline;
+  display:flex;
+  overflow-x: scroll;
+  overflow-y: hidden;
+
+  a {
+    min-height: fit-content;
+    min-width: fit-content;
+  }
+
+  img {
+    margin-left: 0.5rem;
+  }
 }
 
 .check_in__item-body{
   margin-bottom: $spacing-small;
+  flex-grow: 1;
 }
 
 .check_in__item-footer{

@@ -210,9 +210,12 @@ loadingOverlay loading =
                 [ div [ class "loader_bar__container" ]
                     [ div [ class "loader_bar__background" ]
                         [ div
-                            [ class "loader_bar__foreground", style "width" percentageString ]
+                            [ class "loader_bar__foreground"
+                            , style "width" percentageString
+                            ]
                             []
-                        , div [ class "loader_bar__text" ] [ text uploadingText ]
+                        , div [ class "loader_bar__text" ]
+                            [ text uploadingText ]
                         ]
                     ]
                 ]
@@ -249,7 +252,22 @@ checkInRowHeader checkIn =
         [ div [] [ text <| "Watered: " ++ yesOrNo checkIn.watered ]
         , div [] [ text <| "Fertilized: " ++ yesOrNo checkIn.fertilized ]
         ]
+    , div [ class "check_in__item-photos" ] <| checkInPhotos checkIn.photos
     ]
+
+
+checkInPhotos : List String -> List (Html msg)
+checkInPhotos photoUrls =
+    let
+        imageTags =
+            List.map toImageTag photoUrls
+    in
+    imageTags
+
+
+toImageTag : String -> Html msg
+toImageTag photoUrl =
+    a [ href photoUrl ] [ img [ src photoUrl ] [] ]
 
 
 monthText : Time.Posix -> String

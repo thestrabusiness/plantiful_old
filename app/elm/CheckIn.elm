@@ -5,7 +5,7 @@ import DateAndTime
 import File
 import Http
 import HttpBuilder
-import Json.Decode exposing (Decoder, bool, int, string, succeed)
+import Json.Decode exposing (Decoder, bool, int, list, string, succeed)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
 import Process
@@ -20,6 +20,7 @@ type alias CheckIn =
     , fertilized : Bool
     , notes : String
     , plantId : Int
+    , photos : List String
     }
 
 
@@ -136,6 +137,7 @@ checkInDecoder =
         |> required "fertilized" bool
         |> optional "notes" string ""
         |> required "plant_id" int
+        |> required "photo_urls" (list string)
 
 
 checkInListDecoder : Decoder (List CheckIn)

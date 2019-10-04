@@ -1,6 +1,4 @@
-class PlantSerializer < ActiveModel::Serializer
-  include Rails.application.routes.url_helpers
-
+class PlantSerializer < BaseSerializer
   attributes :avatar, :check_ins, :id, :last_watered_at, :name,
              :next_check_date, :overdue_for_check_in
 
