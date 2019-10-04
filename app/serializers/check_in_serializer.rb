@@ -1,5 +1,6 @@
 class CheckInSerializer < BaseSerializer
-  attributes :id, :created_at, :watered, :fertilized, :notes, :plant_id, :photo_urls
+  attributes :created_at, :fertilized, :id, :notes, :photo_urls, :plant_id,
+             :watered
 
   def created_at
     object.created_at.to_i
@@ -7,7 +8,12 @@ class CheckInSerializer < BaseSerializer
 
   def photo_urls
     object.photos.map do |photo|
-      rails_representation_url(photo.variant(resize: '70x70').processed)
+      {
+        preview: rails_representation_url(
+          photo.variant(resize: '70x70').processed
+        ),
+        original: rails_blob_path(photo, disposition: 'inline')
+      }
     end
   end
 end

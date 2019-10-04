@@ -1,4 +1,10 @@
-module CheckIn exposing (CheckIn, Event(..), checkInListDecoder, submitCheckIn)
+module CheckIn exposing
+    ( CheckIn
+    , Event(..)
+    , PhotoUrls
+    , checkInListDecoder
+    , submitCheckIn
+    )
 
 import Api
 import DateAndTime
@@ -20,7 +26,7 @@ type alias CheckIn =
     , fertilized : Bool
     , notes : String
     , plantId : Int
-    , photos : List String
+    , photos : List PhotoUrls
     }
 
 
@@ -31,6 +37,10 @@ type alias NewCheckIn =
     , photos : List String
     , plantId : Int
     }
+
+
+type alias PhotoUrls =
+    { preview : String, original : String }
 
 
 type Event
@@ -137,9 +147,21 @@ checkInDecoder =
         |> required "fertilized" bool
         |> optional "notes" string ""
         |> required "plant_id" int
-        |> required "photo_urls" (list string)
+        |> required "photo_urls" photoUrlsListDecoder
 
 
 checkInListDecoder : Decoder (List CheckIn)
 checkInListDecoder =
     Json.Decode.list checkInDecoder
+
+
+photoUrlsDecoder : Decoder PhotoUrls
+photoUrlsDecoder =
+    succeed PhotoUrls
+        |> required "preview" string
+        |> required "original" string
+
+
+photoUrlsListDecoder : Decoder (List PhotoUrls)
+photoUrlsListDecoder =
+    Json.Decode.list photoUrlsDecoder

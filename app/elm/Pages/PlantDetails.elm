@@ -12,7 +12,7 @@ import DateAndTime
 import File
 import File.Select as Select
 import Html exposing (Html, a, button, div, h2, h3, h4, img, p, text)
-import Html.Attributes exposing (class, href, id, src, style)
+import Html.Attributes exposing (class, href, id, src, style, target)
 import Html.Events exposing (onClick)
 import Http
 import Json.Encode
@@ -256,7 +256,7 @@ checkInRowHeader checkIn =
     ]
 
 
-checkInPhotos : List String -> List (Html msg)
+checkInPhotos : List CheckIn.PhotoUrls -> List (Html msg)
 checkInPhotos photoUrls =
     let
         imageTags =
@@ -265,9 +265,10 @@ checkInPhotos photoUrls =
     imageTags
 
 
-toImageTag : String -> Html msg
-toImageTag photoUrl =
-    a [ href photoUrl ] [ img [ src photoUrl ] [] ]
+toImageTag : CheckIn.PhotoUrls -> Html msg
+toImageTag photoUrls =
+    a [ href photoUrls.original, target "_blank" ]
+        [ img [ src photoUrls.preview ] [] ]
 
 
 monthText : Time.Posix -> String
