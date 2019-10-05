@@ -1,9 +1,15 @@
-%p= "Hey #{@user.full_name}," 
-  
+%h2= "Hey #{@user.first_name},"
+
 %p Some of your plants need some love!
-%ul
+
+.mailer__grid
   - @plants_that_need_care.each do |plant|
-    %li= plant.name
+    .mailer__grid-item
+      .mailer__avatar=image_tag(plant.avatar.variant(resize: '100x100'), size: '100')
+      .mailer__plant-details
+        .name=plant.name
+        .date=plant.last_check_in.created_at_date
+
 
 %p
   = link_to "Sign in", @sign_in_url 

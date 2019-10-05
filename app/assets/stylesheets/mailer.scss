@@ -1,0 +1,27 @@
+@import "bourbon";
+@import "base/base";
+
+html {
+  color: $font-color-base;
+  font-family: $base-font-family;
+  font-size: 100%;
+  line-height: $base-line-height;
+}
+
+.mailer__grid {
+  display: grid;
+  padding: $spacing-base 0;
+  padding-left: 5em;
+  width: 50vw;
+  grid-template: 1fr / repeat(4, 1fr);
+}
+
+.mailer__grid-item {
+  display:flex;
+}
+
+.mailer__plant-details {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}

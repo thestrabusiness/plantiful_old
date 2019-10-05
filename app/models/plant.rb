@@ -23,7 +23,7 @@ class Plant < ApplicationRecord
       .where(
         "check_ins.created_at + #{care_frequency_interval_sql}
         <= now()"
-      )
+      ).uniq
   end
 
   def check_frequency
