@@ -6,6 +6,7 @@
     "croppie": "^2.6.4",
     "elm": "^0.19.0-no-deps",
     "elm-webpack-loader": "^5.0.0",
+    "exif-js": "^2.3.0",
     "lodash": "^4.17.15"
   },
   "devDependencies": {

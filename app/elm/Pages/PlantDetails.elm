@@ -361,8 +361,14 @@ cropperModal model =
                 [ div [ class "modal__cropper" ]
                     [ div [ id "croppie" ] [] ]
                 , Modal.modalFooter
-                    [ button [ onClick UserCroppedPhoto, id "croppie_button" ]
+                    [ button [ id "croppie_rotate_l" ]
+                        [ text "Rotate Left"
+                        ]
+                    , button [ onClick UserCroppedPhoto, id "croppie_button" ]
                         [ text "Crop"
+                        ]
+                    , button [ id "croppie_rotate_r" ]
+                        [ text "Rotate Right"
                         ]
                     ]
                 ]

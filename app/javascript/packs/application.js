@@ -1,5 +1,6 @@
 import { Elm } from '../../elm/Main';
 import Croppie from 'croppie/croppie';
+import EXIF from 'exif-js'
 
 function rafAsync() {
   return new Promise(resolve => {
@@ -32,6 +33,7 @@ function boundaryDimensions () {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  window.EXIF = EXIF
   const csrfToken = document.getElementsByName('csrf-token')[0].content
   const target = document.createElement('div')
   document.body.appendChild(target)
@@ -43,16 +45,26 @@ document.addEventListener('DOMContentLoaded', () => {
     checkElement('#croppie').then(result =>{
       const croppieTarget = document.getElementById('croppie')
       const croppieButton = document.getElementById('croppie_button')
+      const rotateLeftButton = document.getElementById('croppie_rotate_l')
+      const rotateRightButton = document.getElementById('croppie_rotate_r')
       const opts = {
+        boundary: boundaryDimensions(),
+        enableExif: true,
+        enableOrientation: true,
         url: data,
         viewport: viewportDimensions(),
-        boundary: boundaryDimensions(),
       }
       let croppie = new Croppie(croppieTarget, opts )
       croppieButton.addEventListener("click", function(){
         croppie.result({format: 'jpeg', type: 'base64'}).then(function(result){
           app.ports.sendCroppedImage.send(result)
         })
+      })
+      rotateLeftButton.addEventListener("click", function(){
+        croppie.rotate(90)
+      })
+      rotateRightButton.addEventListener("click", function(){
+        croppie.rotate(-90)
       })
     });
   });
