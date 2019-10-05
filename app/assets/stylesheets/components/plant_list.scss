@@ -41,8 +41,15 @@
 
 .plant__list-details {
   display: grid;
-  grid-template: 1fr / repeat(2, 1fr);
-  padding: 1em;
+  grid-template: 1fr / repeat(2, 150px);
+  max-width: fit-content;
+  padding: 1em 0;
+
+  li {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 
 .plant__list-button {
