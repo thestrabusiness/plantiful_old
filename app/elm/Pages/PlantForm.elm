@@ -62,14 +62,14 @@ init csrfToken user maybeId =
                     Form.Create
 
         initialModel =
-            Model emptyPlantForm user [] "" csrfToken formAction maybeId
+            Model initialPlantForm user [] "" csrfToken formAction maybeId
     in
     ( initialModel, loadPlant maybeId )
 
 
-emptyPlantForm : PlantForm
-emptyPlantForm =
-    { name = "", checkFrequencyScalar = "", checkFrequencyUnit = "" }
+initialPlantForm : PlantForm
+initialPlantForm =
+    { name = "", checkFrequencyScalar = "", checkFrequencyUnit = "day" }
 
 
 loadPlant : Maybe Int -> Cmd Msg
