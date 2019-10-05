@@ -141,7 +141,7 @@ plantListDecoder =
 
 placeholderImage : String
 placeholderImage =
-    "https://raw.githubusercontent.com/thestrabusiness/plantiful/change-plant-list-styling/app/assets/images/default_plant.jpg"
+    "https://raw.githubusercontent.com/thestrabusiness/plantiful/master/app/assets/images/default_plant.jpg"
 
 
 plantDecoder : Decoder Plant
