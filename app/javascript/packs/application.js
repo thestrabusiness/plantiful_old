@@ -15,6 +15,22 @@ function checkElement(selector) {
   }
 }
 
+function viewportDimensions () {
+  if(window.innerWidth <= 1100) {
+    return { height: 500, width: 500 }
+  } else {
+    return { height: 300, width: 300 }
+  }
+}
+
+function boundaryDimensions () {
+  if(window.innerWidth <= 1100) {
+    return { height: 800, width: 800 }
+  } else {
+    return { height: 400, width: 400 }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const csrfToken = document.getElementsByName('csrf-token')[0].content
   const target = document.createElement('div')
@@ -29,8 +45,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const croppieButton = document.getElementById('croppie_button')
       const opts = {
         url: data,
-        viewport: { height: 300, width: 300 },
-        boundary: { height: 400, width: 400 },
+        viewport: viewportDimensions(),
+        boundary: boundaryDimensions(),
       }
       let croppie = new Croppie(croppieTarget, opts )
       croppieButton.addEventListener("click", function(){

@@ -358,7 +358,8 @@ cropperModal model =
         [ div [ class "modal__container--large" ]
             [ Modal.modalHeader "Crop your image"
             , div [ class "modal__content--large" ]
-                [ div [ id "croppie" ] []
+                [ div [ class "modal__cropper" ]
+                    [ div [ id "croppie" ] [] ]
                 , Modal.modalFooter
                     [ button [ onClick UserCroppedPhoto, id "croppie_button" ]
                         [ text "Crop"
