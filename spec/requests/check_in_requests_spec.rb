@@ -6,7 +6,7 @@ RSpec.describe 'Check-in request', type: :request do
       context 'marks a plant watered' do
         it 'creates check-in with watered true for the given plant' do
           plant = create(:plant, name: 'Planty')
-          api_sign_in(plant.user)
+          api_sign_in(plant.added_by)
 
           json_post(api_plant_check_ins_path(plant),
                     params: { check_in: { watered: true, fertilized: false } })
@@ -24,7 +24,7 @@ RSpec.describe 'Check-in request', type: :request do
       context 'marks a plant fertilized' do
         it 'creates a check-in with fertilized true for the given plant' do
           plant = create(:plant, name: 'Planty')
-          api_sign_in(plant.user)
+          api_sign_in(plant.added_by)
 
           json_post(api_plant_check_ins_path(plant),
                     params: { check_in: { watered: false, fertilized: true } })
@@ -42,7 +42,7 @@ RSpec.describe 'Check-in request', type: :request do
       context 'adds notes to the check-in' do
         it 'creates a check-in with notes for the given plant' do
           plant = create(:plant, name: 'Planty')
-          api_sign_in(plant.user)
+          api_sign_in(plant.added_by)
 
           json_post(api_plant_check_ins_path(plant),
                     params: { check_in: { watered: false,
@@ -66,7 +66,7 @@ RSpec.describe 'Check-in request', type: :request do
           image_path = Rails.root.join('spec', 'fixtures', 'plant.jpg')
           photo = 'data:image/jpg;base64,' + Base64.strict_encode64(File.read(image_path))
 
-          api_sign_in(plant.user)
+          api_sign_in(plant.added_by)
           expect {
             post api_plant_check_ins_path(plant),
                  params: { check_in: { watered: false,
@@ -80,7 +80,7 @@ RSpec.describe 'Check-in request', type: :request do
         context 'such as a missing "watered" key' do
           it 'creates the check-in with watered false' do
             plant = create(:plant, name: 'Planty')
-            api_sign_in(plant.user)
+            api_sign_in(plant.added_by)
 
             json_post(api_plant_check_ins_path(plant),
                       params: { check_in: { watered: false,

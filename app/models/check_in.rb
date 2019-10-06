@@ -1,9 +1,10 @@
 class CheckIn < ApplicationRecord
   belongs_to :plant
+  belongs_to :performed_by, class_name: 'User'
 
   has_many_base64_attached :photos
 
-  validates :plant, presence: true
+  validates :plant, :performed_by, presence: true
 
   scope :check_in, -> { where(fertilized: false, watered: false) }
   scope :fertilized, -> { where(fertilized: true) }

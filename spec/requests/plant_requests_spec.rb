@@ -87,7 +87,7 @@ RSpec.describe 'Plant requests', type: :request do
       image_path = Rails.root.join('spec', 'fixtures', 'plant.jpg')
       base64_avatar = 'data:image/jpg;base64,' + Base64.strict_encode64(File.read(image_path))
 
-      api_sign_in(plant.user)
+      api_sign_in(plant.added_by)
 
       expect { post_avatar(plant, base64_avatar) }
         .to change { ActiveStorage::Blob.count }.from(0).to(1)
@@ -100,7 +100,7 @@ RSpec.describe 'Plant requests', type: :request do
     it 'destroys the plant with the given ID' do
       plant = create(:plant)
 
-      api_sign_in(plant.user)
+      api_sign_in(plant.added_by)
 
       expect { delete api_plant_path(plant) }.to change { Plant.count }.from(1).to(0)
       expect(response.status).to eq 200
@@ -119,7 +119,7 @@ RSpec.describe 'Plant requests', type: :request do
             check_frequency_scalar: 1,
             check_frequency_unit: 'day' } }
 
-        api_sign_in(plant.user)
+        api_sign_in(plant.added_by)
         put api_plant_path(plant.id), params: plant_params
 
         result = response_json
@@ -141,7 +141,7 @@ RSpec.describe 'Plant requests', type: :request do
             check_frequency_scalar: nil,
             check_frequency_unit: nil } }
 
-        api_sign_in(plant.user)
+        api_sign_in(plant.added_by)
         put api_plant_path(plant.id), params: plant_params
 
         result = response_json

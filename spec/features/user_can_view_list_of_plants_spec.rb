@@ -2,9 +2,10 @@ require 'rails_helper'
 
 RSpec.feature 'User can view a list of plants' do
   it 'user can see a list of plant names' do
-    user = create(:user)
-    plant1 = create(:plant, name: 'plant', user: user)
-    plant2 = create(:plant, name: 'other plant', user: user)
+    garden = create(:garden)
+    user = create(:user, garden: garden)
+    plant1 = create(:plant, name: 'plant', garden: garden)
+    plant2 = create(:plant, name: 'other plant', garden: garden)
 
     visit plants_path(user)
     expect(page).to have_content plant1.name
@@ -12,9 +13,10 @@ RSpec.feature 'User can view a list of plants' do
   end
 
   it 'user can see when a plant was last watered' do
-    user = create(:user)
-    plant = create(:plant, name: 'plant', user: user)
-    plant.waterings.create
+    garden = create(:garden)
+    user = create(:user, garden: garden)
+    plant = create(:plant, name: 'plant', garden: garden)
+    plant.waterings.create(performed_by: user)
 
     visit plants_path(user)
 
@@ -22,8 +24,9 @@ RSpec.feature 'User can view a list of plants' do
   end
 
   it 'user can see when a plant is overdue for watering' do
-    user = create(:user)
-    _plant_without_watering = create(:plant, name: 'plant', user: user)
+    garden = create(:garden)
+    user = create(:user, garden: garden)
+    _plant_without_watering = create(:plant, name: 'plant', garden: garden)
 
     visit plants_path(user)
 

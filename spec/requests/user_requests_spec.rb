@@ -1,3 +1,5 @@
+require 'rails_helper'
+
 RSpec.describe 'User requests', type: :request do
   describe 'POST /api/users' do
     context 'with the required fields' do

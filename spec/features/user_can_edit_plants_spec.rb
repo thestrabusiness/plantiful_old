@@ -7,7 +7,7 @@ RSpec.feature 'User can edit plants' do
                    check_frequency_scalar: 3,
                    check_frequency_unit: 'week')
 
-    visit plant_path(plant, plant.user)
+    visit plant_path(plant, plant.added_by)
     click_on 'Edit'
 
     fill_in 'Name', with: 'my cool plant'

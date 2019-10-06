@@ -1,7 +1,9 @@
 class Plant < ApplicationRecord
   FREQUENCY_UNITS = %w[day week].freeze
 
-  belongs_to :user
+  belongs_to :garden
+  belongs_to :added_by, class_name: 'User'
+  has_many :users, through: :garden
   has_many :check_ins, dependent: :destroy
   has_one :last_check_in, class_name: 'CheckIn'
   has_one :last_check, -> { check_in }, class_name: 'CheckIn'
@@ -14,7 +16,7 @@ class Plant < ApplicationRecord
 
   has_one_base64_attached :avatar
 
-  validates :user, :name, presence: true
+  validates :added_by, :garden, :name, presence: true
   validates :check_frequency_scalar, presence: true, numericality: true
   validates :check_frequency_unit, presence: true, inclusion: FREQUENCY_UNITS
 

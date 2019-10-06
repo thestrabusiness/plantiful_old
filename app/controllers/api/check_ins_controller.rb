@@ -2,7 +2,11 @@ module Api
   class CheckInsController < Api::BaseController
     def create
       plant = current_user.plants.find(params[:plant_id])
-      check_in = plant.check_ins.create(check_in_attrs)
+      check_in = plant
+                 .check_ins
+                 .create(
+                   check_in_attrs.merge(performed_by: current_user)
+                 )
       check_in.attach_photos(photos)
       if check_in.valid?
         render json: check_in, status: :created

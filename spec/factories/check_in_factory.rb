@@ -3,6 +3,7 @@ FactoryBot.define do
     fertilized { false }
     watered { false }
     plant
+    association :performed_by, factory: :user
 
     trait :watered do
       watered { true }

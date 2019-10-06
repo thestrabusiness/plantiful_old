@@ -9,7 +9,12 @@ module Api
     end
 
     def create
-      plant = current_user.plants.create(plant_params)
+      plant = current_user
+              .garden
+              .plants
+              .create(
+                plant_params.merge(added_by: current_user)
+              )
       if plant.errors.empty?
         render json: plant, status: :created
       else

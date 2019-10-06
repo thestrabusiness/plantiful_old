@@ -1,9 +1,10 @@
 FactoryBot.define do
   factory :plant do
-    sequence(:name) { |n| "Plant #{n}" }
-    user
+    association :added_by, factory: :user
     check_frequency_scalar { 1 }
     check_frequency_unit { 'day' }
+    garden
+    sequence(:name) { |n| "Plant #{n}" }
 
     trait :with_weekly_check do
       check_frequency_scalar { 1 }
@@ -14,6 +15,10 @@ FactoryBot.define do
       after :create do |plant, _evaluator|
         create_list(:check_in, 5, :watered, plant: plant)
       end
+    end
+
+    after(:build) do |plant, _|
+      plant.added_by.update(garden: plant.garden)
     end
   end
 end
