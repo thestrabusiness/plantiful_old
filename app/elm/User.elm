@@ -20,6 +20,7 @@ type alias User =
     , lastName : String
     , email : String
     , rememberToken : String
+    , defaultGardenId : Int
     }
 
 
@@ -88,15 +89,7 @@ userDecoder =
         |> required "last_name" string
         |> required "email" string
         |> required "remember_token" string
-
-
-errorsDecoder : Decoder Errors
-errorsDecoder =
-    succeed Errors
-        |> optional "first_name" (list string) []
-        |> optional "last_name" (list string) []
-        |> optional "email" (list string) []
-        |> optional "password" (list string) []
+        |> required "default_garden_id" int
 
 
 encodeUser : NewUser -> Encode.Value

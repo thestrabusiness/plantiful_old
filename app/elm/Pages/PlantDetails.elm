@@ -60,7 +60,9 @@ type Msg
 
 init : Nav.Key -> String -> Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
 init key csrfToken plantId user timeZone =
-    ( Model Nothing user timeZone None Modal.ModalClosed csrfToken key, getPlant plantId )
+    ( Model Nothing user timeZone None Modal.ModalClosed csrfToken key
+    , getPlant plantId
+    )
 
 
 port initJsCropper : String -> Cmd msg
@@ -143,7 +145,9 @@ update msg model =
                     ( model, Cmd.none )
 
         UserClickedDeletePlant plantId ->
-            ( model, deletePlant model.csrfToken plantId )
+            ( model
+            , deletePlant model.csrfToken plantId
+            )
 
         ReceivedDeletePlantResponse (Ok _) ->
             ( model, Nav.pushUrl model.key Routes.plantsPath )
@@ -169,13 +173,13 @@ uploadPhoto csrfToken base64Photo plant =
 
 
 getPlant : Int -> Cmd Msg
-getPlant id =
-    Plant.getPlant id ReceivedGetPlantResponse
+getPlant plantId =
+    Plant.getPlant plantId ReceivedGetPlantResponse
 
 
 deletePlant : String -> Int -> Cmd Msg
-deletePlant csrfToken id =
-    Plant.deletePlant csrfToken id ReceivedDeletePlantResponse
+deletePlant csrfToken plantId =
+    Plant.deletePlant csrfToken plantId ReceivedDeletePlantResponse
 
 
 view : Model -> Html Msg

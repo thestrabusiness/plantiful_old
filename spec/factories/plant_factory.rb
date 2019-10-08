@@ -3,7 +3,6 @@ FactoryBot.define do
     association :added_by, factory: :user
     check_frequency_scalar { 1 }
     check_frequency_unit { 'day' }
-    garden
     sequence(:name) { |n| "Plant #{n}" }
 
     trait :with_weekly_check do
@@ -18,7 +17,9 @@ FactoryBot.define do
     end
 
     after(:build) do |plant, _|
-      plant.added_by.update(garden: plant.garden)
+      if plant.garden.nil?
+        plant.garden = plant.added_by.owned_gardens.first
+      end
     end
   end
 end

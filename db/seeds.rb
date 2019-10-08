@@ -10,12 +10,10 @@ plant_image_paths = [
   PLANT_4_IMAGE_PATH
 ]
 
-garden = Garden.create!(name: "Uncle Tony's Garden")
 
 uncle = User.create!(
   email: "uncletony@example.com",
   first_name: "Uncle",
-  garden: garden,
   last_name: "Tony",
   password: "password",
 )
@@ -23,12 +21,14 @@ uncle = User.create!(
 auntie = User.create!(
   email: "auntietony@example.com",
   first_name: "Auntie",
-  garden: garden,
   last_name: "Tony",
   password: "password",
 )
 
 users = [uncle, auntie]
+
+garden = Garden.create!(name: "Uncle Tony's Garden", owner: uncle)
+garden.users << auntie
 
 12.times do |i|
   plant = Plant.create!(

@@ -73,7 +73,9 @@ type Loading
 
 init : String -> User -> Time.Posix -> Time.Zone -> ( Model, Cmd Msg )
 init csrfToken user currentTime timeZone =
-    ( initialModel csrfToken user currentTime timeZone, getPlants )
+    ( initialModel csrfToken user currentTime timeZone
+    , getPlants user.defaultGardenId
+    )
 
 
 initialModel : String -> User -> Time.Posix -> Time.Zone -> Model
@@ -356,9 +358,9 @@ distanceInDays currentTime wateredAt =
 -- API
 
 
-getPlants : Cmd Msg
-getPlants =
-    Plant.getPlants NewPlants
+getPlants : Int -> Cmd Msg
+getPlants gardenId =
+    Plant.getPlants gardenId NewPlants
 
 
 submitCheckIn : String -> CheckInForm -> Cmd Msg

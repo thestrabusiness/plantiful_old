@@ -51,10 +51,10 @@ type alias PlantForm =
 
 
 init : String -> User -> Maybe Int -> ( Model, Cmd Msg )
-init csrfToken user maybeId =
+init csrfToken user maybePlantId =
     let
         formAction =
-            case maybeId of
+            case maybePlantId of
                 Just _ ->
                     Form.Update
 
@@ -62,24 +62,14 @@ init csrfToken user maybeId =
                     Form.Create
 
         initialModel =
-            Model initialPlantForm user [] "" csrfToken formAction maybeId
+            Model initialPlantForm user [] "" csrfToken formAction maybePlantId
     in
-    ( initialModel, loadPlant maybeId )
+    ( initialModel, loadPlant maybePlantId )
 
 
 initialPlantForm : PlantForm
 initialPlantForm =
     { name = "", checkFrequencyScalar = "", checkFrequencyUnit = "day" }
-
-
-loadPlant : Maybe Int -> Cmd Msg
-loadPlant maybeId =
-    case maybeId of
-        Just id ->
-            Plant.getPlant id ReceivedGetPlantResponse
-
-        Nothing ->
-            Cmd.none
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg )
@@ -99,14 +89,22 @@ update msg model key =
                         validPlant =
                             fromValid validatedForm
                     in
-                    ( model, createNewPlant model.csrfToken validPlant )
+                    ( model
+                    , createNewPlant model.csrfToken
+                        model.currentUser.defaultGardenId
+                        validPlant
+                    )
 
                 ( Ok validatedForm, Form.Update, Just plantId ) ->
                     let
                         validPlant =
                             fromValid validatedForm
                     in
-                    ( model, updatePlant model.csrfToken plantId validPlant )
+                    ( model
+                    , updatePlant model.csrfToken
+                        plantId
+                        validPlant
+                    )
 
                 ( Ok _, _, _ ) ->
                     ( model, Cmd.none )
@@ -198,6 +196,10 @@ setField field value model =
                     { plant | checkFrequencyScalar = value }
     in
     { model | plant = updatedPlant }
+
+
+
+-- VIEW
 
 
 view : Model -> Html Msg
@@ -319,11 +321,25 @@ formValidator =
         ]
 
 
-createNewPlant : String -> PlantForm -> Cmd Msg
-createNewPlant csrfToken plantForm =
-    Plant.createPlant csrfToken ReceivedCreatePlantResponse plantForm
+
+-- API
+
+
+loadPlant : Maybe Int -> Cmd Msg
+loadPlant maybePlantId =
+    case maybePlantId of
+        Just plantId ->
+            Plant.getPlant plantId ReceivedGetPlantResponse
+
+        Nothing ->
+            Cmd.none
+
+
+createNewPlant : String -> Int -> PlantForm -> Cmd Msg
+createNewPlant csrfToken gardenId plantForm =
+    Plant.createPlant csrfToken gardenId ReceivedCreatePlantResponse plantForm
 
 
 updatePlant : String -> Int -> PlantForm -> Cmd Msg
 updatePlant csrfToken plantId plantForm =
-    Plant.updatePlant csrfToken ReceivedUpdatePlantResponse plantId plantForm
+    Plant.updatePlant csrfToken plantId ReceivedUpdatePlantResponse plantForm

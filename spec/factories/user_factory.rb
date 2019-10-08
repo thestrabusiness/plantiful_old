@@ -4,7 +4,10 @@ FactoryBot.define do
     sequence(:last_name) { |n| "Tony #{n}" }
     sequence(:email) { |n| "uncletony#{n}@example.com" }
     password { 'password' }
-    garden
+
+    after :create do |user, _|
+      create(:garden, owner: user)
+    end
 
     trait :with_plants do
       transient do
@@ -14,7 +17,7 @@ FactoryBot.define do
       after :create do |user, evaluator|
         evaluator
           .number
-          .times { create(:plant, added_by: user, garden: user.garden) }
+          .times { create(:plant, added_by: user, garden: user.owned_gardens.first) }
       end
     end
   end

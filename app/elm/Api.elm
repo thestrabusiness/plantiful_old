@@ -2,6 +2,9 @@ module Api exposing
     ( baseUrl
     , checkInEndpoint
     , currentUserEndpoint
+    , gardenEndpoint
+    , gardenPlantEndpoint
+    , gardenPlantsEndpoint
     , networkError
     , plantAvatarEndpoint
     , plantEndpoint
@@ -17,6 +20,21 @@ module Api exposing
 baseUrl : String
 baseUrl =
     "/api"
+
+
+gardenEndpoint : Int -> String
+gardenEndpoint gardenId =
+    baseUrl ++ "/gardens/" ++ String.fromInt gardenId
+
+
+gardenPlantsEndpoint : Int -> String
+gardenPlantsEndpoint gardenId =
+    gardenEndpoint gardenId ++ "/plants/"
+
+
+gardenPlantEndpoint : Int -> Int -> String
+gardenPlantEndpoint gardenId plantId =
+    gardenPlantsEndpoint gardenId ++ "/" ++ String.fromInt plantId
 
 
 plantsEndpoint : String

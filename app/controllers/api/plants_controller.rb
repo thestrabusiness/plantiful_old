@@ -1,20 +1,19 @@
 module Api
   class PlantsController < Api::BaseController
     def index
-      render json: current_user
-        .plants
+      garden = Garden.find(params[:garden_id])
+      plants = garden.plants
+
+      render json: plants
         .with_attached_avatar
         .includes(:last_watering, :last_check_in)
         .sort_by(&:next_check_time)
     end
 
     def create
-      plant = current_user
-              .garden
-              .plants
-              .create(
-                plant_params.merge(added_by: current_user)
-              )
+      garden = Garden.find(params[:garden_id])
+      plant = garden.plants.create(plant_params.merge(added_by: current_user))
+
       if plant.errors.empty?
         render json: plant, status: :created
       else

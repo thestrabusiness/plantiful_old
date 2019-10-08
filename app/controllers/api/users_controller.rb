@@ -3,11 +3,10 @@ module Api
     skip_before_action :require_login
 
     def create
-      garden = Garden.create(name: 'New Garden')
-      user = User.new(user_params.merge(garden: garden))
+      user = User.new(user_params)
+      garden = Garden.new(name: user.default_garden_name, owner: user)
 
-      if user.save
-        garden.update(name: user.default_garden_name)
+      if user.save && garden.save
         sign_in user
         render_with_status(user, :created)
       else

@@ -56,16 +56,11 @@ getPlant plantId msg =
         |> HttpBuilder.request
 
 
-getPlants : (Result Http.Error (List Plant) -> msg) -> Cmd msg
-getPlants msg =
-    HttpBuilder.get Api.plantsEndpoint
+getPlants : Int -> (Result Http.Error (List Plant) -> msg) -> Cmd msg
+getPlants gardenId msg =
+    HttpBuilder.get (Api.gardenPlantsEndpoint gardenId)
         |> HttpBuilder.withExpect (Http.expectJson msg plantListDecoder)
         |> HttpBuilder.request
-
-
-encodeCareEvent : String -> Encode.Value
-encodeCareEvent kind =
-    Encode.object [ ( "kind", Encode.string kind ) ]
 
 
 encodePlant : NewPlant -> Encode.Value
@@ -77,21 +72,21 @@ encodePlant plant =
         ]
 
 
-createPlant : String -> (Result Http.Error Plant -> msg) -> NewPlant -> Cmd msg
-createPlant csrfToken msg newPlant =
+createPlant : String -> Int -> (Result Http.Error Plant -> msg) -> NewPlant -> Cmd msg
+createPlant csrfToken gardenId msg newPlant =
     let
         params =
             encodePlant newPlant
     in
-    HttpBuilder.post Api.plantsEndpoint
+    HttpBuilder.post (Api.gardenPlantsEndpoint gardenId)
         |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
         |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
         |> HttpBuilder.request
 
 
-updatePlant : String -> (Result Http.Error Plant -> msg) -> Int -> NewPlant -> Cmd msg
-updatePlant csrfToken msg plantId plantForm =
+updatePlant : String -> Int -> (Result Http.Error Plant -> msg) -> NewPlant -> Cmd msg
+updatePlant csrfToken plantId msg plantForm =
     let
         params =
             encodePlant plantForm

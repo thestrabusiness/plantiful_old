@@ -10,7 +10,7 @@ RSpec.describe 'Plant requests', type: :request do
           _other_plants = create_list(:plant, 3)
           api_sign_in(user)
 
-          get api_plants_path
+          get api_garden_plants_path(user.gardens.first)
 
           api_response = response_json
           returned_ids = api_response.collect { |result| result[:id] }
@@ -26,7 +26,7 @@ RSpec.describe 'Plant requests', type: :request do
           _other_plants = create_list(:plant, 3)
           api_sign_in(user)
 
-          get api_plants_path
+          get api_garden_plants_path(user.gardens.first)
 
           result = response_json
           expect(result.size).to eq 0
@@ -36,7 +36,8 @@ RSpec.describe 'Plant requests', type: :request do
 
     context 'when no user is signed in' do
       it 'returns a 401 - Unauthorized' do
-        get '/api/plants'
+        user = create(:user)
+        get api_garden_plants_path(user.gardens.first)
         expect(response.code).to eq '401'
       end
     end
@@ -44,21 +45,23 @@ RSpec.describe 'Plant requests', type: :request do
 
   describe 'POST /api/plants' do
     context 'with valid input' do
-      it 'returns the created plant' do
+      it 'returns the created plant in the users garden' do
         user = create(:user)
+        garden = user.gardens.first
         plant_params = { plant:
           { name: 'Bobby',
             check_frequency_scalar: 1,
             check_frequency_unit: 'week' } }
 
         api_sign_in(user)
-        post api_plants_path, params: plant_params
+        post api_garden_plants_path(garden), params: plant_params
 
         result = response_json
 
         expect(result[:name]).to eq plant_params[:plant][:name]
         expect(result[:check_frequency_unit]).to eq plant_params[:plant][:check_frequency_unit]
         expect(result[:check_frequency_scalar]).to eq plant_params[:plant][:check_frequency_scalar]
+        expect(result[:garden_id]).to eq garden.id
       end
     end
 
@@ -71,7 +74,7 @@ RSpec.describe 'Plant requests', type: :request do
             check_frequency_unit: nil } }
 
         api_sign_in(user)
-        post api_plants_path, params: plant_params
+        post api_garden_plants_path(user.gardens.first), params: plant_params
 
         result = response_json
 
@@ -102,7 +105,8 @@ RSpec.describe 'Plant requests', type: :request do
 
       api_sign_in(plant.added_by)
 
-      expect { delete api_plant_path(plant) }.to change { Plant.count }.from(1).to(0)
+      expect { delete api_plant_path(plant) }
+        .to change { Plant.count }.from(1).to(0)
       expect(response.status).to eq 200
     end
   end
