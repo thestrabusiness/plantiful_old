@@ -1,6 +1,6 @@
 module FrontEndRouteHelpers
-  def plants_path(user = nil)
-    path_builder('plants', user)
+  def garden_path(garden, user = nil)
+    path_builder("gardens/#{garden.id}", user)
   end
 
   def plant_path(plant, user = nil)

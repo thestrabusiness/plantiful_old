@@ -150,7 +150,16 @@ update msg model =
             )
 
         ReceivedDeletePlantResponse (Ok _) ->
-            ( model, Nav.pushUrl model.key Routes.plantsPath )
+            case model.plant of
+                Just plant ->
+                    ( model
+                    , Nav.pushUrl model.key (Routes.gardenPath plant.gardenId)
+                    )
+
+                Nothing ->
+                    ( model
+                    , Nav.pushUrl model.key (Routes.gardenPath model.currentUser.defaultGardenId)
+                    )
 
         ReceivedDeletePlantResponse (Err _) ->
             ( model, Cmd.none )
@@ -189,7 +198,7 @@ view model =
             div [ class "container__center" ]
                 [ div [ class "details__container container__grid" ]
                     [ div [ class "details__controls details__controls-left" ]
-                        [ a [ href Routes.plantsPath ]
+                        [ a [ href (Routes.gardenPath plant.gardenId) ]
                             [ backButton, text "Back to Plants" ]
                         ]
                     , div [ class "details__controls details__controls-right" ]

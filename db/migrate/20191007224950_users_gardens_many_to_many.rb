@@ -20,7 +20,7 @@ class UsersGardensManyToMany < ActiveRecord::Migration[5.2]
       garden = user.garden
       if garden.owner_id.nil?
         garden.update(owner_id: user.id)
-        garden.users << User.where(garden_id: garden.id).where.not(id: user.id)
+        garden.users << User.where(garden_id: garden.id)
       end
     end
 

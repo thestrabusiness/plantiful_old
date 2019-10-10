@@ -104,4 +104,33 @@
   font-size: $font-size-large;
 }
 
+.menu__button {
+  cursor: pointer;
+}
 
+.menu {
+  background: #ededed;
+  bottom: 0;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.15);
+  height: 100vh;
+  left: 0px;
+  list-style-type: none;
+  padding: $spacing-base;
+  position: absolute;
+  transform-origin: 0% 0%;
+  transform: translate(-100%, 0);
+  transition: transform 0.5s cubic-bezier(0.77,0.2,0.05,1.0);
+  top: 65px;
+  width: 300px;
+  /* to stop flickering of text in safari */
+  -webkit-font-smoothing: antialiased;
+}
+
+.menu li {
+  padding: 10px 0;
+  font-size: 22px;
+}
+
+.menu-toggled  {
+  transform: none;
+}

@@ -63,7 +63,10 @@ update msg model key =
                     ( { model | errors = errorList }, Cmd.none, Nothing )
 
         ReceivedSignInResponse (Ok user) ->
-            ( model, Nav.pushUrl key Routes.plantsPath, Just user )
+            ( model
+            , Nav.pushUrl key (Routes.gardenPath user.defaultGardenId)
+            , Just user
+            )
 
         ReceivedSignInResponse (Err error) ->
             case error of

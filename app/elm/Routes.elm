@@ -2,11 +2,11 @@ module Routes exposing
     ( Route(..)
     , editPlantPath
     , extractRoute
+    , gardenPath
     , matchRoute
     , newPlantPath
     , pathFor
     , plantPath
-    , plantsPath
     , signInPath
     )
 
@@ -15,13 +15,14 @@ import Url.Parser exposing (..)
 
 
 type Route
-    = PlantsRoute
-    | PlantRoute Int
-    | NotFoundRoute
-    | NewPlantRoute
+    = NotFoundRoute
+    | NewPlantRoute Int
     | NewUserRoute
     | SignInRoute
     | EditPlantRoute Int
+    | GardenRoute Int
+    | GardensRoute
+    | PlantRoute Int
 
 
 extractRoute : Url -> Route
@@ -38,26 +39,21 @@ matchRoute : Parser (Route -> a) a
 matchRoute =
     oneOf
         [ map SignInRoute top
-        , map PlantsRoute (s "plants")
-        , map PlantRoute (s "plants" </> int)
-        , map NewPlantRoute (s "plants" </> s "new")
+        , map NewPlantRoute (s "gardens" </> int </> s "plants" </> s "new")
         , map NewUserRoute (s "sign_up")
         , map SignInRoute (s "sign_in")
         , map EditPlantRoute (s "plants" </> int </> s "edit")
+        , map GardensRoute (s "gardens")
+        , map GardenRoute (s "gardens" </> int)
+        , map PlantRoute (s "plants" </> int)
         ]
 
 
 pathFor : Route -> String
 pathFor route =
     case route of
-        PlantRoute id ->
-            "/plants/" ++ String.fromInt id
-
-        PlantsRoute ->
-            "/plants"
-
-        NewPlantRoute ->
-            "/plants/new"
+        NewPlantRoute gardenId ->
+            "/gardens/" ++ String.fromInt gardenId ++ "/plants/new"
 
         NewUserRoute ->
             "/sign_up"
@@ -68,23 +64,22 @@ pathFor route =
         NotFoundRoute ->
             "/"
 
-        EditPlantRoute id ->
-            pathFor (PlantRoute id) ++ "/edit"
+        EditPlantRoute plantId ->
+            "/plants/" ++ String.fromInt plantId ++ "/edit"
+
+        GardenRoute id ->
+            "/gardens/" ++ String.fromInt id
+
+        GardensRoute ->
+            "/gardens"
+
+        PlantRoute id ->
+            "/plants/" ++ String.fromInt id
 
 
-plantPath : Int -> String
-plantPath id =
-    pathFor <| PlantRoute id
-
-
-plantsPath : String
-plantsPath =
-    pathFor PlantsRoute
-
-
-newPlantPath : String
-newPlantPath =
-    pathFor NewPlantRoute
+newPlantPath : Int -> String
+newPlantPath gardenId =
+    pathFor <| NewPlantRoute gardenId
 
 
 signInPath : String
@@ -93,5 +88,15 @@ signInPath =
 
 
 editPlantPath : Int -> String
-editPlantPath id =
-    pathFor <| EditPlantRoute id
+editPlantPath plantId =
+    pathFor <| EditPlantRoute plantId
+
+
+gardenPath : Int -> String
+gardenPath id =
+    pathFor <| GardenRoute id
+
+
+plantPath : Int -> String
+plantPath id =
+    "/plants/" ++ String.fromInt id

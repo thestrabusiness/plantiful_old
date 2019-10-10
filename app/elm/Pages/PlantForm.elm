@@ -21,6 +21,7 @@ type alias Model =
     , csrfToken : String
     , formAction : Form.FormAction
     , plantId : Maybe Int
+    , gardenId : Maybe Int
     }
 
 
@@ -50,8 +51,8 @@ type alias PlantForm =
     }
 
 
-init : String -> User -> Maybe Int -> ( Model, Cmd Msg )
-init csrfToken user maybePlantId =
+init : String -> User -> Maybe Int -> Maybe Int -> ( Model, Cmd Msg )
+init csrfToken user maybePlantId maybeGardenId =
     let
         formAction =
             case maybePlantId of
@@ -62,7 +63,14 @@ init csrfToken user maybePlantId =
                     Form.Create
 
         initialModel =
-            Model initialPlantForm user [] "" csrfToken formAction maybePlantId
+            Model initialPlantForm
+                user
+                []
+                ""
+                csrfToken
+                formAction
+                maybePlantId
+                maybeGardenId
     in
     ( initialModel, loadPlant maybePlantId )
 
@@ -83,54 +91,69 @@ update msg model key =
                 validateForm =
                     validate formValidator model.plant
             in
-            case ( validateForm, model.formAction, model.plantId ) of
-                ( Ok validatedForm, Form.Create, _ ) ->
+            case ( validateForm, model.formAction ) of
+                ( Ok validatedForm, Form.Create ) ->
                     let
                         validPlant =
                             fromValid validatedForm
                     in
-                    ( model
-                    , createNewPlant model.csrfToken
-                        model.currentUser.defaultGardenId
-                        validPlant
-                    )
+                    case model.gardenId of
+                        Just gardenId ->
+                            ( model
+                            , createNewPlant model.csrfToken gardenId validPlant
+                            )
 
-                ( Ok validatedForm, Form.Update, Just plantId ) ->
+                        Nothing ->
+                            ( model, Cmd.none )
+
+                ( Ok validatedForm, Form.Update ) ->
                     let
                         validPlant =
                             fromValid validatedForm
                     in
-                    ( model
-                    , updatePlant model.csrfToken
-                        plantId
-                        validPlant
-                    )
+                    case model.plantId of
+                        Just plantId ->
+                            ( model
+                            , updatePlant model.csrfToken plantId validPlant
+                            )
 
-                ( Ok _, _, _ ) ->
-                    ( model, Cmd.none )
+                        Nothing ->
+                            ( model, Cmd.none )
 
-                ( Err errorList, _, _ ) ->
+                ( Err errorList, _ ) ->
                     ( { model | errors = errorList }, Cmd.none )
 
         UserCancelledForm ->
-            case ( model.formAction, model.plantId ) of
-                ( Form.Create, _ ) ->
-                    ( model, goBackToPlantsList key )
+            case ( model.formAction, model.plantId, model.gardenId ) of
+                ( Form.Create, _, Just gardenId ) ->
+                    ( model, goBackToPlantsList key gardenId )
 
-                ( Form.Update, Just plantId ) ->
+                ( Form.Update, Just plantId, Just gardenId ) ->
                     ( model, goBackToPlantDetails key plantId )
 
-                ( _, _ ) ->
+                ( _, _, _ ) ->
                     ( model, Cmd.none )
 
         ReceivedCreatePlantResponse (Ok plant) ->
-            ( model, goBackToPlantsList key )
+            case model.gardenId of
+                Just gardenId ->
+                    ( model, goBackToPlantsList key gardenId )
+
+                Nothing ->
+                    ( model
+                    , goBackToPlantsList key model.currentUser.defaultGardenId
+                    )
 
         ReceivedCreatePlantResponse (Err error) ->
             handleErrorResponse model error key
 
         ReceivedGetPlantResponse (Ok plant) ->
-            ( { model | plant = plantToForm plant }, Cmd.none )
+            ( { model
+                | plant = plantToForm plant
+                , gardenId = Just plant.gardenId
+              }
+            , Cmd.none
+            )
 
         ReceivedGetPlantResponse (Err error) ->
             handleErrorResponse model error key
@@ -160,9 +183,9 @@ handleErrorResponse model error key =
             ( { model | apiError = somethingWentWrongError }, Cmd.none )
 
 
-goBackToPlantsList : Nav.Key -> Cmd Msg
-goBackToPlantsList key =
-    Nav.pushUrl key Routes.plantsPath
+goBackToPlantsList : Nav.Key -> Int -> Cmd Msg
+goBackToPlantsList key gardenId =
+    Nav.pushUrl key (Routes.gardenPath gardenId)
 
 
 goBackToPlantDetails : Nav.Key -> Int -> Cmd Msg

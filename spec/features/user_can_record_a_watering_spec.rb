@@ -4,7 +4,7 @@ RSpec.feature 'User can record when a plant is checked on' do
   it 'Adds a new check-in record for the given plant' do
     plant = create(:plant)
 
-    visit plants_path(plant.added_by)
+    visit garden_path(plant.garden, plant.added_by)
     click_on 'Check In'
     within('.modal__content--large') do
       check 'Watered'

@@ -34,6 +34,7 @@ type alias Plant =
     , overdueForCheckIn : Bool
     , checkFrequencyUnit : String
     , checkFrequencyScalar : String
+    , gardenId : Int
     }
 
 
@@ -46,7 +47,7 @@ type alias NewPlant =
 
 emptyPlant : Plant
 emptyPlant =
-    Plant 0 "" (Time.millisToPosix 0) [] "" False "" ""
+    Plant 0 "" (Time.millisToPosix 0) [] "" False "" "" 0
 
 
 getPlant : Int -> (Result Http.Error Plant -> msg) -> Cmd msg
@@ -150,6 +151,7 @@ plantDecoder =
         |> required "overdue_for_check_in" bool
         |> required "check_frequency_unit" string
         |> required "check_frequency_scalar" intToString
+        |> required "garden_id" int
 
 
 intToString : Decoder String

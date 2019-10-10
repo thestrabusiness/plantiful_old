@@ -1,6 +1,16 @@
-module User exposing (Errors, NewUser, User, createUser, getCurrentUser, signIn, signOut, toCredentials)
+module User exposing
+    ( Errors
+    , NewUser
+    , User
+    , createUser
+    , getCurrentUser
+    , signIn
+    , signOut
+    , toCredentials
+    )
 
 import Api
+import Garden exposing (Garden, gardenListDecoder)
 import Http
 import HttpBuilder
 import Json.Decode exposing (Decoder, int, list, string, succeed)
@@ -21,6 +31,8 @@ type alias User =
     , email : String
     , rememberToken : String
     , defaultGardenId : Int
+    , ownedGardens : List Garden
+    , sharedGardens : List Garden
     }
 
 
@@ -90,6 +102,8 @@ userDecoder =
         |> required "email" string
         |> required "remember_token" string
         |> required "default_garden_id" int
+        |> required "owned_gardens" gardenListDecoder
+        |> required "shared_gardens" gardenListDecoder
 
 
 encodeUser : NewUser -> Encode.Value

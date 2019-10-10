@@ -7,7 +7,7 @@ RSpec.feature 'User can view a list of plants' do
     plant1 = create(:plant, name: 'plant', added_by: user, garden: garden)
     plant2 = create(:plant, name: 'other plant', added_by: user, garden: garden)
 
-    visit plants_path(user)
+    visit garden_path(garden, user)
     expect(page).to have_content plant1.name
     expect(page).to have_content plant2.name
   end
@@ -18,7 +18,7 @@ RSpec.feature 'User can view a list of plants' do
     plant = create(:plant, name: 'plant', added_by: user, garden: garden)
     plant.waterings.create(performed_by: user)
 
-    visit plants_path(user)
+    visit garden_path(garden, user)
 
     expect(page).to have_content 'Today'
   end
@@ -31,7 +31,7 @@ RSpec.feature 'User can view a list of plants' do
                                      added_by: user,
                                      garden: garden)
 
-    visit plants_path(user)
+    visit garden_path(garden, user)
 
     expect(page).to have_selector '.plant__list-indicator'
   end

@@ -6,7 +6,9 @@ FactoryBot.define do
     password { 'password' }
 
     after :create do |user, _|
-      create(:garden, owner: user)
+      if user.owned_gardens.empty?
+        create(:garden, owner: user)
+      end
     end
 
     trait :with_plants do

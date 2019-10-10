@@ -8,7 +8,7 @@ RSpec.feature 'User can delete plants' do
     delete_button = find('.trashcan')
     delete_button.click
 
-    expect(page).to have_current_path('/plants')
+    expect(page).to have_current_path("/gardens/#{plant.garden_id}")
     expect(page).to_not have_content(plant.name)
   end
 end

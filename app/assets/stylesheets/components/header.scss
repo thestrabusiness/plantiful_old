@@ -10,10 +10,22 @@
 }
 
 .header__item--full {
+  align-items: center;
+  display: flex;
   flex: auto;
   margin: 0;
+
+  svg {
+    position: relative;
+    top: 3px;
+  }
+}
+
+.header__text {
+  margin-left: 5px;
 }
 
 .header__item {
   margin: 0;
 }
+

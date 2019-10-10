@@ -38,6 +38,7 @@ type alias Model =
     , checkInForm : CheckInForm
     , loading : Loading
     , csrfToken : String
+    , gardenId : Int
     }
 
 
@@ -71,15 +72,15 @@ type Loading
     | Failed
 
 
-init : String -> User -> Time.Posix -> Time.Zone -> ( Model, Cmd Msg )
-init csrfToken user currentTime timeZone =
-    ( initialModel csrfToken user currentTime timeZone
-    , getPlants user.defaultGardenId
+init : String -> User -> Int -> Time.Posix -> Time.Zone -> ( Model, Cmd Msg )
+init csrfToken user gardenId currentTime timeZone =
+    ( initialModel csrfToken user currentTime timeZone gardenId
+    , getPlants gardenId
     )
 
 
-initialModel : String -> User -> Time.Posix -> Time.Zone -> Model
-initialModel csrfToken user currentTime timeZone =
+initialModel : String -> User -> Time.Posix -> Time.Zone -> Int -> Model
+initialModel csrfToken user currentTime timeZone gardenId =
     Model []
         user
         currentTime
@@ -88,6 +89,7 @@ initialModel csrfToken user currentTime timeZone =
         initialCheckInForm
         Loading
         csrfToken
+        gardenId
 
 
 initialCheckInForm : CheckInForm
@@ -287,7 +289,8 @@ view model =
         Success ->
             div [ class "container__center-wide" ]
                 [ viewPlantList model
-                , a [ class "add-record-btn", href newPlantPath ] [ text "Add New Plant" ]
+                , a [ class "add-record-btn", href (newPlantPath model.gardenId) ]
+                    [ text "Add New Plant" ]
                 , viewModal model.modal
                 ]
 

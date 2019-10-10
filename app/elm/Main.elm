@@ -2,6 +2,7 @@ module Main exposing (Model, Msg(..), Page(..), currentPage, init, loadCurrentPa
 
 import Browser
 import Browser.Navigation as Nav
+import Garden exposing (Garden)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
@@ -31,6 +32,7 @@ type alias Model =
     , currentTime : Time.Posix
     , timeZone : Time.Zone
     , csrfToken : String
+    , menuOpen : Bool
     }
 
 
@@ -55,6 +57,7 @@ init flags url key =
             , currentTime = Time.millisToPosix 0
             , timeZone = Time.utc
             , csrfToken = flags.csrfToken
+            , menuOpen = False
             }
 
         initCmds =
@@ -97,6 +100,7 @@ type Msg
     | ReceivedCurrentUserResponse Route (Result Http.Error User)
     | ReceivedCurrentTime Time.Posix
     | ReceivedTimeZone Time.Zone
+    | UserClickedMenuButton
 
 
 type Page
@@ -154,6 +158,9 @@ update msg model =
         ( ReceivedCurrentUserResponse _ (Err error), _ ) ->
             ( { model | currentUser = None }, Cmd.none )
                 |> loadCurrentPage
+
+        ( UserClickedMenuButton, _ ) ->
+            ( { model | menuOpen = not model.menuOpen }, Cmd.none )
 
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let
@@ -233,25 +240,7 @@ loadCurrentPage ( model, cmd ) =
     let
         ( page, newCmd ) =
             case model.route of
-                Routes.PlantsRoute ->
-                    case model.currentUser of
-                        Success user ->
-                            let
-                                ( pageModel, pageCmd ) =
-                                    PlantList.init model.csrfToken
-                                        user
-                                        model.currentTime
-                                        model.timeZone
-                            in
-                            ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
-
-                        Loading ->
-                            ( LoadingPage, Cmd.none )
-
-                        None ->
-                            ( NotAuthorizedPage {}, Cmd.map NotAuthorizedMsg Cmd.none )
-
-                Routes.NewPlantRoute ->
+                Routes.NewPlantRoute gardenId ->
                     case model.currentUser of
                         Success user ->
                             let
@@ -259,6 +248,7 @@ loadCurrentPage ( model, cmd ) =
                                     PlantForm.init model.csrfToken
                                         user
                                         Nothing
+                                        (Just gardenId)
                             in
                             ( PlantFormPage formModel, Cmd.map PlantFormMsg formCmd )
 
@@ -282,10 +272,13 @@ loadCurrentPage ( model, cmd ) =
                                 ( pageModel, pageCmd ) =
                                     PlantList.init model.csrfToken
                                         user
+                                        user.defaultGardenId
                                         model.currentTime
                                         model.timeZone
                             in
-                            ( PlantListPage pageModel, Nav.pushUrl model.key Routes.plantsPath )
+                            ( PlantListPage pageModel
+                            , Nav.pushUrl model.key (Routes.gardenPath user.defaultGardenId)
+                            )
 
                         Loading ->
                             ( LoadingPage, Cmd.none )
@@ -326,16 +319,55 @@ loadCurrentPage ( model, cmd ) =
                             in
                             ( SignInPage pageModel, Cmd.map SignInMsg pageCmd )
 
-                Routes.EditPlantRoute id ->
+                Routes.EditPlantRoute plantId ->
                     case model.currentUser of
                         Success user ->
                             let
                                 ( formModel, formCmd ) =
                                     PlantForm.init model.csrfToken
                                         user
-                                        (Just id)
+                                        (Just plantId)
+                                        Nothing
                             in
                             ( PlantFormPage formModel, Cmd.map PlantFormMsg formCmd )
+
+                        Loading ->
+                            ( LoadingPage, Cmd.none )
+
+                        None ->
+                            ( NotAuthorizedPage {}, Cmd.map NotAuthorizedMsg Cmd.none )
+
+                Routes.GardenRoute gardenId ->
+                    case model.currentUser of
+                        Success user ->
+                            let
+                                ( pageModel, pageCmd ) =
+                                    PlantList.init model.csrfToken
+                                        user
+                                        gardenId
+                                        model.currentTime
+                                        model.timeZone
+                            in
+                            ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
+
+                        Loading ->
+                            ( LoadingPage, Cmd.none )
+
+                        None ->
+                            ( NotAuthorizedPage {}, Cmd.map NotAuthorizedMsg Cmd.none )
+
+                Routes.GardensRoute ->
+                    case model.currentUser of
+                        Success user ->
+                            let
+                                ( pageModel, pageCmd ) =
+                                    PlantList.init model.csrfToken
+                                        user
+                                        user.defaultGardenId
+                                        model.currentTime
+                                        model.timeZone
+                            in
+                            ( PlantListPage pageModel, Cmd.map PlantListMsg pageCmd )
 
                         Loading ->
                             ( LoadingPage, Cmd.none )
@@ -403,18 +435,29 @@ nav : Model -> Html Msg
 nav model =
     div
         [ class "header" ]
-        [ h2 [ class "header__item--full" ] [ text "Plantiful" ]
+        [ h2 [ class "header__item--full" ]
+            [ Garden.menuButton UserClickedMenuButton
+            , div [ class "header__text" ] [ text "Plantiful" ]
+            ]
+        , gardenMenu model
         , headerLink model
         ]
+
+
+gardenMenu : Model -> Html Msg
+gardenMenu model =
+    case model.currentUser of
+        Success user ->
+            Garden.menu user.ownedGardens user.sharedGardens model.menuOpen
+
+        _ ->
+            text ""
 
 
 headerLink : Model -> Html Msg
 headerLink model =
     case model.route of
-        Routes.PlantsRoute ->
-            signOutButton
-
-        Routes.NewPlantRoute ->
+        Routes.NewPlantRoute _ ->
             signOutButton
 
         Routes.NewUserRoute ->
@@ -430,6 +473,12 @@ headerLink model =
             signOutButton
 
         Routes.EditPlantRoute _ ->
+            signOutButton
+
+        Routes.GardenRoute _ ->
+            signOutButton
+
+        Routes.GardensRoute ->
             signOutButton
 
 

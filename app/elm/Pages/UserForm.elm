@@ -66,7 +66,10 @@ update msg model key =
                     ( { model | errors = errorList }, Cmd.none, Nothing )
 
         UserCreated (Ok user) ->
-            ( model, Nav.pushUrl key Routes.plantsPath, Just user )
+            ( model
+            , Nav.pushUrl key (Routes.gardenPath user.defaultGardenId)
+            , Just user
+            )
 
         UserCreated (Err error) ->
             case error of
