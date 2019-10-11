@@ -1,4 +1,4 @@
 class GardenSerializer < BaseSerializer
-  attributes :id, :name
+  attributes :id, :name, :owner_id
 end
 

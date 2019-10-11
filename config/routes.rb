@@ -2,13 +2,13 @@ Rails.application.routes.draw do
   root 'application#index'
 
   namespace :api do
-    resources :plants, only: [:show, :update, :destroy] do
+    resources :plants, only: [:destroy, :show, :update] do
       post :avatar, on: :member
       resources :check_ins, only: :create
     end
 
-    resources :gardens do
-      resources :plants, only: [:index, :create]
+    resources :gardens, only: [:create, :destroy, :update] do
+      resources :plants, only: [:create, :index]
     end
 
     resources :users, only: [:create]
