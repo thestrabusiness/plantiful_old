@@ -1,15 +1,24 @@
 module Menu exposing (Model, Msg, init, menu, menuButton, update, view)
 
+import Browser.Navigation as Nav
 import Garden exposing (Garden)
-import Html exposing (Html, a, div, li, text, ul)
-import Html.Attributes exposing (class, href)
-import Html.Events exposing (onClick)
+import Html exposing (Html, a, button, div, input, label, li, text, ul)
+import Html.Attributes exposing (class, disabled, href, value)
+import Html.Events exposing (onClick, onInput)
+import Http
 import Octicons
 import Routes
 
 
 type alias Model =
-    { ownedGardens : List Garden, sharedGardens : List Garden, isOpen : Bool }
+    { csrfToken : String
+    , key : Nav.Key
+    , ownedGardens : List Garden
+    , sharedGardens : List Garden
+    , isOpen : Bool
+    , gardenFormState : GardenFormState
+    , newGardenName : String
+    }
 
 
 type Msg
@@ -17,13 +26,22 @@ type Msg
     | UserOpenedGardenForm
     | UserClosedGardenForm
     | UserSubmittedGardenForm
+    | UserTypedGardenName String
+    | ReceivedCreateGardenResponse (Result Http.Error Garden)
 
 
-init : List Garden -> List Garden -> ( Model, Cmd Msg )
-init ownedGardens sharedGardens =
+type GardenFormState
+    = Closed
+    | Open
+    | Submitting
+    | Invalid
+
+
+init : String -> Nav.Key -> List Garden -> List Garden -> ( Model, Cmd Msg )
+init csrfToken key ownedGardens sharedGardens =
     let
         initialModel =
-            Model ownedGardens sharedGardens False
+            Model csrfToken key ownedGardens sharedGardens False Closed ""
     in
     ( initialModel, Cmd.none )
 
@@ -32,23 +50,49 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         UserClickedMenuButton ->
-            let
-                updatedModel =
-                    { model | isOpen = not model.isOpen }
-
-                newView =
-                    view updatedModel
-            in
-            ( updatedModel, Cmd.none )
+            ( { model
+                | isOpen = not model.isOpen
+                , gardenFormState = Closed
+                , newGardenName = ""
+              }
+            , Cmd.none
+            )
 
         UserOpenedGardenForm ->
-            ( model, Cmd.none )
+            ( { model | gardenFormState = Open }, Cmd.none )
+
+        UserTypedGardenName name ->
+            ( { model | newGardenName = name, gardenFormState = Open }, Cmd.none )
 
         UserClosedGardenForm ->
-            ( model, Cmd.none )
+            ( { model | gardenFormState = Closed }, Cmd.none )
 
         UserSubmittedGardenForm ->
-            ( model, Cmd.none )
+            if String.isEmpty model.newGardenName then
+                ( { model | gardenFormState = Invalid }, Cmd.none )
+
+            else
+                ( { model | gardenFormState = Submitting }
+                , Garden.createGarden model.csrfToken
+                    model.newGardenName
+                    ReceivedCreateGardenResponse
+                )
+
+        ReceivedCreateGardenResponse (Ok garden) ->
+            let
+                newOwnedGardensList =
+                    model.ownedGardens ++ [ garden ]
+            in
+            ( { model
+                | gardenFormState = Closed
+                , newGardenName = ""
+                , ownedGardens = newOwnedGardensList
+              }
+            , Nav.pushUrl model.key (Routes.gardenPath garden.id)
+            )
+
+        ReceivedCreateGardenResponse (Err error) ->
+            ( { model | gardenFormState = Open }, Cmd.none )
 
 
 
@@ -59,15 +103,24 @@ view : Model -> Html Msg
 view model =
     div []
         [ menuButton
-        , menu model.ownedGardens model.sharedGardens model.isOpen
+        , menu model
         ]
 
 
-menu : List Garden -> List Garden -> Bool -> Html Msg
-menu ownedGardens sharedGardens menuOpen =
-    ul [ class (menuClass menuOpen) ]
-        [ gardensList ownedGardens "My Gardens"
-        , gardensList sharedGardens "Shared Gardens"
+menu : Model -> Html Msg
+menu model =
+    ul [ class (menuClass model.isOpen) ]
+        [ gardensList model.ownedGardens
+            "My Gardens"
+            addGardenButton
+            model.gardenFormState
+            model.newGardenName
+        , gardensList
+            model.sharedGardens
+            "Shared Gardens"
+            (text "")
+            Closed
+            ""
         ]
 
 
@@ -80,7 +133,7 @@ menuClass menuOpen =
         finalString =
             case menuOpen of
                 True ->
-                    baseString ++ " menu-toggled"
+                    baseString ++ " menu-open"
 
                 False ->
                     baseString
@@ -107,23 +160,95 @@ addGardenButton =
                 |> Octicons.plus
     in
     div
-        [ class "menu__button--add-garden"
+        [ class "menu__button menu__button--add-garden"
         , onClick UserOpenedGardenForm
         ]
         [ icon ]
 
 
-gardensList : List Garden -> String -> Html Msg
-gardensList ownedGardens label =
-    if List.isEmpty ownedGardens then
+gardensList : List Garden -> String -> Html Msg -> GardenFormState -> String -> Html Msg
+gardensList gardens listLabel icon showNewGardenForm newGardenName =
+    if List.isEmpty gardens then
         text ""
 
     else
         let
             listItems =
-                List.map gardenListItem ownedGardens
+                List.map gardenListItem gardens
+
+            listDiv =
+                div [ class "menu__items" ] listItems
+
+            headerDiv =
+                div [ class "menu__header" ] [ text listLabel, icon ]
+
+            listSection =
+                case showNewGardenForm of
+                    Closed ->
+                        div [] [ headerDiv, listDiv ]
+
+                    _ ->
+                        div []
+                            [ headerDiv
+                            , newGardenForm newGardenName showNewGardenForm
+                            , listDiv
+                            ]
         in
-        div [] (text label :: listItems)
+        listSection
+
+
+newGardenForm : String -> GardenFormState -> Html Msg
+newGardenForm newGardenName formState =
+    let
+        submitButtonText =
+            case formState of
+                Submitting ->
+                    "Submitting..."
+
+                _ ->
+                    "Submit"
+
+        formDisabled =
+            case formState of
+                Submitting ->
+                    True
+
+                _ ->
+                    False
+
+        errorMessage =
+            case formState of
+                Invalid ->
+                    div
+                        [ class "errors" ]
+                        [ text "You must provide a name" ]
+
+                _ ->
+                    text ""
+    in
+    div [ class "menu__input" ]
+        [ label []
+            [ text "Add a new garden"
+            , errorMessage
+            , input
+                [ onInput UserTypedGardenName
+                , value newGardenName
+                , disabled formDisabled
+                ]
+                []
+            ]
+        , button
+            [ onClick UserClosedGardenForm
+            , class "secondary"
+            , disabled formDisabled
+            ]
+            [ text "Cancel" ]
+        , button
+            [ onClick UserSubmittedGardenForm
+            , disabled formDisabled
+            ]
+            [ text submitButtonText ]
+        ]
 
 
 gardenListItem : Garden -> Html Msg
@@ -134,6 +259,4 @@ gardenListItem garden =
                 |> Routes.pathFor
     in
     li []
-        [ a [ href linkToGarden ] [ text garden.name ]
-        , addGardenButton
-        ]
+        [ a [ href linkToGarden ] [ text garden.name ] ]

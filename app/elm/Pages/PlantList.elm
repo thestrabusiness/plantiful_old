@@ -310,7 +310,7 @@ viewPlantList model =
 
 noPlantsMessage : String
 noPlantsMessage =
-    "You dont have any plants yet! Add some new friends with the + button."
+    "You dont have any plants in this garden yet! Add some new friends with the + button."
 
 
 plantListItem currentTime plant =

@@ -73,11 +73,11 @@ init flags url key =
         |> loadCurrentPage
 
 
-initMenu : List Garden -> List Garden -> Menu
-initMenu ownedGardens sharedGardens =
+initMenu : String -> Nav.Key -> List Garden -> List Garden -> Menu
+initMenu csrfToken key ownedGardens sharedGardens =
     let
         ( initialModel, _ ) =
-            Menu.init ownedGardens sharedGardens
+            Menu.init csrfToken key ownedGardens sharedGardens
     in
     Menu initialModel
 
@@ -168,7 +168,10 @@ update msg model =
         ( ReceivedCurrentUserResponse route (Ok user), _ ) ->
             let
                 initialMenu =
-                    initMenu user.ownedGardens user.sharedGardens
+                    initMenu model.csrfToken
+                        model.key
+                        user.ownedGardens
+                        user.sharedGardens
             in
             ( { model | currentUser = Success user, menu = initialMenu }
             , Nav.pushUrl model.key (Routes.pathFor route)
@@ -205,7 +208,10 @@ update msg model =
                     case currentUser of
                         Just user ->
                             ( Success user
-                            , initMenu user.ownedGardens user.sharedGardens
+                            , initMenu model.csrfToken
+                                model.key
+                                user.ownedGardens
+                                user.sharedGardens
                             )
 
                         Nothing ->
@@ -228,7 +234,10 @@ update msg model =
                     case currentUser of
                         Just user ->
                             ( Success user
-                            , initMenu user.ownedGardens user.sharedGardens
+                            , initMenu model.csrfToken
+                                model.key
+                                user.ownedGardens
+                                user.sharedGardens
                             )
 
                         Nothing ->

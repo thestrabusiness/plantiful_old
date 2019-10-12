@@ -27,25 +27,30 @@ auntie = User.create!(
 
 users = [uncle, auntie]
 
-garden = Garden.create!(name: "Uncle Tony's Garden", owner: uncle)
-garden.users << auntie
+uncle_garden = Garden.create!(name: uncle.default_garden_name,  owner: uncle)
+uncle_garden.users << auntie
 
-12.times do |i|
-  plant = Plant.create!(
-    added_by: users.sample,
-    botanical_name: "Newus Plantus #{i}",
-    check_frequency_scalar: 1,
-    check_frequency_unit: 'week',
-    garden: garden,
-    name: "Plant #{i}",
-  )
+auntie_garden = Garden.create!(name: auntie.default_garden_name, owner: auntie)
+auntie_garden.users << uncle
 
-  plant
-    .avatar
-    .attach(
-      io: File.open(plant_image_paths.sample),
-      filename: "plant#{i}.jpg"
-  )
+[uncle_garden, auntie_garden].each do |garden|
+  12.times do |i|
+    plant = Plant.create!(
+      added_by: users.sample,
+      botanical_name: "Newus Plantus #{i}",
+      check_frequency_scalar: 1,
+      check_frequency_unit: 'week',
+      garden: garden,
+      name: "Plant #{i}",
+    )
+
+    plant
+      .avatar
+      .attach(
+        io: File.open(plant_image_paths.sample),
+        filename: "plant#{i}.jpg"
+    )
+  end
 end
 
 Plant.find_each do |plant|

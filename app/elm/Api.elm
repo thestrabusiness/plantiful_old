@@ -5,6 +5,7 @@ module Api exposing
     , gardenEndpoint
     , gardenPlantEndpoint
     , gardenPlantsEndpoint
+    , gardensEndpoint
     , networkError
     , plantAvatarEndpoint
     , plantEndpoint
@@ -22,9 +23,14 @@ baseUrl =
     "/api"
 
 
+gardensEndpoint : String
+gardensEndpoint =
+    baseUrl ++ "/gardens"
+
+
 gardenEndpoint : Int -> String
 gardenEndpoint gardenId =
-    baseUrl ++ "/gardens/" ++ String.fromInt gardenId
+    gardensEndpoint ++ "/" ++ String.fromInt gardenId
 
 
 gardenPlantsEndpoint : Int -> String

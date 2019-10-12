@@ -73,7 +73,12 @@ encodePlant plant =
         ]
 
 
-createPlant : String -> Int -> (Result Http.Error Plant -> msg) -> NewPlant -> Cmd msg
+createPlant :
+    String
+    -> Int
+    -> (Result Http.Error Plant -> msg)
+    -> NewPlant
+    -> Cmd msg
 createPlant csrfToken gardenId msg newPlant =
     let
         params =
@@ -86,7 +91,12 @@ createPlant csrfToken gardenId msg newPlant =
         |> HttpBuilder.request
 
 
-updatePlant : String -> Int -> (Result Http.Error Plant -> msg) -> NewPlant -> Cmd msg
+updatePlant :
+    String
+    -> Int
+    -> (Result Http.Error Plant -> msg)
+    -> NewPlant
+    -> Cmd msg
 updatePlant csrfToken plantId msg plantForm =
     let
         params =
