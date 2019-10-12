@@ -7,6 +7,7 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
+import Menu
 import Pages.NotAuthorized as NotAuthorized
 import Pages.PlantDetails as PlantDetails
 import Pages.PlantForm as PlantForm
@@ -32,8 +33,13 @@ type alias Model =
     , currentTime : Time.Posix
     , timeZone : Time.Zone
     , csrfToken : String
-    , menuOpen : Bool
+    , menu : Menu
     }
+
+
+type Menu
+    = MenuNone
+    | Menu Menu.Model
 
 
 type Loadable a
@@ -57,7 +63,7 @@ init flags url key =
             , currentTime = Time.millisToPosix 0
             , timeZone = Time.utc
             , csrfToken = flags.csrfToken
-            , menuOpen = False
+            , menu = MenuNone
             }
 
         initCmds =
@@ -65,6 +71,15 @@ init flags url key =
     in
     ( model, Cmd.batch initCmds )
         |> loadCurrentPage
+
+
+initMenu : List Garden -> List Garden -> Menu
+initMenu ownedGardens sharedGardens =
+    let
+        ( initialModel, _ ) =
+            Menu.init ownedGardens sharedGardens
+    in
+    Menu initialModel
 
 
 getCurrentUser : Routes.Route -> Cmd Msg
@@ -100,7 +115,7 @@ type Msg
     | ReceivedCurrentUserResponse Route (Result Http.Error User)
     | ReceivedCurrentTime Time.Posix
     | ReceivedTimeZone Time.Zone
-    | UserClickedMenuButton
+    | MenuMsg Menu.Msg
 
 
 type Page
@@ -151,16 +166,17 @@ update msg model =
             ( model, Cmd.none )
 
         ( ReceivedCurrentUserResponse route (Ok user), _ ) ->
-            ( { model | currentUser = Success user }
+            let
+                initialMenu =
+                    initMenu user.ownedGardens user.sharedGardens
+            in
+            ( { model | currentUser = Success user, menu = initialMenu }
             , Nav.pushUrl model.key (Routes.pathFor route)
             )
 
         ( ReceivedCurrentUserResponse _ (Err error), _ ) ->
             ( { model | currentUser = None }, Cmd.none )
                 |> loadCurrentPage
-
-        ( UserClickedMenuButton, _ ) ->
-            ( { model | menuOpen = not model.menuOpen }, Cmd.none )
 
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let
@@ -185,17 +201,20 @@ update msg model =
                 ( newPageModel, newCmd, currentUser ) =
                     UserForm.update subMsg pageModel model.key
 
-                loadableUser =
+                ( loadableUser, newMenu ) =
                     case currentUser of
                         Just user ->
-                            Success user
+                            ( Success user
+                            , initMenu user.ownedGardens user.sharedGardens
+                            )
 
                         Nothing ->
-                            None
+                            ( None, MenuNone )
             in
             ( { model
                 | page = UserPage newPageModel
                 , currentUser = loadableUser
+                , menu = newMenu
               }
             , Cmd.map UserFormMsg newCmd
             )
@@ -205,17 +224,20 @@ update msg model =
                 ( newPageModel, newCmd, currentUser ) =
                     SignIn.update subMsg pageModel model.key
 
-                loadableUser =
+                ( loadableUser, newMenu ) =
                     case currentUser of
                         Just user ->
-                            Success user
+                            ( Success user
+                            , initMenu user.ownedGardens user.sharedGardens
+                            )
 
                         Nothing ->
-                            None
+                            ( None, MenuNone )
             in
             ( { model
                 | page = SignInPage newPageModel
                 , currentUser = loadableUser
+                , menu = newMenu
               }
             , Cmd.map SignInMsg newCmd
             )
@@ -230,6 +252,20 @@ update msg model =
               }
             , Cmd.map PlantDetailsMsg newCmd
             )
+
+        ( MenuMsg subMsg, _ ) ->
+            case model.menu of
+                Menu menuModel ->
+                    let
+                        ( newMenuModel, newCmd ) =
+                            Menu.update subMsg menuModel
+                    in
+                    ( { model | menu = Menu newMenuModel }
+                    , Cmd.map MenuMsg newCmd
+                    )
+
+                MenuNone ->
+                    ( model, Cmd.none )
 
         ( _, _ ) ->
             ( model, Cmd.none )
@@ -436,21 +472,21 @@ nav model =
     div
         [ class "header" ]
         [ h2 [ class "header__item--full" ]
-            [ Garden.menuButton UserClickedMenuButton
+            [ viewMenu model.menu
             , div [ class "header__text" ] [ text "Plantiful" ]
             ]
-        , gardenMenu model
         , headerLink model
         ]
 
 
-gardenMenu : Model -> Html Msg
-gardenMenu model =
-    case model.currentUser of
-        Success user ->
-            Garden.menu user.ownedGardens user.sharedGardens model.menuOpen
+viewMenu : Menu -> Html Msg
+viewMenu menu =
+    case menu of
+        Menu model ->
+            Menu.view model
+                |> Html.map MenuMsg
 
-        _ ->
+        MenuNone ->
             text ""
 
 

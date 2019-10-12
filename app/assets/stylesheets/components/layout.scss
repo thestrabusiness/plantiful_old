@@ -122,6 +122,7 @@
   transition: transform 0.5s cubic-bezier(0.77,0.2,0.05,1.0);
   top: 65px;
   width: 300px;
+  z-index: 3;
   /* to stop flickering of text in safari */
   -webkit-font-smoothing: antialiased;
 }
