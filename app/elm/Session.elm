@@ -51,7 +51,7 @@ getCurrentSession csrfToken msg =
         , url = Api.sessionStatusEndpoint
         , body = Http.emptyBody
         , expect = Http.expectJson msg User.userDecoder
-        , headers = [ Http.header "X-CSRF-Token" csrfToken ]
+        , headers = [ Api.sessionTypeHeader, Http.header "X-CSRF-Token" csrfToken ]
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -64,7 +64,7 @@ getCurrentUser session msg =
         , url = Api.currentUserEndpoint
         , body = Http.emptyBody
         , expect = Http.expectJson msg User.userDecoder
-        , headers = [ Api.authorizationHeader session.currentUser ]
+        , headers = [ Api.sessionTypeHeader, Api.authorizationHeader session.currentUser ]
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -91,7 +91,8 @@ signOut session msg =
         , body = Http.emptyBody
         , expect = Http.expectWhatever msg
         , headers =
-            [ Http.header "X-CSRF-Token" session.csrfToken
+            [ Api.sessionTypeHeader
+            , Http.header "X-CSRF-Token" session.csrfToken
             , Api.authorizationHeader session.currentUser
             ]
         , timeout = Nothing

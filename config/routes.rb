@@ -7,7 +7,7 @@ Rails.application.routes.draw do
       resources :check_ins, only: :create
     end
 
-    resources :gardens, only: [:create, :destroy, :update] do
+    resources :gardens, only: [:create, :destroy, :show, :update] do
       resources :plants, only: [:create, :index]
     end
 

@@ -6,7 +6,13 @@ class User < ApplicationRecord
   has_many :waterings, through: :plants
   has_many :owned_gardens, foreign_key: :owner_id, class_name: 'Garden'
 
-  validates :first_name, :last_name, presence: true
+  validates :first_name, :last_name, :mobile_api_token, presence: true
+
+  # This is necessary because it appears that the default function values do not
+  # get loaded on create. Without this, the mobile_api_token column is nil.
+  #
+  # See this issue: https://github.com/rails/rails/issues/34237
+  after_initialize :generate_api_token, if: :new_record?
 
   def full_name
     [first_name, last_name].join(' ')
@@ -14,5 +20,15 @@ class User < ApplicationRecord
 
   def default_garden_name
     "#{first_name}'s Garden"
+  end
+
+  def reset_mobile_api_token!
+    update(mobile_api_token: SecureRandom.uuid)
+  end
+
+  private
+
+  def generate_api_token
+    self.mobile_api_token = SecureRandom.uuid
   end
 end

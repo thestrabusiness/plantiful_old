@@ -14,6 +14,7 @@ createUser csrfToken msg newUser =
     in
     HttpBuilder.post Api.usersEndpoint
         |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
+        |> HttpBuilder.withHeader "Session-Type" "desktop"
         |> HttpBuilder.withJsonBody params
         |> HttpBuilder.withExpect (Http.expectJson msg userDecoder)
         |> HttpBuilder.request

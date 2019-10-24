@@ -1,5 +1,12 @@
 module Api
   class GardensController < Api::BaseController
+    def show
+      garden = Garden.includes(plants: [ :avatar_attachment, :last_watering, :last_check_in ])
+                     .find(params[:id])
+
+      render json: garden, status: :ok
+    end
+
     def create
       garden = current_user.owned_gardens.create(garden_params)
 

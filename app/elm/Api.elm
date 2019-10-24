@@ -12,6 +12,7 @@ module Api exposing
     , plantEndpoint
     , plantsEndpoint
     , sessionStatusEndpoint
+    , sessionTypeHeader
     , signInEndpoint
     , signOutEndpoint
     , somethingWentWrongError
@@ -22,6 +23,11 @@ module Api exposing
 import Http exposing (Header)
 import Loadable exposing (Loadable(..))
 import User exposing (AuthToken(..), User)
+
+
+sessionTypeHeader : Header
+sessionTypeHeader =
+    Http.header "Session-Type" "desktop"
 
 
 authorizationHeader : Loadable User -> Header

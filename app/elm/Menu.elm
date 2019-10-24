@@ -280,7 +280,8 @@ createGarden session name msg =
         , body = Http.jsonBody body
         , expect = Http.expectJson msg Garden.gardenDecoder
         , headers =
-            [ Http.header "X-CSRF-Token" session.csrfToken
+            [ Api.sessionTypeHeader
+            , Http.header "X-CSRF-Token" session.csrfToken
             , Api.authorizationHeader session.currentUser
             ]
         , timeout = Nothing

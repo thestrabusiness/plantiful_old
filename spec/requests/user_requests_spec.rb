@@ -13,7 +13,9 @@ RSpec.describe 'User requests', type: :request do
           }
         }
 
-        post api_users_path, params: user_params
+        post api_users_path,
+             params: user_params,
+             headers: { 'HTTP_SESSION_TYPE': 'desktop' }
 
         user_response = response_json
 

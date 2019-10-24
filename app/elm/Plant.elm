@@ -66,7 +66,7 @@ getPlant session plantId msg =
         , url = Api.plantEndpoint plantId
         , body = Http.emptyBody
         , expect = Http.expectJson msg plantDecoder
-        , headers = [ Api.authorizationHeader session.currentUser ]
+        , headers = [ Api.sessionTypeHeader, Api.authorizationHeader session.currentUser ]
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -79,7 +79,7 @@ getPlants session gardenId msg =
         , url = Api.gardenPlantsEndpoint gardenId
         , body = Http.emptyBody
         , expect = Http.expectJson msg plantListDecoder
-        , headers = [ Api.authorizationHeader session.currentUser ]
+        , headers = [ Api.sessionTypeHeader, Api.authorizationHeader session.currentUser ]
         , timeout = Nothing
         , tracker = Nothing
         }
@@ -111,7 +111,8 @@ createPlant session gardenId msg newPlant =
         , body = Http.jsonBody params
         , expect = Http.expectJson msg plantDecoder
         , headers =
-            [ Http.header "X-CSRF-Token" session.csrfToken
+            [ Api.sessionTypeHeader
+            , Http.header "X-CSRF-Token" session.csrfToken
             , Api.authorizationHeader session.currentUser
             ]
         , timeout = Nothing
@@ -136,7 +137,8 @@ updatePlant session plantId msg plantForm =
         , body = Http.jsonBody params
         , expect = Http.expectJson msg plantDecoder
         , headers =
-            [ Http.header "X-CSRF-Token" session.csrfToken
+            [ Api.sessionTypeHeader
+            , Http.header "X-CSRF-Token" session.csrfToken
             , Api.authorizationHeader session.currentUser
             ]
         , timeout = Nothing
@@ -168,7 +170,8 @@ deletePlant session plantId msg =
         , body = Http.emptyBody
         , expect = Http.expectWhatever msg
         , headers =
-            [ Http.header "X-CSRF-Token" session.csrfToken
+            [ Api.sessionTypeHeader
+            , Http.header "X-CSRF-Token" session.csrfToken
             , Api.authorizationHeader session.currentUser
             ]
         , timeout = Nothing

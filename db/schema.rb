@@ -10,9 +10,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_07_224950) do
+ActiveRecord::Schema.define(version: 2019_10_25_181522) do
 
   # These are extensions that must be enabled in order to support this database
+  enable_extension "pgcrypto"
   enable_extension "plpgsql"
 
   create_table "active_storage_attachments", force: :cascade do |t|
@@ -88,7 +89,9 @@ ActiveRecord::Schema.define(version: 2019_10_07_224950) do
     t.string "encrypted_password", limit: 128, null: false
     t.string "confirmation_token", limit: 128
     t.string "remember_token", limit: 128, null: false
+    t.uuid "mobile_api_token", default: -> { "gen_random_uuid()" }, null: false
     t.index ["email"], name: "index_users_on_email"
+    t.index ["mobile_api_token"], name: "index_users_on_mobile_api_token", unique: true
     t.index ["remember_token"], name: "index_users_on_remember_token"
   end
 

@@ -76,7 +76,8 @@ submitCheckIn session form a =
         , body = checkInRequestBody <| checkInFromForm form
         , expect = Http.expectJson a checkInDecoder
         , headers =
-            [ Http.header "X-CSRF-Token" session.csrfToken
+            [ Api.sessionTypeHeader
+            , Http.header "X-CSRF-Token" session.csrfToken
             , Api.authorizationHeader session.currentUser
             ]
         , timeout = Nothing

@@ -45,13 +45,30 @@ RSpec.describe 'Session requests', type: :request do
     end
 
     describe 'DELETE api/sign_out' do
-      it 'resets the users remember_token and returns a 200' do
-        user = create(:user)
-        remember_token = user.remember_token
+      context 'with a desktop session' do
+        it 'resets the users remember_token and returns a 200' do
+          user = create(:user)
+          remember_token = user.remember_token
+          mobile_token = user.mobile_api_token
 
-        delete api_sign_out_path, headers: auth_header(user)
+          delete api_sign_out_path, headers: auth_header(user, 'desktop')
 
-        expect(user.reload.remember_token).to_not eq remember_token
+          expect(user.reload.remember_token).to_not eq remember_token
+          expect(user.reload.mobile_api_token).to eq mobile_token
+        end
+      end
+
+      context 'with a mobile session' do
+        it 'resets the users mobile_api_token and returns a 200' do
+          user = create(:user)
+          remember_token = user.remember_token
+          mobile_token = user.mobile_api_token
+
+          delete api_sign_out_path, headers: auth_header(user, 'mobile')
+
+          expect(user.reload.mobile_api_token).to_not eq mobile_token
+          expect(user.reload.remember_token).to eq remember_token
+        end
       end
     end
   end

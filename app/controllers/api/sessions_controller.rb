@@ -1,6 +1,7 @@
 module Api
   class SessionsController < Api::BaseController
-    skip_before_action :require_login, only: [:create, :status]
+    skip_before_action :require_login, only: :create
+    skip_before_action :require_login, only: :status, unless: :mobile_session?
 
     def create
       user = User.authenticate(user_params[:email], user_params[:password])
