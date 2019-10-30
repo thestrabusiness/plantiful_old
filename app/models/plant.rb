@@ -23,8 +23,11 @@ class Plant < ApplicationRecord
   def self.need_care
     joins(:check_ins)
       .where(
-        "check_ins.created_at + #{care_frequency_interval_sql}
-        <= now()"
+        'check_ins.created_at = (SELECT MAX(check_ins.created_at)
+        FROM check_ins WHERE check_ins.plant_id = plants.id)'
+      )
+      .where(
+        "check_ins.created_at + #{care_frequency_interval_sql} <= now()"
       ).uniq
   end
 
