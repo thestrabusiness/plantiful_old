@@ -5,9 +5,8 @@ RSpec.describe 'Current user requests', type: :request do
     context 'when a user is logged in' do
       it 'returns the user' do
         user = create(:user)
-        api_sign_in(user)
 
-        get api_current_user_path
+        get api_current_user_path, headers: auth_header(user)
 
         user_response = response_json
 
@@ -15,7 +14,6 @@ RSpec.describe 'Current user requests', type: :request do
         expect(user_response[:first_name]).to eq user.first_name
         expect(user_response[:last_name]).to eq user.last_name
         expect(user_response[:email]).to eq user.email
-        expect(user_response[:remember_token]).to eq user.remember_token
       end
     end
 

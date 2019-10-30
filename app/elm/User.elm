@@ -1,15 +1,12 @@
 module User exposing
-    ( Errors
+    ( AuthToken(..)
+    , Errors
     , NewUser
     , User
-    , createUser
-    , getCurrentUser
-    , signIn
-    , signOut
-    , toCredentials
+    , encodeUser
+    , userDecoder
     )
 
-import Api
 import Garden exposing (Garden, gardenListDecoder)
 import Http
 import HttpBuilder
@@ -18,10 +15,8 @@ import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
 
 
-type alias Credentials =
-    { email : String
-    , password : String
-    }
+type AuthToken
+    = AuthToken String
 
 
 type alias User =
@@ -29,10 +24,10 @@ type alias User =
     , firstName : String
     , lastName : String
     , email : String
-    , rememberToken : String
     , defaultGardenId : Int
     , ownedGardens : List Garden
     , sharedGardens : List Garden
+    , rememberToken : AuthToken
     }
 
 
@@ -52,47 +47,6 @@ type alias Errors =
     }
 
 
-createUser : String -> (Result Http.Error User -> msg) -> NewUser -> Cmd msg
-createUser csrfToken msg newUser =
-    let
-        params =
-            encodeUser newUser
-    in
-    HttpBuilder.post Api.usersEndpoint
-        |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
-        |> HttpBuilder.withJsonBody params
-        |> HttpBuilder.withExpect (Http.expectJson msg userDecoder)
-        |> HttpBuilder.request
-
-
-signIn : String -> (Result Http.Error User -> msg) -> Credentials -> Cmd msg
-signIn csrfToken msg credentials =
-    let
-        params =
-            encodeCredentials credentials
-    in
-    HttpBuilder.post Api.signInEndpoint
-        |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
-        |> HttpBuilder.withJsonBody params
-        |> HttpBuilder.withExpect (Http.expectJson msg userDecoder)
-        |> HttpBuilder.request
-
-
-signOut : String -> (Result Http.Error () -> msg) -> Cmd msg
-signOut csrfToken msg =
-    HttpBuilder.delete Api.signOutEndpoint
-        |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
-        |> HttpBuilder.withExpect (Http.expectWhatever msg)
-        |> HttpBuilder.request
-
-
-getCurrentUser : (Result Http.Error User -> msg) -> Cmd msg
-getCurrentUser msg =
-    HttpBuilder.get Api.currentUserEndpoint
-        |> HttpBuilder.withExpect (Http.expectJson msg userDecoder)
-        |> HttpBuilder.request
-
-
 userDecoder : Decoder User
 userDecoder =
     succeed User
@@ -100,10 +54,15 @@ userDecoder =
         |> required "first_name" string
         |> required "last_name" string
         |> required "email" string
-        |> required "remember_token" string
         |> required "default_garden_id" int
         |> required "owned_gardens" gardenListDecoder
         |> required "shared_gardens" gardenListDecoder
+        |> required "remember_token" authTokenDecoder
+
+
+authTokenDecoder : Decoder AuthToken
+authTokenDecoder =
+    Json.Decode.map AuthToken string
 
 
 encodeUser : NewUser -> Encode.Value
@@ -118,20 +77,3 @@ encodeUser newUser =
                 ]
           )
         ]
-
-
-encodeCredentials : Credentials -> Encode.Value
-encodeCredentials credentials =
-    Encode.object
-        [ ( "user"
-          , Encode.object
-                [ ( "email", Encode.string credentials.email )
-                , ( "password", Encode.string credentials.password )
-                ]
-          )
-        ]
-
-
-toCredentials : { a | email : String, password : String } -> Credentials
-toCredentials { email, password } =
-    Credentials email password

@@ -15,6 +15,7 @@ Rails.application.routes.draw do
     resource :current_user, only: :show
     resources :sessions, only: :create
     delete "/sign_out" => "sessions#destroy", as: "sign_out"
+    post "/sessions/status" => "sessions#status"
   end
 
   get '*destination', to: 'application#index', constraints: lambda { |req|

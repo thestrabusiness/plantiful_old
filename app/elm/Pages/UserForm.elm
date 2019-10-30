@@ -7,7 +7,9 @@ import Html exposing (..)
 import Html.Attributes exposing (class, placeholder, value)
 import Html.Events exposing (onClick, onInput)
 import Http
+import Pages.UserForm.Request as Request
 import Routes
+import Session exposing (Session)
 import User exposing (User)
 import Validate exposing (Validator, fromValid, ifBlank, ifFalse, ifInvalidEmail, validate)
 
@@ -20,7 +22,7 @@ type alias Model =
     , passwordConfirmation : String
     , errors : List Error
     , apiError : String
-    , csrfToken : String
+    , session : Session
     }
 
 
@@ -42,9 +44,9 @@ type alias Error =
     ( Field, String )
 
 
-init : String -> ( Model, Cmd Msg )
-init csrfToken =
-    ( Model "" "" "" "" "" [] "" csrfToken, Cmd.none )
+init : Session -> ( Model, Cmd Msg )
+init session =
+    ( Model "" "" "" "" "" [] "" session, Cmd.none )
 
 
 update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Maybe User )
@@ -58,7 +60,7 @@ update msg model key =
                             fromValid validatedModel
                     in
                     ( { validModel | errors = [] }
-                    , createUser model.csrfToken (toNewUser model)
+                    , createUser model.session.csrfToken (toNewUser model)
                     , Nothing
                     )
 
@@ -158,7 +160,7 @@ textField field errors =
 
 createUser : String -> User.NewUser -> Cmd Msg
 createUser csrfToken newUser =
-    User.createUser csrfToken UserCreated newUser
+    Request.createUser csrfToken UserCreated newUser
 
 
 toNewUser : Model -> User.NewUser

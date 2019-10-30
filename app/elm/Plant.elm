@@ -22,6 +22,7 @@ import HttpBuilder
 import Json.Decode exposing (Decoder, bool, int, string, succeed)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
+import Session exposing (Session)
 import Time exposing (Posix)
 
 
@@ -47,21 +48,41 @@ type alias NewPlant =
 
 emptyPlant : Plant
 emptyPlant =
-    Plant 0 "" (Time.millisToPosix 0) [] "" False "" "" 0
+    Plant 0
+        ""
+        (Time.millisToPosix 0)
+        []
+        ""
+        False
+        ""
+        ""
+        0
 
 
-getPlant : Int -> (Result Http.Error Plant -> msg) -> Cmd msg
-getPlant plantId msg =
-    HttpBuilder.get (Api.plantEndpoint plantId)
-        |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
-        |> HttpBuilder.request
+getPlant : Session -> Int -> (Result Http.Error Plant -> msg) -> Cmd msg
+getPlant session plantId msg =
+    Http.request
+        { method = "GET"
+        , url = Api.plantEndpoint plantId
+        , body = Http.emptyBody
+        , expect = Http.expectJson msg plantDecoder
+        , headers = [ Api.authorizationHeader session.currentUser ]
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
-getPlants : Int -> (Result Http.Error (List Plant) -> msg) -> Cmd msg
-getPlants gardenId msg =
-    HttpBuilder.get (Api.gardenPlantsEndpoint gardenId)
-        |> HttpBuilder.withExpect (Http.expectJson msg plantListDecoder)
-        |> HttpBuilder.request
+getPlants : Session -> Int -> (Result Http.Error (List Plant) -> msg) -> Cmd msg
+getPlants session gardenId msg =
+    Http.request
+        { method = "GET"
+        , url = Api.gardenPlantsEndpoint gardenId
+        , body = Http.emptyBody
+        , expect = Http.expectJson msg plantListDecoder
+        , headers = [ Api.authorizationHeader session.currentUser ]
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 encodePlant : NewPlant -> Encode.Value
@@ -74,62 +95,82 @@ encodePlant plant =
 
 
 createPlant :
-    String
+    Session
     -> Int
     -> (Result Http.Error Plant -> msg)
     -> NewPlant
     -> Cmd msg
-createPlant csrfToken gardenId msg newPlant =
+createPlant session gardenId msg newPlant =
     let
         params =
             encodePlant newPlant
     in
-    HttpBuilder.post (Api.gardenPlantsEndpoint gardenId)
-        |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
-        |> HttpBuilder.withJsonBody params
-        |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
-        |> HttpBuilder.request
+    Http.request
+        { method = "POST"
+        , url = Api.gardenPlantsEndpoint gardenId
+        , body = Http.jsonBody params
+        , expect = Http.expectJson msg plantDecoder
+        , headers =
+            [ Http.header "X-CSRF-Token" session.csrfToken
+            , Api.authorizationHeader session.currentUser
+            ]
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
 updatePlant :
-    String
+    Session
     -> Int
     -> (Result Http.Error Plant -> msg)
     -> NewPlant
     -> Cmd msg
-updatePlant csrfToken plantId msg plantForm =
+updatePlant session plantId msg plantForm =
     let
         params =
             encodePlant plantForm
     in
-    HttpBuilder.put (Api.plantEndpoint plantId)
-        |> HttpBuilder.withHeader "X-CSRF-Token" csrfToken
-        |> HttpBuilder.withJsonBody params
-        |> HttpBuilder.withExpect (Http.expectJson msg plantDecoder)
-        |> HttpBuilder.request
+    Http.request
+        { method = "PUT"
+        , url = Api.plantEndpoint plantId
+        , body = Http.jsonBody params
+        , expect = Http.expectJson msg plantDecoder
+        , headers =
+            [ Http.header "X-CSRF-Token" session.csrfToken
+            , Api.authorizationHeader session.currentUser
+            ]
+        , timeout = Nothing
+        , tracker = Nothing
+        }
 
 
-uploadPhoto : String -> String -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
-uploadPhoto csrfToken base64Photo plant msg =
+uploadPhoto : Session -> String -> Plant -> (Result Http.Error Plant -> msg) -> Cmd msg
+uploadPhoto session base64Photo plant msg =
     Http.request
         { method = "POST"
         , url = Api.plantAvatarEndpoint plant.id
         , body = Http.multipartBody [ Http.stringPart "plant[avatar]" base64Photo ]
         , expect = Http.expectJson msg plantDecoder
-        , headers = [ Http.header "X-CSRF-Token" csrfToken ]
+        , headers =
+            [ Http.header "X-CSRF-Token" session.csrfToken
+            , Api.authorizationHeader session.currentUser
+            ]
         , timeout = Nothing
         , tracker = Just "photoUpload"
         }
 
 
-deletePlant : String -> Int -> (Result Http.Error () -> msg) -> Cmd msg
-deletePlant csrfToken plantId msg =
+deletePlant : Session -> Int -> (Result Http.Error () -> msg) -> Cmd msg
+deletePlant session plantId msg =
     Http.request
         { method = "DELETE"
         , url = Api.plantEndpoint plantId
         , body = Http.emptyBody
         , expect = Http.expectWhatever msg
-        , headers = [ Http.header "X-CSRF-Token" csrfToken ]
+        , headers =
+            [ Http.header "X-CSRF-Token" session.csrfToken
+            , Api.authorizationHeader session.currentUser
+            ]
         , timeout = Nothing
         , tracker = Nothing
         }

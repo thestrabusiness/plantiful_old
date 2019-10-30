@@ -6,10 +6,11 @@ RSpec.describe 'Check-in request', type: :request do
       context 'marks a plant watered' do
         it 'creates check-in with watered true for the given plant' do
           plant = create(:plant, name: 'Planty')
-          api_sign_in(plant.added_by)
 
           json_post(api_plant_check_ins_path(plant),
-                    params: { check_in: { watered: true, fertilized: false } })
+                    params: { check_in: { watered: true, fertilized: false } },
+                    headers: auth_header(plant.added_by))
+
 
           result = response_json
 
@@ -24,10 +25,10 @@ RSpec.describe 'Check-in request', type: :request do
       context 'marks a plant fertilized' do
         it 'creates a check-in with fertilized true for the given plant' do
           plant = create(:plant, name: 'Planty')
-          api_sign_in(plant.added_by)
 
           json_post(api_plant_check_ins_path(plant),
-                    params: { check_in: { watered: false, fertilized: true } })
+                    params: { check_in: { watered: false, fertilized: true } },
+                    headers: auth_header(plant.added_by))
 
           result = response_json
 
@@ -42,12 +43,12 @@ RSpec.describe 'Check-in request', type: :request do
       context 'adds notes to the check-in' do
         it 'creates a check-in with notes for the given plant' do
           plant = create(:plant, name: 'Planty')
-          api_sign_in(plant.added_by)
 
           json_post(api_plant_check_ins_path(plant),
                     params: { check_in: { watered: false,
                                           fertilized: false,
-                                          notes: 'here are some notes' } })
+                                          notes: 'here are some notes' } },
+                    headers: auth_header(plant.added_by))
 
           result = response_json
 
@@ -64,14 +65,15 @@ RSpec.describe 'Check-in request', type: :request do
         it 'creates a check-in with 2 photos' do
           plant = create(:plant)
           image_path = Rails.root.join('spec', 'fixtures', 'plant.jpg')
-          photo = 'data:image/jpg;base64,' + Base64.strict_encode64(File.read(image_path))
+          photo =
+            'data:image/jpg;base64,' + Base64.strict_encode64(File.read(image_path))
 
-          api_sign_in(plant.added_by)
           expect {
             post api_plant_check_ins_path(plant),
                  params: { check_in: { watered: false,
                                        fertilized: false,
-                                       photos: [photo, photo] } }
+                                       photos: [photo, photo] } },
+                 headers: auth_header(plant.added_by)
           }.to change { ActiveStorage::Blob.count }.from(0).to(2)
         end
       end
@@ -80,12 +82,11 @@ RSpec.describe 'Check-in request', type: :request do
         context 'such as a missing "watered" key' do
           it 'creates the check-in with watered false' do
             plant = create(:plant, name: 'Planty')
-            api_sign_in(plant.added_by)
 
             json_post(api_plant_check_ins_path(plant),
-                      params: { check_in: { watered: false,
-                                            fertilized: false,
-                                            notes: 'here are some notes' } })
+                      params: { check_in: { fertilized: false,
+                                            notes: 'here are some notes' } },
+                      headers: auth_header(plant.added_by))
 
             result = response_json
             expect(plant.check_ins.count).to eq 1

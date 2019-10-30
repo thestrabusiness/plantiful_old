@@ -7,9 +7,12 @@ RSpec.describe 'Garden requests' do
         user = create(:user)
         garden_name = 'A new garden'
         garden_params = { garden: { name: garden_name } }
-        api_sign_in(user)
 
-        expect { post api_gardens_path, params: garden_params }
+        expect {
+          post api_gardens_path,
+               params: garden_params,
+               headers: auth_header(user)
+        }
           .to change { Garden.count }.by 1
       end
 
@@ -17,9 +20,10 @@ RSpec.describe 'Garden requests' do
         user = create(:user)
         garden_name = 'A new garden'
         garden_params = { garden: { name: garden_name } }
-        api_sign_in(user)
 
-        post api_gardens_path, params: garden_params
+        post api_gardens_path,
+             params: garden_params,
+             headers: auth_header(user)
 
         result = response_json
 
@@ -34,18 +38,22 @@ RSpec.describe 'Garden requests' do
         user = create(:user)
         original_garden_count = Garden.count
         garden_params = { garden: { name: '' } }
-        api_sign_in(user)
 
-        expect { post api_gardens_path, params: garden_params }
+        expect {
+          post api_gardens_path,
+               params: garden_params,
+               headers: auth_header(user)
+        }
           .to_not change { Garden.count }.from original_garden_count
       end
 
       it 'returns the gardens errors and status 422' do
         user = create(:user)
         garden_params = { garden: { name: '' } }
-        api_sign_in(user)
 
-        post api_gardens_path, params: garden_params
+        post api_gardens_path,
+             params: garden_params,
+             headers: auth_header(user)
 
         result = response_json
 
@@ -56,11 +64,15 @@ RSpec.describe 'Garden requests' do
 
     context 'without an authenticated user' do
       it 'does not create a new garden' do
-        _user = create(:user)
+        user = create(:user)
         original_garden_count = Garden.count
         garden_params = { garden: { name: '' } }
 
-        expect { post api_gardens_path, params: garden_params }
+        expect {
+          post api_gardens_path,
+               params: garden_params,
+               headers: auth_header(user)
+        }
           .to_not change { Garden.count }.from original_garden_count
       end
 
@@ -84,9 +96,12 @@ RSpec.describe 'Garden requests' do
         original_name = garden.name
         new_name = 'A new name'
         garden_params = { garden: { name: new_name } }
-        api_sign_in(user)
 
-        expect { put api_garden_path(garden), params: garden_params }
+        expect {
+          put api_garden_path(garden),
+              params: garden_params,
+              headers: auth_header(user)
+        }
           .to change { garden.reload.name }
           .from(original_name)
           .to(garden_params[:garden][:name])
@@ -97,9 +112,10 @@ RSpec.describe 'Garden requests' do
         garden = user.owned_gardens.first
         new_name = 'A new name'
         garden_params = { garden: { name: new_name } }
-        api_sign_in(user)
 
-        put api_garden_path(garden), params: garden_params
+        put api_garden_path(garden),
+            params: garden_params,
+            headers: auth_header(user)
 
         result = response_json
 
@@ -113,9 +129,12 @@ RSpec.describe 'Garden requests' do
         user = create(:user)
         garden = user.owned_gardens.first
         garden_params = { garden: { name: '' } }
-        api_sign_in(user)
 
-        expect { put api_garden_path(garden), params: garden_params }
+        expect {
+          put api_garden_path(garden),
+              params: garden_params,
+              headers: auth_header(user)
+        }
           .to_not change { garden.reload.name }
       end
 
@@ -123,9 +142,10 @@ RSpec.describe 'Garden requests' do
         user = create(:user)
         garden = user.owned_gardens.first
         garden_params = { garden: { name: '' } }
-        api_sign_in(user)
 
-        put api_garden_path(garden), params: garden_params
+        put api_garden_path(garden),
+            params: garden_params,
+            headers: auth_header(user)
 
         result = response_json
 
@@ -162,9 +182,8 @@ RSpec.describe 'Garden requests' do
       user = create(:user)
       original_garden_count = Garden.count
       garden = user.owned_gardens.first
-      api_sign_in(user)
 
-      delete api_garden_path(garden)
+      delete api_garden_path(garden), headers: auth_header(user)
 
       expect(response.code).to eq '200'
       expect(Garden.count).to eq original_garden_count - 1

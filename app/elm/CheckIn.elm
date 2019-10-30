@@ -15,6 +15,7 @@ import Json.Decode exposing (Decoder, bool, int, list, string, succeed)
 import Json.Decode.Pipeline exposing (optional, required)
 import Json.Encode as Encode
 import Process
+import Session exposing (Session)
 import Task
 import Time exposing (Posix)
 
@@ -50,7 +51,7 @@ type Event
 
 
 submitCheckIn :
-    String
+    Session
     ->
         { watered : Bool
         , fertilized : Bool
@@ -61,7 +62,7 @@ submitCheckIn :
         }
     -> (Result Http.Error CheckIn -> a)
     -> Cmd a
-submitCheckIn csrfToken form a =
+submitCheckIn session form a =
     let
         plantId =
             form.plantId
@@ -74,7 +75,10 @@ submitCheckIn csrfToken form a =
         , url = Api.checkInEndpoint plantId
         , body = checkInRequestBody <| checkInFromForm form
         , expect = Http.expectJson a checkInDecoder
-        , headers = [ Http.header "X-CSRF-Token" csrfToken ]
+        , headers =
+            [ Http.header "X-CSRF-Token" session.csrfToken
+            , Api.authorizationHeader session.currentUser
+            ]
         , timeout = Nothing
         , tracker = Nothing
         }

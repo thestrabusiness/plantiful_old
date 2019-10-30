@@ -21,7 +21,6 @@ RSpec.describe 'User requests', type: :request do
         expect(user_response[:first_name]).to eq 'Uncle'
         expect(user_response[:last_name]).to eq 'Tony'
         expect(user_response[:email]).to eq 'uncle@tony.com'
-        expect(user_response[:remember_token]).to be
       end
     end
   end

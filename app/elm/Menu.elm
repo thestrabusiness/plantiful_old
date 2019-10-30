@@ -1,5 +1,6 @@
 module Menu exposing (Model, Msg, init, menu, menuButton, update, view)
 
+import Api
 import Browser.Navigation as Nav
 import Garden exposing (Garden)
 import Html exposing (Html, a, button, div, input, label, li, text, ul)
@@ -8,10 +9,11 @@ import Html.Events exposing (onClick, onInput)
 import Http
 import Octicons
 import Routes
+import Session exposing (Session)
 
 
 type alias Model =
-    { csrfToken : String
+    { session : Session
     , key : Nav.Key
     , ownedGardens : List Garden
     , sharedGardens : List Garden
@@ -37,11 +39,11 @@ type GardenFormState
     | Invalid
 
 
-init : String -> Nav.Key -> List Garden -> List Garden -> ( Model, Cmd Msg )
-init csrfToken key ownedGardens sharedGardens =
+init : Session -> Nav.Key -> List Garden -> List Garden -> ( Model, Cmd Msg )
+init session key ownedGardens sharedGardens =
     let
         initialModel =
-            Model csrfToken key ownedGardens sharedGardens False Closed ""
+            Model session key ownedGardens sharedGardens False Closed ""
     in
     ( initialModel, Cmd.none )
 
@@ -73,7 +75,7 @@ update msg model =
 
             else
                 ( { model | gardenFormState = Submitting }
-                , Garden.createGarden model.csrfToken
+                , createGarden model.session
                     model.newGardenName
                     ReceivedCreateGardenResponse
                 )
@@ -260,3 +262,27 @@ gardenListItem garden =
     in
     li []
         [ a [ href linkToGarden ] [ text garden.name ] ]
+
+
+
+-- API
+
+
+createGarden : Session -> String -> (Result Http.Error Garden -> msg) -> Cmd msg
+createGarden session name msg =
+    let
+        body =
+            Garden.encodeGarden name
+    in
+    Http.request
+        { method = "POST"
+        , url = Api.gardensEndpoint
+        , body = Http.jsonBody body
+        , expect = Http.expectJson msg Garden.gardenDecoder
+        , headers =
+            [ Http.header "X-CSRF-Token" session.csrfToken
+            , Api.authorizationHeader session.currentUser
+            ]
+        , timeout = Nothing
+        , tracker = Nothing
+        }

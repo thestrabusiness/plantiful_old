@@ -24,20 +24,20 @@ import Octicons exposing (defaultOptions)
 import Plant
 import Process
 import Routes exposing (newPlantPath)
+import Session exposing (Session)
 import Task
 import Time exposing (Posix)
 import User exposing (User)
 
 
 type alias Model =
-    { plants : List Plant.Plant
-    , currentUser : User
+    { session : Session
+    , plants : List Plant.Plant
     , currentTime : Posix
     , currentTimeZone : Time.Zone
     , modal : Modal.Modal Msg
     , checkInForm : CheckInForm
     , loading : Loading
-    , csrfToken : String
     , gardenId : Int
     }
 
@@ -72,23 +72,23 @@ type Loading
     | Failed
 
 
-init : String -> User -> Int -> Time.Posix -> Time.Zone -> ( Model, Cmd Msg )
-init csrfToken user gardenId currentTime timeZone =
-    ( initialModel csrfToken user currentTime timeZone gardenId
-    , getPlants gardenId
+init : Session -> Int -> Time.Posix -> Time.Zone -> ( Model, Cmd Msg )
+init session gardenId currentTime timeZone =
+    ( initialModel session currentTime timeZone gardenId
+    , getPlants session gardenId
     )
 
 
-initialModel : String -> User -> Time.Posix -> Time.Zone -> Int -> Model
-initialModel csrfToken user currentTime timeZone gardenId =
-    Model []
-        user
+initialModel : Session -> Time.Posix -> Time.Zone -> Int -> Model
+initialModel session currentTime timeZone gardenId =
+    Model
+        session
+        []
         currentTime
         timeZone
         ModalClosed
         initialCheckInForm
         Loading
-        csrfToken
         gardenId
 
 
@@ -155,7 +155,7 @@ update msg model =
                 |> closeModal
 
         UserSubmittedCheckIn ->
-            ( model, submitCheckIn model.csrfToken model.checkInForm )
+            ( model, submitCheckIn model.session model.checkInForm )
 
         ReceivedPlantCheckInResponse (Ok checkIn) ->
             case checkIn.watered of
@@ -361,14 +361,14 @@ distanceInDays currentTime wateredAt =
 -- API
 
 
-getPlants : Int -> Cmd Msg
-getPlants gardenId =
-    Plant.getPlants gardenId NewPlants
+getPlants : Session -> Int -> Cmd Msg
+getPlants session gardenId =
+    Plant.getPlants session gardenId NewPlants
 
 
-submitCheckIn : String -> CheckInForm -> Cmd Msg
-submitCheckIn csrfToken form =
-    CheckIn.submitCheckIn csrfToken form ReceivedPlantCheckInResponse
+submitCheckIn : Session -> CheckInForm -> Cmd Msg
+submitCheckIn session form =
+    CheckIn.submitCheckIn session form ReceivedPlantCheckInResponse
 
 
 

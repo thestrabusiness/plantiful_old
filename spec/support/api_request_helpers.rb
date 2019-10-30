@@ -1,5 +1,5 @@
 module ApiRequestHelpers
-  def api_sign_in(user)
-    cookies['remember_token'] = user.remember_token
+  def auth_header(user)
+    { 'HTTP_AUTHORIZATION': "Bearer #{user.remember_token}" }
   end
 end

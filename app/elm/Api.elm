@@ -1,5 +1,6 @@
 module Api exposing
-    ( baseUrl
+    ( authorizationHeader
+    , baseUrl
     , checkInEndpoint
     , currentUserEndpoint
     , gardenEndpoint
@@ -10,12 +11,33 @@ module Api exposing
     , plantAvatarEndpoint
     , plantEndpoint
     , plantsEndpoint
+    , sessionStatusEndpoint
     , signInEndpoint
     , signOutEndpoint
     , somethingWentWrongError
     , unauthorizedError
     , usersEndpoint
     )
+
+import Http exposing (Header)
+import Loadable exposing (Loadable(..))
+import User exposing (AuthToken(..), User)
+
+
+authorizationHeader : Loadable User -> Header
+authorizationHeader loadableUser =
+    case loadableUser of
+        Success user ->
+            authoriationHeaderValue user.rememberToken
+                |> Http.header "Authorization"
+
+        _ ->
+            Http.header "Authorization" ""
+
+
+authoriationHeaderValue : AuthToken -> String
+authoriationHeaderValue (AuthToken token) =
+    "Bearer " ++ token
 
 
 baseUrl : String
@@ -81,6 +103,11 @@ signInEndpoint =
 signOutEndpoint : String
 signOutEndpoint =
     baseUrl ++ "/sign_out"
+
+
+sessionStatusEndpoint : String
+sessionStatusEndpoint =
+    signInEndpoint ++ "/status"
 
 
 unauthorizedError : String

@@ -8,9 +8,9 @@ RSpec.describe 'Plant requests', type: :request do
         it 'returns a list of the users plants' do
           user = create(:user, :with_plants, number: 3)
           _other_plants = create_list(:plant, 3)
-          api_sign_in(user)
 
-          get api_garden_plants_path(user.gardens.first)
+          get api_garden_plants_path(user.gardens.first),
+              headers: auth_header(user)
 
           api_response = response_json
           returned_ids = api_response.collect { |result| result[:id] }
@@ -24,9 +24,9 @@ RSpec.describe 'Plant requests', type: :request do
         it 'returns an empty list' do
           user = create(:user)
           _other_plants = create_list(:plant, 3)
-          api_sign_in(user)
 
-          get api_garden_plants_path(user.gardens.first)
+          get api_garden_plants_path(user.gardens.first),
+              headers: auth_header(user)
 
           result = response_json
           expect(result.size).to eq 0
@@ -53,14 +53,17 @@ RSpec.describe 'Plant requests', type: :request do
             check_frequency_scalar: 1,
             check_frequency_unit: 'week' } }
 
-        api_sign_in(user)
-        post api_garden_plants_path(garden), params: plant_params
+        post api_garden_plants_path(garden),
+             params: plant_params,
+             headers: auth_header(user)
 
         result = response_json
 
         expect(result[:name]).to eq plant_params[:plant][:name]
-        expect(result[:check_frequency_unit]).to eq plant_params[:plant][:check_frequency_unit]
-        expect(result[:check_frequency_scalar]).to eq plant_params[:plant][:check_frequency_scalar]
+        expect(result[:check_frequency_unit])
+          .to eq plant_params[:plant][:check_frequency_unit]
+        expect(result[:check_frequency_scalar])
+          .to eq plant_params[:plant][:check_frequency_scalar]
         expect(result[:garden_id]).to eq garden.id
       end
     end
@@ -73,13 +76,15 @@ RSpec.describe 'Plant requests', type: :request do
             check_frequency_scalar: nil,
             check_frequency_unit: nil } }
 
-        api_sign_in(user)
-        post api_garden_plants_path(user.gardens.first), params: plant_params
+        post api_garden_plants_path(user.gardens.first),
+             params: plant_params,
+             headers: auth_header(user)
 
         result = response_json
 
         expect(response.code).to eq '422'
-        expect(result.keys).to match_array %i[name check_frequency_scalar check_frequency_unit]
+        expect(result.keys)
+          .to match_array %i[name check_frequency_scalar check_frequency_unit]
       end
     end
   end
@@ -88,12 +93,15 @@ RSpec.describe 'Plant requests', type: :request do
     it 'attaches a new avatar to the plant' do
       plant = create(:plant)
       image_path = Rails.root.join('spec', 'fixtures', 'plant.jpg')
-      base64_avatar = 'data:image/jpg;base64,' + Base64.strict_encode64(File.read(image_path))
+      base64_avatar =
+        'data:image/jpg;base64,' + Base64.strict_encode64(File.read(image_path))
 
-      api_sign_in(plant.added_by)
+      expect {
+        post_avatar(plant,
+                    base64_avatar,
+                    headers: auth_header(plant.added_by))
+      }.to change { ActiveStorage::Blob.count }.from(0).to(1)
 
-      expect { post_avatar(plant, base64_avatar) }
-        .to change { ActiveStorage::Blob.count }.from(0).to(1)
       result = response_json
       expect(result[:avatar]).to be
     end
@@ -103,10 +111,10 @@ RSpec.describe 'Plant requests', type: :request do
     it 'destroys the plant with the given ID' do
       plant = create(:plant)
 
-      api_sign_in(plant.added_by)
-
-      expect { delete api_plant_path(plant) }
-        .to change { Plant.count }.from(1).to(0)
+      expect {
+        delete api_plant_path(plant),
+               headers: auth_header(plant.added_by)
+      } .to change { Plant.count }.from(1).to(0)
       expect(response.status).to eq 200
     end
   end
@@ -123,8 +131,9 @@ RSpec.describe 'Plant requests', type: :request do
             check_frequency_scalar: 1,
             check_frequency_unit: 'day' } }
 
-        api_sign_in(plant.added_by)
-        put api_plant_path(plant.id), params: plant_params
+        put api_plant_path(plant.id),
+            params: plant_params,
+            headers: auth_header(plant.added_by)
 
         result = response_json
 
@@ -145,8 +154,9 @@ RSpec.describe 'Plant requests', type: :request do
             check_frequency_scalar: nil,
             check_frequency_unit: nil } }
 
-        api_sign_in(plant.added_by)
-        put api_plant_path(plant.id), params: plant_params
+        put api_plant_path(plant.id),
+            params: plant_params,
+            headers: auth_header(plant.added_by)
 
         result = response_json
 
@@ -162,7 +172,9 @@ RSpec.describe 'Plant requests', type: :request do
     end
   end
 
-  def post_avatar(plant, avatar)
-    post avatar_api_plant_path(plant), params: { plant: { avatar: avatar } }
+  def post_avatar(plant, avatar, headers:)
+    post avatar_api_plant_path(plant),
+         params: { plant: { avatar: avatar } },
+         headers: headers
   end
 end

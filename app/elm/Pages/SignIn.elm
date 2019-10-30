@@ -8,6 +8,7 @@ import Html.Attributes exposing (class, href, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Routes
+import Session
 import User exposing (User)
 import Validate exposing (Validator, fromValid, ifBlank, ifInvalidEmail, validate)
 
@@ -55,7 +56,9 @@ update msg model key =
                             fromValid validatedModel
                     in
                     ( { validModel | errors = [] }
-                    , User.signIn model.csrfToken ReceivedSignInResponse (User.toCredentials model)
+                    , Session.signIn model.csrfToken
+                        ReceivedSignInResponse
+                        (Session.toCredentials model)
                     , Nothing
                     )
 

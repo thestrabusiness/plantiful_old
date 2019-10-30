@@ -1,12 +1,29 @@
-module Main exposing (Model, Msg(..), Page(..), currentPage, init, loadCurrentPage, main, nav, subscriptions, update, view)
+module Main exposing
+    ( Model
+    , Msg(..)
+    , Page(..)
+    , currentPage
+    , init
+    , loadCurrentPage
+    , main
+    , nav
+    , subscriptions
+    , update
+    , view
+    )
 
+import Api
 import Browser
 import Browser.Navigation as Nav
+import Dict
 import Garden exposing (Garden)
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (onClick)
 import Http
+import Json.Decode exposing (Decoder, string, succeed)
+import Json.Decode.Pipeline exposing (required)
+import Loadable exposing (Loadable(..))
 import Menu
 import Pages.NotAuthorized as NotAuthorized
 import Pages.PlantDetails as PlantDetails
@@ -15,6 +32,7 @@ import Pages.PlantList as PlantList
 import Pages.SignIn as SignIn
 import Pages.UserForm as UserForm
 import Routes exposing (Route)
+import Session
 import Task
 import Time
 import Url
@@ -29,10 +47,9 @@ type alias Model =
     { key : Nav.Key
     , page : Page
     , route : Route
-    , currentUser : Loadable User
     , currentTime : Time.Posix
     , timeZone : Time.Zone
-    , csrfToken : String
+    , session : Session.Session
     , menu : Menu
     }
 
@@ -40,12 +57,6 @@ type alias Model =
 type Menu
     = MenuNone
     | Menu Menu.Model
-
-
-type Loadable a
-    = Loading
-    | Success a
-    | None
 
 
 
@@ -59,32 +70,34 @@ init flags url key =
             { key = key
             , page = PageNone
             , route = Routes.extractRoute url
-            , currentUser = Loading
             , currentTime = Time.millisToPosix 0
             , timeZone = Time.utc
-            , csrfToken = flags.csrfToken
+            , session = Session.Session flags.csrfToken Loading
             , menu = MenuNone
             }
 
         initCmds =
-            [ getCurrentTime, getTimeZone, getCurrentUser model.route ]
+            [ getCurrentTime
+            , getTimeZone
+            , Session.getCurrentSession flags.csrfToken ReceivedSessionStatus
+            ]
     in
     ( model, Cmd.batch initCmds )
         |> loadCurrentPage
 
 
-initMenu : String -> Nav.Key -> List Garden -> List Garden -> Menu
-initMenu csrfToken key ownedGardens sharedGardens =
+initMenu : Session.Session -> Nav.Key -> List Garden -> List Garden -> Menu
+initMenu session key ownedGardens sharedGardens =
     let
         ( initialModel, _ ) =
-            Menu.init csrfToken key ownedGardens sharedGardens
+            Menu.init session key ownedGardens sharedGardens
     in
     Menu initialModel
 
 
-getCurrentUser : Routes.Route -> Cmd Msg
-getCurrentUser route =
-    User.getCurrentUser <| ReceivedCurrentUserResponse route
+getCurrentUser : Session.Session -> Routes.Route -> Cmd Msg
+getCurrentUser session route =
+    Session.getCurrentUser session <| ReceivedCurrentUserResponse route
 
 
 getCurrentTime : Cmd Msg
@@ -115,6 +128,7 @@ type Msg
     | ReceivedCurrentUserResponse Route (Result Http.Error User)
     | ReceivedCurrentTime Time.Posix
     | ReceivedTimeZone Time.Zone
+    | ReceivedSessionStatus (Result Http.Error User)
     | MenuMsg Menu.Msg
 
 
@@ -157,28 +171,79 @@ update msg model =
             ( { model | timeZone = zone }, Cmd.none )
 
         ( UserClickedSignOutButton, _ ) ->
-            ( model, User.signOut model.csrfToken ReceivedUserSignOutResponse )
+            ( model, Session.signOut model.session ReceivedUserSignOutResponse )
 
         ( ReceivedUserSignOutResponse (Ok _), _ ) ->
-            ( { model | currentUser = None }, Nav.pushUrl model.key Routes.signInPath )
+            let
+                session =
+                    model.session
+
+                updatedSession =
+                    { session | currentUser = None }
+            in
+            ( { model | session = updatedSession }, Nav.pushUrl model.key Routes.signInPath )
 
         ( ReceivedUserSignOutResponse (Err _), _ ) ->
             ( model, Cmd.none )
 
         ( ReceivedCurrentUserResponse route (Ok user), _ ) ->
             let
+                session =
+                    model.session
+
+                updatedSession =
+                    { session | currentUser = Success user }
+
                 initialMenu =
-                    initMenu model.csrfToken
+                    initMenu updatedSession
                         model.key
                         user.ownedGardens
                         user.sharedGardens
             in
-            ( { model | currentUser = Success user, menu = initialMenu }
+            ( { model | session = updatedSession, menu = initialMenu }
             , Nav.pushUrl model.key (Routes.pathFor route)
             )
 
         ( ReceivedCurrentUserResponse _ (Err error), _ ) ->
-            ( { model | currentUser = None }, Cmd.none )
+            let
+                session =
+                    model.session
+
+                updatedSession =
+                    { session | currentUser = None }
+            in
+            ( { model | session = updatedSession }, Cmd.none )
+                |> loadCurrentPage
+
+        ( ReceivedSessionStatus (Ok user), _ ) ->
+            let
+                session =
+                    model.session
+
+                updatedSession =
+                    { session | currentUser = Success user }
+
+                initialMenu =
+                    initMenu updatedSession
+                        model.key
+                        user.ownedGardens
+                        user.sharedGardens
+            in
+            ( { model | session = updatedSession, menu = initialMenu }, Cmd.none )
+                |> loadCurrentPage
+
+        ( ReceivedSessionStatus (Err error), _ ) ->
+            let
+                _ =
+                    Debug.log "error:" error
+
+                session =
+                    model.session
+
+                updatedSession =
+                    { session | currentUser = None }
+            in
+            ( { model | session = updatedSession }, Cmd.none )
                 |> loadCurrentPage
 
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
@@ -201,25 +266,32 @@ update msg model =
 
         ( UserFormMsg subMsg, UserPage pageModel ) ->
             let
+                session =
+                    model.session
+
                 ( newPageModel, newCmd, currentUser ) =
                     UserForm.update subMsg pageModel model.key
 
-                ( loadableUser, newMenu ) =
+                ( newMenu, updatedSession ) =
                     case currentUser of
                         Just user ->
-                            ( Success user
-                            , initMenu model.csrfToken
+                            let
+                                newSession =
+                                    { session | currentUser = Success user }
+                            in
+                            ( initMenu newSession
                                 model.key
                                 user.ownedGardens
                                 user.sharedGardens
+                            , newSession
                             )
 
                         Nothing ->
-                            ( None, MenuNone )
+                            ( MenuNone, session )
             in
             ( { model
                 | page = UserPage newPageModel
-                , currentUser = loadableUser
+                , session = updatedSession
                 , menu = newMenu
               }
             , Cmd.map UserFormMsg newCmd
@@ -234,7 +306,7 @@ update msg model =
                     case currentUser of
                         Just user ->
                             ( Success user
-                            , initMenu model.csrfToken
+                            , initMenu model.session
                                 model.key
                                 user.ownedGardens
                                 user.sharedGardens
@@ -242,10 +314,16 @@ update msg model =
 
                         Nothing ->
                             ( None, MenuNone )
+
+                session =
+                    model.session
+
+                updatedSession =
+                    { session | currentUser = loadableUser }
             in
             ( { model
                 | page = SignInPage newPageModel
-                , currentUser = loadableUser
+                , session = updatedSession
                 , menu = newMenu
               }
             , Cmd.map SignInMsg newCmd
@@ -286,12 +364,11 @@ loadCurrentPage ( model, cmd ) =
         ( page, newCmd ) =
             case model.route of
                 Routes.NewPlantRoute gardenId ->
-                    case model.currentUser of
+                    case model.session.currentUser of
                         Success user ->
                             let
                                 ( formModel, formCmd ) =
-                                    PlantForm.init model.csrfToken
-                                        user
+                                    PlantForm.init model.session
                                         Nothing
                                         (Just gardenId)
                             in
@@ -306,17 +383,16 @@ loadCurrentPage ( model, cmd ) =
                 Routes.NewUserRoute ->
                     let
                         ( formModel, formCmd ) =
-                            UserForm.init model.csrfToken
+                            UserForm.init model.session
                     in
                     ( UserPage formModel, Cmd.map UserFormMsg formCmd )
 
                 Routes.SignInRoute ->
-                    case model.currentUser of
+                    case model.session.currentUser of
                         Success user ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    PlantList.init model.csrfToken
-                                        user
+                                    PlantList.init model.session
                                         user.defaultGardenId
                                         model.currentTime
                                         model.timeZone
@@ -331,7 +407,7 @@ loadCurrentPage ( model, cmd ) =
                         None ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    SignIn.init model.csrfToken
+                                    SignIn.init model.session.csrfToken
                             in
                             ( SignInPage pageModel, Cmd.map SignInMsg pageCmd )
 
@@ -339,14 +415,13 @@ loadCurrentPage ( model, cmd ) =
                     ( PageNone, Cmd.none )
 
                 Routes.PlantRoute id ->
-                    case model.currentUser of
+                    case model.session.currentUser of
                         Success user ->
                             let
                                 ( pageModel, pageCmd ) =
                                     PlantDetails.init model.key
-                                        model.csrfToken
+                                        model.session
                                         id
-                                        user
                                         model.timeZone
                             in
                             ( PlantDetailsPage pageModel
@@ -360,17 +435,16 @@ loadCurrentPage ( model, cmd ) =
                         None ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    SignIn.init model.csrfToken
+                                    SignIn.init model.session.csrfToken
                             in
                             ( SignInPage pageModel, Cmd.map SignInMsg pageCmd )
 
                 Routes.EditPlantRoute plantId ->
-                    case model.currentUser of
+                    case model.session.currentUser of
                         Success user ->
                             let
                                 ( formModel, formCmd ) =
-                                    PlantForm.init model.csrfToken
-                                        user
+                                    PlantForm.init model.session
                                         (Just plantId)
                                         Nothing
                             in
@@ -383,12 +457,11 @@ loadCurrentPage ( model, cmd ) =
                             ( NotAuthorizedPage {}, Cmd.map NotAuthorizedMsg Cmd.none )
 
                 Routes.GardenRoute gardenId ->
-                    case model.currentUser of
+                    case model.session.currentUser of
                         Success user ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    PlantList.init model.csrfToken
-                                        user
+                                    PlantList.init model.session
                                         gardenId
                                         model.currentTime
                                         model.timeZone
@@ -402,12 +475,11 @@ loadCurrentPage ( model, cmd ) =
                             ( NotAuthorizedPage {}, Cmd.map NotAuthorizedMsg Cmd.none )
 
                 Routes.GardensRoute ->
-                    case model.currentUser of
+                    case model.session.currentUser of
                         Success user ->
                             let
                                 ( pageModel, pageCmd ) =
-                                    PlantList.init model.csrfToken
-                                        user
+                                    PlantList.init model.session
                                         user.defaultGardenId
                                         model.currentTime
                                         model.timeZone

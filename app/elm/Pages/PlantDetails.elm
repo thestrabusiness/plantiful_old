@@ -17,22 +17,23 @@ import Html.Attributes exposing (class, href, id, src, style, target)
 import Html.Events exposing (onClick)
 import Http
 import Json.Encode
+import Loadable exposing (Loadable(..))
 import Modal exposing (..)
 import Octicons exposing (defaultOptions)
 import Plant
 import Routes
+import Session exposing (Session)
 import Task
 import Time
 import User
 
 
 type alias Model =
-    { plant : Maybe Plant.Plant
-    , currentUser : User.User
+    { session : Session
+    , plant : Maybe Plant.Plant
     , timeZone : Time.Zone
     , upload : Upload
     , modal : Modal.Modal Msg
-    , csrfToken : String
     , key : Nav.Key
     }
 
@@ -58,10 +59,10 @@ type Msg
     | UserClickedEditPlant Int
 
 
-init : Nav.Key -> String -> Int -> User.User -> Time.Zone -> ( Model, Cmd Msg )
-init key csrfToken plantId user timeZone =
-    ( Model Nothing user timeZone None Modal.ModalClosed csrfToken key
-    , getPlant plantId
+init : Nav.Key -> Session -> Int -> Time.Zone -> ( Model, Cmd Msg )
+init key session plantId timeZone =
+    ( Model session Nothing timeZone None Modal.ModalClosed key
+    , getPlant session plantId
     )
 
 
@@ -116,7 +117,7 @@ update msg model =
                             { plant | avatarUrl = photo }
                     in
                     ( { model | upload = Uploading 0 }
-                    , uploadPhoto model.csrfToken photo plant
+                    , uploadPhoto model.session photo plant
                     )
 
                 Nothing ->
@@ -146,20 +147,23 @@ update msg model =
 
         UserClickedDeletePlant plantId ->
             ( model
-            , deletePlant model.csrfToken plantId
+            , deletePlant model.session plantId
             )
 
         ReceivedDeletePlantResponse (Ok _) ->
-            case model.plant of
-                Just plant ->
+            case ( model.plant, model.session.currentUser ) of
+                ( Just plant, _ ) ->
                     ( model
                     , Nav.pushUrl model.key (Routes.gardenPath plant.gardenId)
                     )
 
-                Nothing ->
+                ( Nothing, Success user ) ->
                     ( model
-                    , Nav.pushUrl model.key (Routes.gardenPath model.currentUser.defaultGardenId)
+                    , Nav.pushUrl model.key (Routes.gardenPath user.defaultGardenId)
                     )
+
+                ( _, _ ) ->
+                    ( model, Cmd.none )
 
         ReceivedDeletePlantResponse (Err _) ->
             ( model, Cmd.none )
@@ -176,19 +180,19 @@ subscriptions =
         ]
 
 
-uploadPhoto : String -> String -> Plant.Plant -> Cmd Msg
-uploadPhoto csrfToken base64Photo plant =
-    Plant.uploadPhoto csrfToken base64Photo plant ReceivedUploadPhotoResponse
+uploadPhoto : Session -> String -> Plant.Plant -> Cmd Msg
+uploadPhoto session base64Photo plant =
+    Plant.uploadPhoto session base64Photo plant ReceivedUploadPhotoResponse
 
 
-getPlant : Int -> Cmd Msg
-getPlant plantId =
-    Plant.getPlant plantId ReceivedGetPlantResponse
+getPlant : Session -> Int -> Cmd Msg
+getPlant session plantId =
+    Plant.getPlant session plantId ReceivedGetPlantResponse
 
 
-deletePlant : String -> Int -> Cmd Msg
-deletePlant csrfToken plantId =
-    Plant.deletePlant csrfToken plantId ReceivedDeletePlantResponse
+deletePlant : Session -> Int -> Cmd Msg
+deletePlant session plantId =
+    Plant.deletePlant session plantId ReceivedDeletePlantResponse
 
 
 view : Model -> Html Msg

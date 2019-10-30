@@ -7,18 +7,19 @@ import Html exposing (..)
 import Html.Attributes exposing (class, id, name, selected, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
+import Loadable exposing (Loadable(..))
 import Plant
 import Routes
+import Session exposing (Session)
 import User exposing (User)
 import Validate exposing (Validator, fromValid, ifBlank, ifNotInt, validate)
 
 
 type alias Model =
-    { plant : PlantForm
-    , currentUser : User
+    { session : Session
+    , plant : PlantForm
     , errors : List Error
     , apiError : String
-    , csrfToken : String
     , formAction : Form.FormAction
     , plantId : Maybe Int
     , gardenId : Maybe Int
@@ -51,8 +52,8 @@ type alias PlantForm =
     }
 
 
-init : String -> User -> Maybe Int -> Maybe Int -> ( Model, Cmd Msg )
-init csrfToken user maybePlantId maybeGardenId =
+init : Session -> Maybe Int -> Maybe Int -> ( Model, Cmd Msg )
+init session maybePlantId maybeGardenId =
     let
         formAction =
             case maybePlantId of
@@ -63,16 +64,15 @@ init csrfToken user maybePlantId maybeGardenId =
                     Form.Create
 
         initialModel =
-            Model initialPlantForm
-                user
+            Model session
+                initialPlantForm
                 []
                 ""
-                csrfToken
                 formAction
                 maybePlantId
                 maybeGardenId
     in
-    ( initialModel, loadPlant maybePlantId )
+    ( initialModel, loadPlant session maybePlantId )
 
 
 initialPlantForm : PlantForm
@@ -100,7 +100,7 @@ update msg model key =
                     case model.gardenId of
                         Just gardenId ->
                             ( model
-                            , createNewPlant model.csrfToken gardenId validPlant
+                            , createNewPlant model.session gardenId validPlant
                             )
 
                         Nothing ->
@@ -114,7 +114,7 @@ update msg model key =
                     case model.plantId of
                         Just plantId ->
                             ( model
-                            , updatePlant model.csrfToken plantId validPlant
+                            , updatePlant model.session plantId validPlant
                             )
 
                         Nothing ->
@@ -135,14 +135,17 @@ update msg model key =
                     ( model, Cmd.none )
 
         ReceivedCreatePlantResponse (Ok plant) ->
-            case model.gardenId of
-                Just gardenId ->
+            case ( model.gardenId, model.session.currentUser ) of
+                ( Just gardenId, _ ) ->
                     ( model, goBackToPlantsList key gardenId )
 
-                Nothing ->
+                ( Nothing, Success user ) ->
                     ( model
-                    , goBackToPlantsList key model.currentUser.defaultGardenId
+                    , goBackToPlantsList key user.defaultGardenId
                     )
+
+                ( _, _ ) ->
+                    ( model, Cmd.none )
 
         ReceivedCreatePlantResponse (Err error) ->
             handleErrorResponse model error key
@@ -348,21 +351,21 @@ formValidator =
 -- API
 
 
-loadPlant : Maybe Int -> Cmd Msg
-loadPlant maybePlantId =
+loadPlant : Session -> Maybe Int -> Cmd Msg
+loadPlant session maybePlantId =
     case maybePlantId of
         Just plantId ->
-            Plant.getPlant plantId ReceivedGetPlantResponse
+            Plant.getPlant session plantId ReceivedGetPlantResponse
 
         Nothing ->
             Cmd.none
 
 
-createNewPlant : String -> Int -> PlantForm -> Cmd Msg
-createNewPlant csrfToken gardenId plantForm =
-    Plant.createPlant csrfToken gardenId ReceivedCreatePlantResponse plantForm
+createNewPlant : Session -> Int -> PlantForm -> Cmd Msg
+createNewPlant session gardenId plantForm =
+    Plant.createPlant session gardenId ReceivedCreatePlantResponse plantForm
 
 
-updatePlant : String -> Int -> PlantForm -> Cmd Msg
-updatePlant csrfToken plantId plantForm =
-    Plant.updatePlant csrfToken plantId ReceivedUpdatePlantResponse plantForm
+updatePlant : Session -> Int -> PlantForm -> Cmd Msg
+updatePlant session plantId plantForm =
+    Plant.updatePlant session plantId ReceivedUpdatePlantResponse plantForm
