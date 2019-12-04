@@ -35,4 +35,17 @@ RSpec.feature 'User can view a list of plants' do
 
     expect(page).to have_selector '.plant__list-indicator'
   end
+
+  it 'user cannot see deleted plants' do
+    user = create(:user)
+    garden = user.owned_gardens.first
+    deleted_plant = create(:plant,
+                           name: 'deleted',
+                           added_by: user,
+                           garden: garden)
+
+    visit garden_path(garden, user)
+
+    expect(page).to_not have_content deleted_plant.name
+  end
 end

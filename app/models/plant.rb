@@ -16,19 +16,17 @@ class Plant < ApplicationRecord
 
   has_one_base64_attached :avatar
 
+  time_for_a_boolean :deleted
+
   validates :added_by, :garden, :name, presence: true
   validates :check_frequency_scalar, presence: true, numericality: true
   validates :check_frequency_unit, presence: true, inclusion: FREQUENCY_UNITS
 
+  scope :active, -> { where(deleted_at: nil) }
+  scope :deleted, -> { where.not(deleted_at: nil) }
+
   def self.need_care
-    joins(:check_ins)
-      .where(
-        'check_ins.created_at = (SELECT MAX(check_ins.created_at)
-        FROM check_ins WHERE check_ins.plant_id = plants.id)'
-      )
-      .where(
-        "check_ins.created_at + #{care_frequency_interval_sql} <= now()"
-      ).uniq
+    NeedsCheckIn.plants(self)
   end
 
   def check_frequency
@@ -57,10 +55,6 @@ class Plant < ApplicationRecord
   end
 
   private
-
-  def self.care_frequency_interval_sql
-    "(check_frequency_scalar || ' ' || check_frequency_unit::TEXT)::INTERVAL"
-  end
 
   def recent_check_in
     last_check_in || NullCheckIn.new(self)

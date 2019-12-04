@@ -88,7 +88,7 @@ update msg model =
                 _ =
                     Debug.log "Error" error
             in
-            ( model, Cmd.none )
+            ( model, Nav.pushUrl model.key Routes.gardensPath )
 
         UserSelectedUploadNewPhoto ->
             ( model, Select.file [ "image/*" ] NewImageSelected )

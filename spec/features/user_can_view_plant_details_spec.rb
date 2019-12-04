@@ -19,4 +19,13 @@ RSpec.feature 'User can view plant details' do
 
     expect(page).to have_selector('.check_in__item', count: 5)
   end
+
+  it 'user is redirected when trying to view a deleted plant' do
+    plant = create(:plant, :deleted, name: 'Planthony')
+    create(:check_in, :watered, plant: plant, performed_by: plant.added_by)
+
+    visit plant_path(plant, plant.added_by)
+
+    expect(page).to have_current_path('/gardens')
+  end
 end

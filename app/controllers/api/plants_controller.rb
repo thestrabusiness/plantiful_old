@@ -5,6 +5,7 @@ module Api
       plants = garden.plants
 
       render json: plants
+        .active
         .with_attached_avatar
         .includes(:last_watering, :last_check_in)
         .sort_by(&:next_check_time)
@@ -23,10 +24,11 @@ module Api
 
     def show
       plant = current_user
-              .plants
+              .active_plants
               .with_attached_avatar
               .includes(check_ins: :photos_attachments)
               .find(params[:id])
+
       render json: plant, status: :ok
     end
 
@@ -43,7 +45,7 @@ module Api
 
     def destroy
       plant = current_user.plants.find(params[:id])
-      plant.destroy!
+      plant.update(deleted: true)
       head :ok
     end
 
