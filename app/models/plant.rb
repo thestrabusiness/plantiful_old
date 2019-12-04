@@ -16,9 +16,14 @@ class Plant < ApplicationRecord
 
   has_one_base64_attached :avatar
 
+  time_for_a_boolean :deleted
+
   validates :added_by, :garden, :name, presence: true
   validates :check_frequency_scalar, presence: true, numericality: true
   validates :check_frequency_unit, presence: true, inclusion: FREQUENCY_UNITS
+
+  scope :active, -> { where(deleted_at: nil) }
+  scope :deleted, -> { where.not(deleted_at: nil) }
 
   def self.need_care
     joins(:check_ins)

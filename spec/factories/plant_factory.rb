@@ -16,6 +16,10 @@ FactoryBot.define do
       end
     end
 
+    trait :deleted do
+      deleted_at { 1.day.ago }
+    end
+
     after(:build) do |plant, _|
       if plant.garden.nil?
         plant.garden = plant.added_by.owned_gardens.first

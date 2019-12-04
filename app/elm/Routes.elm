@@ -3,6 +3,7 @@ module Routes exposing
     , editPlantPath
     , extractRoute
     , gardenPath
+    , gardensPath
     , matchRoute
     , newPlantPath
     , pathFor
@@ -95,6 +96,11 @@ editPlantPath plantId =
 gardenPath : Int -> String
 gardenPath id =
     pathFor <| GardenRoute id
+
+
+gardensPath : String
+gardensPath =
+    pathFor GardensRoute
 
 
 plantPath : Int -> String

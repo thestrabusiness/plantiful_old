@@ -108,13 +108,13 @@ RSpec.describe 'Plant requests', type: :request do
   end
 
   describe 'DELETE /api/plants/:id' do
-    it 'destroys the plant with the given ID' do
+    it 'soft deletes the plant with the given ID' do
       plant = create(:plant)
 
       expect {
         delete api_plant_path(plant),
                headers: auth_header(plant.added_by)
-      } .to change { Plant.count }.from(1).to(0)
+      } .to change { Plant.deleted.count }.from(0).to(1)
       expect(response.status).to eq 200
     end
   end
