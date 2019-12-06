@@ -3,6 +3,7 @@ class User < ApplicationRecord
 
   has_and_belongs_to_many :gardens
   has_many :plants, through: :gardens
+  has_many :active_plants, -> { active }, through: :gardens, source: :plants
   has_many :waterings, through: :plants
   has_many :owned_gardens, foreign_key: :owner_id, class_name: 'Garden'
 
