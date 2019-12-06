@@ -6,6 +6,7 @@ class User < ApplicationRecord
   has_many :active_plants, -> { active }, through: :gardens, source: :plants
   has_many :waterings, through: :plants
   has_many :owned_gardens, foreign_key: :owner_id, class_name: 'Garden'
+  has_many :check_ins, foreign_key: :performed_by_id
 
   validates :first_name, :last_name, :mobile_api_token, presence: true
 
@@ -14,6 +15,10 @@ class User < ApplicationRecord
   #
   # See this issue: https://github.com/rails/rails/issues/34237
   after_initialize :generate_api_token, if: :new_record?
+
+  def self.with_plants_that_need_care
+    NeedsCheckIn.users(self)
+  end
 
   def full_name
     [first_name, last_name].join(' ')

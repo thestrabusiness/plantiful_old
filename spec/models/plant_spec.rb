@@ -11,24 +11,6 @@ RSpec.describe Plant do
     it { should validate_presence_of(:name) }
   end
 
-  describe '.need_care' do
-    it 'returns plants who are on or past the last scheduled care time' do
-      doesnt_need_care = create(:plant, :with_weekly_check, name: 'not included')
-      create(:check_in, plant: doesnt_need_care, created_at: 12.days.ago)
-      create(:check_in, plant: doesnt_need_care, created_at: 5.days.ago)
-
-      needs_care1 = create(:plant, :with_weekly_check, name: 'included1')
-      create(:check_in, plant: needs_care1, created_at: 7.days.ago - 1.second)
-
-      needs_care2 = create(:plant, :with_weekly_check, name: 'included2')
-      create(:check_in, plant: needs_care2, created_at: 8.days.ago)
-
-      plants_that_need_care_names = Plant.need_care.pluck(:name)
-
-      expect(plants_that_need_care_names).to match_array(%w[included1 included2])
-    end
-  end
-
   describe '#needs_care?' do
     context 'on the day a plant needs care' do
       it 'returns true' do
