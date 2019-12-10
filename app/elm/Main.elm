@@ -25,6 +25,7 @@ import Json.Decode exposing (Decoder, string, succeed)
 import Json.Decode.Pipeline exposing (required)
 import Loadable exposing (Loadable(..))
 import Menu
+import Notice exposing (Notice(..))
 import Pages.NotAuthorized as NotAuthorized
 import Pages.PlantDetails as PlantDetails
 import Pages.PlantForm as PlantForm
@@ -51,6 +52,7 @@ type alias Model =
     , timeZone : Time.Zone
     , session : Session.Session
     , menu : Menu
+    , notice : Notice.Notice
     }
 
 
@@ -74,6 +76,7 @@ init flags url key =
             , timeZone = Time.utc
             , session = Session.Session flags.csrfToken Loading
             , menu = MenuNone
+            , notice = EmptyNotice
             }
 
         initCmds =
@@ -257,10 +260,10 @@ update msg model =
 
         ( PlantFormMsg subMsg, PlantFormPage pageModel ) ->
             let
-                ( newPageModel, newCmd ) =
+                ( newPageModel, newCmd, newNotice ) =
                     PlantForm.update subMsg pageModel model.key
             in
-            ( { model | page = PlantFormPage newPageModel }
+            ( { model | page = PlantFormPage newPageModel, notice = newNotice }
             , Cmd.map PlantFormMsg newCmd
             )
 
@@ -544,6 +547,7 @@ currentPage model =
     in
     div []
         [ nav model
+        , viewNotice model.notice
         , div [ class "main" ] [ page ]
         ]
 
@@ -558,6 +562,16 @@ nav model =
             ]
         , headerLink model
         ]
+
+
+viewNotice : Notice -> Html Msg
+viewNotice notice =
+    case notice of
+        EmptyNotice ->
+            text ""
+
+        Notice message ->
+            div [ class "notice" ] [ text message ]
 
 
 viewMenu : Menu -> Html Msg

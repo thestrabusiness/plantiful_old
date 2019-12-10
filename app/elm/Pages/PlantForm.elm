@@ -8,6 +8,7 @@ import Html.Attributes exposing (class, id, name, selected, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Loadable exposing (Loadable(..))
+import Notice exposing (Notice(..))
 import Plant
 import Routes
 import Session exposing (Session)
@@ -80,11 +81,11 @@ initialPlantForm =
     { name = "", checkFrequencyScalar = "", checkFrequencyUnit = "day" }
 
 
-update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg )
+update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Notice )
 update msg model key =
     case msg of
         UserEditedField field value ->
-            ( setField field value model, Cmd.none )
+            ( setField field value model, Cmd.none, EmptyNotice )
 
         UserSubmittedForm ->
             let
@@ -101,10 +102,11 @@ update msg model key =
                         Just gardenId ->
                             ( model
                             , createNewPlant model.session gardenId validPlant
+                            , EmptyNotice
                             )
 
                         Nothing ->
-                            ( model, Cmd.none )
+                            ( model, Cmd.none, EmptyNotice )
 
                 ( Ok validatedForm, Form.Update ) ->
                     let
@@ -115,37 +117,46 @@ update msg model key =
                         Just plantId ->
                             ( model
                             , updatePlant model.session plantId validPlant
+                            , EmptyNotice
                             )
 
                         Nothing ->
-                            ( model, Cmd.none )
+                            ( model, Cmd.none, EmptyNotice )
 
                 ( Err errorList, _ ) ->
-                    ( { model | errors = errorList }, Cmd.none )
+                    ( { model | errors = errorList }, Cmd.none, EmptyNotice )
 
         UserCancelledForm ->
             case ( model.formAction, model.plantId, model.gardenId ) of
                 ( Form.Create, _, Just gardenId ) ->
-                    ( model, goBackToPlantsList key gardenId )
+                    ( model, goBackToPlantsList key gardenId, EmptyNotice )
 
                 ( Form.Update, Just plantId, Just gardenId ) ->
-                    ( model, goBackToPlantDetails key plantId )
+                    ( model, goBackToPlantDetails key plantId, EmptyNotice )
 
                 ( _, _, _ ) ->
-                    ( model, Cmd.none )
+                    ( model, Cmd.none, EmptyNotice )
 
         ReceivedCreatePlantResponse (Ok plant) ->
             case ( model.gardenId, model.session.currentUser ) of
                 ( Just gardenId, _ ) ->
-                    ( model, goBackToPlantsList key gardenId )
+                    let
+                        noticeMessage =
+                            "New plant added: " ++ plant.name
+                    in
+                    ( model
+                    , goBackToPlantsList key gardenId
+                    , Notice noticeMessage
+                    )
 
                 ( Nothing, Success user ) ->
                     ( model
                     , goBackToPlantsList key user.defaultGardenId
+                    , EmptyNotice
                     )
 
                 ( _, _ ) ->
-                    ( model, Cmd.none )
+                    ( model, Cmd.none, EmptyNotice )
 
         ReceivedCreatePlantResponse (Err error) ->
             handleErrorResponse model error key
@@ -156,34 +167,52 @@ update msg model key =
                 , gardenId = Just plant.gardenId
               }
             , Cmd.none
+            , EmptyNotice
             )
 
         ReceivedGetPlantResponse (Err error) ->
             handleErrorResponse model error key
 
         ReceivedUpdatePlantResponse (Ok plant) ->
-            ( model, goBackToPlantDetails key plant.id )
+            let
+                noticeMessage =
+                    "Updated plant: " ++ plant.name
+            in
+            ( model, goBackToPlantDetails key plant.id, Notice noticeMessage )
 
         ReceivedUpdatePlantResponse (Err error) ->
             handleErrorResponse model error key
 
 
-handleErrorResponse : Model -> Http.Error -> Nav.Key -> ( Model, Cmd Msg )
+handleErrorResponse : Model -> Http.Error -> Nav.Key -> ( Model, Cmd Msg, Notice )
 handleErrorResponse model error key =
     case error of
         Http.BadStatus code ->
             case code of
                 401 ->
-                    ( model, Nav.pushUrl key Routes.signInPath )
+                    let
+                        noticeMessage =
+                            "You have to be signed in to do that"
+                    in
+                    ( model
+                    , Nav.pushUrl key Routes.signInPath
+                    , Notice noticeMessage
+                    )
 
                 _ ->
-                    ( { model | apiError = somethingWentWrongError }, Cmd.none )
+                    ( { model | apiError = somethingWentWrongError }
+                    , Cmd.none
+                    , EmptyNotice
+                    )
 
         Http.NetworkError ->
-            ( { model | apiError = networkError }, Cmd.none )
+            ( { model | apiError = networkError }, Cmd.none, EmptyNotice )
 
         _ ->
-            ( { model | apiError = somethingWentWrongError }, Cmd.none )
+            ( { model | apiError = somethingWentWrongError }
+            , Cmd.none
+            , EmptyNotice
+            )
 
 
 goBackToPlantsList : Nav.Key -> Int -> Cmd Msg
