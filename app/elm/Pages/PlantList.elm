@@ -176,14 +176,17 @@ update msg model =
                         |> updatePlantWateredAt plant checkIn.createdAt
                         |> updateForm initialCheckInForm
                         |> closeModal
-                        |> modifyNotice noticeMessage
+                        |> modifyNotice noticeMessage Notice.NoticeSuccess
 
                 Nothing ->
                     ( model, Cmd.none )
                         |> closeModal
 
         ReceivedPlantCheckInResponse (Err error) ->
-            ( model, Cmd.none, Notice "Something went wrong. Try again later" )
+            ( model
+            , Cmd.none
+            , Notice "Something went wrong. Try again later" Notice.NoticeError
+            )
 
         PhotoConvertedToBase64 base64Photo ->
             let
@@ -253,9 +256,13 @@ closeModal ( model, cmd ) =
     ( { model | modal = ModalClosed }, cmd, EmptyNotice )
 
 
-modifyNotice : String -> ( Model, Cmd Msg, Notice ) -> ( Model, Cmd Msg, Notice )
-modifyNotice newNotice ( model, msg, _ ) =
-    ( model, msg, Notice newNotice )
+modifyNotice :
+    String
+    -> Notice.Class
+    -> ( Model, Cmd Msg, Notice )
+    -> ( Model, Cmd Msg, Notice )
+modifyNotice newNotice noticeClass ( model, msg, _ ) =
+    ( model, msg, Notice newNotice noticeClass )
 
 
 findPlantById : Int -> List Plant.Plant -> Maybe Plant.Plant

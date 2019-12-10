@@ -1,0 +1,27 @@
+.notice {
+  position: relative;
+  box-shadow: 0 1px 4px #ddd;
+  line-height: 2.5;
+  overflow: hidden;
+  text-align: center;
+  z-index: -1;
+
+  -webkit-transform: translateY(-110px);
+  -webkit-animation: slideDown 2.5s 0.5s 1 ease forwards;
+  -moz-transform: translateY(-110px);
+  -moz-animation: slideDown 2.5s 0.5s 1 ease forwards;
+}
+
+.notice-alert { background: $alert }
+.notice-error { background: $error }
+.notice-info { background: $notice }
+.notice-success { background: $success }
+
+@-webkit-keyframes slideDown {
+    0%, 100% { -webkit-transform: translateY(-110px); }
+    10%, 90% { -webkit-transform: translateY(0px); }
+}
+@-moz-keyframes slideDown {
+    0%, 100% { -moz-transform: translateY(-110px); }
+    10%, 90% { -moz-transform: translateY(0px); }
+}

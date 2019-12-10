@@ -94,7 +94,7 @@ update msg model =
             in
             ( model
             , Nav.pushUrl model.key Routes.gardensPath
-            , Notice noticeMessge
+            , Notice noticeMessge Notice.NoticeError
             )
 
         UserSelectedUploadNewPhoto ->
@@ -138,7 +138,7 @@ update msg model =
         ReceivedUploadPhotoResponse (Ok plant) ->
             ( { model | upload = Done, plant = Just plant }
             , Cmd.none
-            , Notice "Photo updated!"
+            , Notice "Photo updated!" Notice.NoticeSuccess
             )
 
         ReceivedUploadPhotoResponse (Err error) ->
@@ -146,7 +146,10 @@ update msg model =
                 _ =
                     Debug.log "Error" error
             in
-            ( model, Cmd.none, Notice "Something went wrong. Try again later." )
+            ( model
+            , Cmd.none
+            , Notice "Something went wrong. Try again later." Notice.NoticeError
+            )
 
         GotUploadProgress progress ->
             case progress of
@@ -178,7 +181,7 @@ update msg model =
                     in
                     ( model
                     , Nav.pushUrl model.key (Routes.gardenPath plant.gardenId)
-                    , Notice noticeMessge
+                    , Notice noticeMessge Notice.NoticeSuccess
                     )
 
                 ( Nothing, Success user ) ->
@@ -191,7 +194,10 @@ update msg model =
                     ( model, Cmd.none, EmptyNotice )
 
         ReceivedDeletePlantResponse (Err _) ->
-            ( model, Cmd.none, Notice "Something went wrong. Try again later." )
+            ( model
+            , Cmd.none
+            , Notice "Something went wrong. Try again later." Notice.NoticeError
+            )
 
         UserClickedEditPlant plantId ->
             ( model, Cmd.none, EmptyNotice )

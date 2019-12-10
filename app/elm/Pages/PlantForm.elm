@@ -146,7 +146,7 @@ update msg model key =
                     in
                     ( model
                     , goBackToPlantsList key gardenId
-                    , Notice noticeMessage
+                    , Notice noticeMessage Notice.NoticeSuccess
                     )
 
                 ( Nothing, Success user ) ->
@@ -178,7 +178,10 @@ update msg model key =
                 noticeMessage =
                     "Updated plant: " ++ plant.name
             in
-            ( model, goBackToPlantDetails key plant.id, Notice noticeMessage )
+            ( model
+            , goBackToPlantDetails key plant.id
+            , Notice noticeMessage Notice.NoticeSuccess
+            )
 
         ReceivedUpdatePlantResponse (Err error) ->
             handleErrorResponse model error key
@@ -196,7 +199,7 @@ handleErrorResponse model error key =
                     in
                     ( model
                     , Nav.pushUrl key Routes.signInPath
-                    , Notice noticeMessage
+                    , Notice noticeMessage Notice.NoticeError
                     )
 
                 _ ->

@@ -186,13 +186,19 @@ update msg model =
             in
             ( { model
                 | session = updatedSession
-                , notice = Notice "Signed out succesfully"
+                , notice = Notice "Signed out succesfully" Notice.NoticeSuccess
               }
             , Nav.pushUrl model.key Routes.signInPath
             )
 
         ( ReceivedUserSignOutResponse (Err _), _ ) ->
-            ( { model | notice = Notice "Something went wrong. Try again later." }, Cmd.none )
+            ( { model
+                | notice =
+                    Notice "Something went wrong. Try again later."
+                        Notice.NoticeError
+              }
+            , Cmd.none
+            )
 
         ( ReceivedCurrentUserResponse route (Ok user), _ ) ->
             let
@@ -292,7 +298,7 @@ update msg model =
                                 user.ownedGardens
                                 user.sharedGardens
                             , updatedSession
-                            , Notice "Welcome to Plantiful!"
+                            , Notice "Welcome to Plantiful!" Notice.NoticeSuccess
                             )
 
                         Nothing ->
@@ -315,12 +321,16 @@ update msg model =
                 ( loadableUser, newMenu, newNotice ) =
                     case currentUser of
                         Just user ->
+                            let
+                                noticeMessage =
+                                    "Welcome back, " ++ user.firstName
+                            in
                             ( Success user
                             , initMenu model.session
                                 model.key
                                 user.ownedGardens
                                 user.sharedGardens
-                            , Notice <| "Welcome back, " ++ user.firstName
+                            , Notice noticeMessage Notice.NoticeSuccess
                             )
 
                         Nothing ->
@@ -580,8 +590,15 @@ viewNotice notice =
         EmptyNotice ->
             text ""
 
-        Notice message ->
-            div [ class "notice" ] [ text message ]
+        Notice message noticeClass ->
+            let
+                noticeClassString =
+                    Notice.noticeClassToString noticeClass
+
+                classString =
+                    "notice " ++ noticeClassString
+            in
+            div [ class classString ] [ text message ]
 
 
 viewMenu : Menu -> Html Msg
