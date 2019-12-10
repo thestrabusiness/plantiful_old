@@ -184,10 +184,15 @@ update msg model =
                 updatedSession =
                     { session | currentUser = None }
             in
-            ( { model | session = updatedSession }, Nav.pushUrl model.key Routes.signInPath )
+            ( { model
+                | session = updatedSession
+                , notice = Notice "Signed out succesfully"
+              }
+            , Nav.pushUrl model.key Routes.signInPath
+            )
 
         ( ReceivedUserSignOutResponse (Err _), _ ) ->
-            ( model, Cmd.none )
+            ( { model | notice = Notice "Something went wrong. Try again later." }, Cmd.none )
 
         ( ReceivedCurrentUserResponse route (Ok user), _ ) ->
             let
@@ -251,10 +256,10 @@ update msg model =
 
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let
-                ( newPageModel, newCmd ) =
+                ( newPageModel, newCmd, newNotice ) =
                     PlantList.update subMsg pageModel
             in
-            ( { model | page = PlantListPage newPageModel }
+            ( { model | page = PlantListPage newPageModel, notice = newNotice }
             , Cmd.map PlantListMsg newCmd
             )
 
@@ -275,27 +280,29 @@ update msg model =
                 ( newPageModel, newCmd, currentUser ) =
                     UserForm.update subMsg pageModel model.key
 
-                ( newMenu, updatedSession ) =
+                ( newMenu, newSession, newNotice ) =
                     case currentUser of
                         Just user ->
                             let
-                                newSession =
+                                updatedSession =
                                     { session | currentUser = Success user }
                             in
-                            ( initMenu newSession
+                            ( initMenu updatedSession
                                 model.key
                                 user.ownedGardens
                                 user.sharedGardens
-                            , newSession
+                            , updatedSession
+                            , Notice "Welcome to Plantiful!"
                             )
 
                         Nothing ->
-                            ( MenuNone, session )
+                            ( MenuNone, session, EmptyNotice )
             in
             ( { model
                 | page = UserPage newPageModel
-                , session = updatedSession
+                , session = newSession
                 , menu = newMenu
+                , notice = newNotice
               }
             , Cmd.map UserFormMsg newCmd
             )
@@ -305,7 +312,7 @@ update msg model =
                 ( newPageModel, newCmd, currentUser ) =
                     SignIn.update subMsg pageModel model.key
 
-                ( loadableUser, newMenu ) =
+                ( loadableUser, newMenu, newNotice ) =
                     case currentUser of
                         Just user ->
                             ( Success user
@@ -313,10 +320,11 @@ update msg model =
                                 model.key
                                 user.ownedGardens
                                 user.sharedGardens
+                            , Notice <| "Welcome back, " ++ user.firstName
                             )
 
                         Nothing ->
-                            ( None, MenuNone )
+                            ( None, MenuNone, EmptyNotice )
 
                 session =
                     model.session
@@ -328,17 +336,19 @@ update msg model =
                 | page = SignInPage newPageModel
                 , session = updatedSession
                 , menu = newMenu
+                , notice = newNotice
               }
             , Cmd.map SignInMsg newCmd
             )
 
         ( PlantDetailsMsg subMsg, PlantDetailsPage pageModel ) ->
             let
-                ( newPageModel, newCmd ) =
+                ( newPageModel, newCmd, newNotice ) =
                     PlantDetails.update subMsg pageModel
             in
             ( { model
                 | page = PlantDetailsPage newPageModel
+                , notice = newNotice
               }
             , Cmd.map PlantDetailsMsg newCmd
             )

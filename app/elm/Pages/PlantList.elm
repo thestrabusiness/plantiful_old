@@ -20,6 +20,7 @@ import Http
 import Json.Decode exposing (Decoder, succeed)
 import List.Extra exposing (removeAt)
 import Modal exposing (..)
+import Notice exposing (Notice(..))
 import Octicons exposing (defaultOptions)
 import Plant
 import Process
@@ -97,18 +98,21 @@ initialCheckInForm =
     CheckInForm False False "" [] 0 ""
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( Model, Cmd Msg, Notice )
 update msg model =
     case msg of
         NewPlants (Ok newPlants) ->
-            ( { model | plants = newPlants, loading = Success }, Cmd.none )
+            ( { model | plants = newPlants, loading = Success }
+            , Cmd.none
+            , EmptyNotice
+            )
 
         NewPlants (Err error) ->
             let
                 _ =
                     Debug.log "Whoops!" error
             in
-            ( { model | loading = Failed }, Cmd.none )
+            ( { model | loading = Failed }, Cmd.none, EmptyNotice )
 
         UserOpenedCheckInModal plant ->
             let
@@ -132,10 +136,10 @@ update msg model =
                 |> updateModal checkInModal
 
         UserClickedFileSelect ->
-            ( model, Select.file [ "image/*" ] NewImageSelected )
+            ( model, Select.file [ "image/*" ] NewImageSelected, EmptyNotice )
 
         NewImageSelected file ->
-            ( model, photoToBase64 file )
+            ( model, photoToBase64 file, EmptyNotice )
 
         UserTypedCheckInNotes notes ->
             let
@@ -155,31 +159,31 @@ update msg model =
                 |> closeModal
 
         UserSubmittedCheckIn ->
-            ( model, submitCheckIn model.session model.checkInForm )
+            ( model, submitCheckIn model.session model.checkInForm, EmptyNotice )
 
         ReceivedPlantCheckInResponse (Ok checkIn) ->
-            case checkIn.watered of
-                True ->
+            let
+                updatedPlant =
+                    findPlantById checkIn.plantId model.plants
+            in
+            case updatedPlant of
+                Just plant ->
                     let
-                        updatedPlant =
-                            findPlantById checkIn.plantId model.plants
+                        noticeMessage =
+                            "Added check-in: " ++ plant.name
                     in
-                    case updatedPlant of
-                        Just plant ->
-                            ( model, Cmd.none )
-                                |> updatePlantWateredAt plant checkIn.createdAt
-                                |> updateForm initialCheckInForm
-                                |> closeModal
+                    ( model, Cmd.none )
+                        |> updatePlantWateredAt plant checkIn.createdAt
+                        |> updateForm initialCheckInForm
+                        |> closeModal
+                        |> modifyNotice noticeMessage
 
-                        Nothing ->
-                            ( model, Cmd.none )
-
-                False ->
+                Nothing ->
                     ( model, Cmd.none )
                         |> closeModal
 
         ReceivedPlantCheckInResponse (Err error) ->
-            ( model, Cmd.none )
+            ( model, Cmd.none, Notice "Something went wrong. Try again later" )
 
         PhotoConvertedToBase64 base64Photo ->
             let
@@ -236,14 +240,22 @@ updateForm form ( model, cmd ) =
     ( { model | checkInForm = form }, cmd )
 
 
-updateModal : (CheckInForm -> Html Msg) -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+updateModal :
+    (CheckInForm -> Html Msg)
+    -> ( Model, Cmd Msg )
+    -> ( Model, Cmd Msg, Notice )
 updateModal modal ( model, cmd ) =
-    ( { model | modal = Modal <| modal model.checkInForm }, cmd )
+    ( { model | modal = Modal <| modal model.checkInForm }, cmd, EmptyNotice )
 
 
-closeModal : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+closeModal : ( Model, Cmd Msg ) -> ( Model, Cmd Msg, Notice )
 closeModal ( model, cmd ) =
-    ( { model | modal = ModalClosed }, cmd )
+    ( { model | modal = ModalClosed }, cmd, EmptyNotice )
+
+
+modifyNotice : String -> ( Model, Cmd Msg, Notice ) -> ( Model, Cmd Msg, Notice )
+modifyNotice newNotice ( model, msg, _ ) =
+    ( model, msg, Notice newNotice )
 
 
 findPlantById : Int -> List Plant.Plant -> Maybe Plant.Plant
