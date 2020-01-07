@@ -1,7 +1,7 @@
 class ReminderMailer < ApplicationMailer
   def remind
     @user = params[:user]
-    @plants_that_need_care = @user.actve_plants.need_care
+    @plants_that_need_care = @user.active_plants.need_care
     @sign_in_url = 'https://plantiful.herokuapp.com/sign_in'
 
     return unless @plants_that_need_care.present?

@@ -100,7 +100,7 @@ RSpec.describe 'Plant requests', type: :request do
         post_avatar(plant,
                     base64_avatar,
                     headers: auth_header(plant.added_by))
-      }.to change { ActiveStorage::Blob.count }.from(0).to(1)
+      }.to change { ActiveStorage::Blob.count }.by(1)
 
       result = response_json
       expect(result[:avatar]).to be

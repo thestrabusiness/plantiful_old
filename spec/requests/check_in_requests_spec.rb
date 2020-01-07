@@ -74,7 +74,7 @@ RSpec.describe 'Check-in request', type: :request do
                                        fertilized: false,
                                        photos: [photo, photo] } },
                  headers: auth_header(plant.added_by)
-          }.to change { ActiveStorage::Blob.count }.from(0).to(2)
+          }.to change { ActiveStorage::Blob.count }.by(2)
         end
       end
 

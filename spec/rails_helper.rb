@@ -56,6 +56,7 @@ RSpec.configure do |config|
     DatabaseCleaner.cleaning do
       example.run
     end
+    ActiveStorage::Blob.destroy_all
   end
 
   Shoulda::Matchers.configure do |config|
@@ -63,5 +64,9 @@ RSpec.configure do |config|
       with.test_framework :rspec
       with.library :rails
     end
+  end
+
+  FactoryBot::SyntaxRunner.class_eval do
+    include ActionDispatch::TestProcess
   end
 end

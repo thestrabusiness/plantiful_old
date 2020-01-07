@@ -5,6 +5,15 @@ FactoryBot.define do
     check_frequency_unit { 'day' }
     sequence(:name) { |n| "Plant #{n}" }
 
+    trait :with_avatar do
+      avatar {
+        fixture_file_upload(
+          Rails.root.join('spec', 'fixtures', 'plant.jpg'),
+          'image/jpg'
+        )
+      }
+    end
+
     trait :with_weekly_check do
       check_frequency_scalar { 1 }
       check_frequency_unit { 'week' }
