@@ -81,11 +81,11 @@ initialPlantForm =
     { name = "", checkFrequencyScalar = "", checkFrequencyUnit = "day" }
 
 
-update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Notice )
+update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Maybe Notice )
 update msg model key =
     case msg of
         UserEditedField field value ->
-            ( setField field value model, Cmd.none, EmptyNotice )
+            ( setField field value model, Cmd.none, Nothing )
 
         UserSubmittedForm ->
             let
@@ -102,11 +102,11 @@ update msg model key =
                         Just gardenId ->
                             ( model
                             , createNewPlant model.session gardenId validPlant
-                            , EmptyNotice
+                            , Nothing
                             )
 
                         Nothing ->
-                            ( model, Cmd.none, EmptyNotice )
+                            ( model, Cmd.none, Nothing )
 
                 ( Ok validatedForm, Form.Update ) ->
                     let
@@ -117,25 +117,25 @@ update msg model key =
                         Just plantId ->
                             ( model
                             , updatePlant model.session plantId validPlant
-                            , EmptyNotice
+                            , Nothing
                             )
 
                         Nothing ->
-                            ( model, Cmd.none, EmptyNotice )
+                            ( model, Cmd.none, Nothing )
 
                 ( Err errorList, _ ) ->
-                    ( { model | errors = errorList }, Cmd.none, EmptyNotice )
+                    ( { model | errors = errorList }, Cmd.none, Nothing )
 
         UserCancelledForm ->
             case ( model.formAction, model.plantId, model.gardenId ) of
                 ( Form.Create, _, Just gardenId ) ->
-                    ( model, goBackToPlantsList key gardenId, EmptyNotice )
+                    ( model, goBackToPlantsList key gardenId, Nothing )
 
                 ( Form.Update, Just plantId, Just gardenId ) ->
-                    ( model, goBackToPlantDetails key plantId, EmptyNotice )
+                    ( model, goBackToPlantDetails key plantId, Nothing )
 
                 ( _, _, _ ) ->
-                    ( model, Cmd.none, EmptyNotice )
+                    ( model, Cmd.none, Nothing )
 
         ReceivedCreatePlantResponse (Ok plant) ->
             case ( model.gardenId, model.session.currentUser ) of
@@ -146,17 +146,17 @@ update msg model key =
                     in
                     ( model
                     , goBackToPlantsList key gardenId
-                    , Notice noticeMessage Notice.NoticeSuccess
+                    , Just (Notice noticeMessage Notice.NoticeSuccess)
                     )
 
                 ( Nothing, Success user ) ->
                     ( model
                     , goBackToPlantsList key user.defaultGardenId
-                    , EmptyNotice
+                    , Nothing
                     )
 
                 ( _, _ ) ->
-                    ( model, Cmd.none, EmptyNotice )
+                    ( model, Cmd.none, Nothing )
 
         ReceivedCreatePlantResponse (Err error) ->
             handleErrorResponse model error key
@@ -167,7 +167,7 @@ update msg model key =
                 , gardenId = Just plant.gardenId
               }
             , Cmd.none
-            , EmptyNotice
+            , Nothing
             )
 
         ReceivedGetPlantResponse (Err error) ->
@@ -180,14 +180,14 @@ update msg model key =
             in
             ( model
             , goBackToPlantDetails key plant.id
-            , Notice noticeMessage Notice.NoticeSuccess
+            , Just (Notice noticeMessage Notice.NoticeSuccess)
             )
 
         ReceivedUpdatePlantResponse (Err error) ->
             handleErrorResponse model error key
 
 
-handleErrorResponse : Model -> Http.Error -> Nav.Key -> ( Model, Cmd Msg, Notice )
+handleErrorResponse : Model -> Http.Error -> Nav.Key -> ( Model, Cmd Msg, Maybe Notice )
 handleErrorResponse model error key =
     case error of
         Http.BadStatus code ->
@@ -199,22 +199,22 @@ handleErrorResponse model error key =
                     in
                     ( model
                     , Nav.pushUrl key Routes.signInPath
-                    , Notice noticeMessage Notice.NoticeError
+                    , Just (Notice noticeMessage Notice.NoticeError)
                     )
 
                 _ ->
                     ( { model | apiError = somethingWentWrongError }
                     , Cmd.none
-                    , EmptyNotice
+                    , Nothing
                     )
 
         Http.NetworkError ->
-            ( { model | apiError = networkError }, Cmd.none, EmptyNotice )
+            ( { model | apiError = networkError }, Cmd.none, Nothing )
 
         _ ->
             ( { model | apiError = somethingWentWrongError }
             , Cmd.none
-            , EmptyNotice
+            , Nothing
             )
 
 

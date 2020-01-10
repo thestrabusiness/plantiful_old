@@ -98,13 +98,13 @@ initialCheckInForm =
     CheckInForm False False "" [] 0 ""
 
 
-update : Msg -> Model -> ( Model, Cmd Msg, Notice )
+update : Msg -> Model -> ( Model, Cmd Msg, Maybe Notice )
 update msg model =
     case msg of
         NewPlants (Ok newPlants) ->
             ( { model | plants = newPlants, loading = Success }
             , Cmd.none
-            , EmptyNotice
+            , Nothing
             )
 
         NewPlants (Err error) ->
@@ -112,7 +112,7 @@ update msg model =
                 _ =
                     Debug.log "Whoops!" error
             in
-            ( { model | loading = Failed }, Cmd.none, EmptyNotice )
+            ( { model | loading = Failed }, Cmd.none, Nothing )
 
         UserOpenedCheckInModal plant ->
             let
@@ -136,10 +136,10 @@ update msg model =
                 |> updateModal checkInModal
 
         UserClickedFileSelect ->
-            ( model, Select.file [ "image/*" ] NewImageSelected, EmptyNotice )
+            ( model, Select.file [ "image/*" ] NewImageSelected, Nothing )
 
         NewImageSelected file ->
-            ( model, photoToBase64 file, EmptyNotice )
+            ( model, photoToBase64 file, Nothing )
 
         UserTypedCheckInNotes notes ->
             let
@@ -159,7 +159,7 @@ update msg model =
                 |> closeModal
 
         UserSubmittedCheckIn ->
-            ( model, submitCheckIn model.session model.checkInForm, EmptyNotice )
+            ( model, submitCheckIn model.session model.checkInForm, Nothing )
 
         ReceivedPlantCheckInResponse (Ok checkIn) ->
             let
@@ -185,7 +185,10 @@ update msg model =
         ReceivedPlantCheckInResponse (Err error) ->
             ( model
             , Cmd.none
-            , Notice "Something went wrong. Try again later" Notice.NoticeError
+            , Just
+                (Notice "Something went wrong. Try again later"
+                    Notice.NoticeError
+                )
             )
 
         PhotoConvertedToBase64 base64Photo ->
@@ -246,23 +249,23 @@ updateForm form ( model, cmd ) =
 updateModal :
     (CheckInForm -> Html Msg)
     -> ( Model, Cmd Msg )
-    -> ( Model, Cmd Msg, Notice )
+    -> ( Model, Cmd Msg, Maybe Notice )
 updateModal modal ( model, cmd ) =
-    ( { model | modal = Modal <| modal model.checkInForm }, cmd, EmptyNotice )
+    ( { model | modal = Modal <| modal model.checkInForm }, cmd, Nothing )
 
 
-closeModal : ( Model, Cmd Msg ) -> ( Model, Cmd Msg, Notice )
+closeModal : ( Model, Cmd Msg ) -> ( Model, Cmd Msg, Maybe Notice )
 closeModal ( model, cmd ) =
-    ( { model | modal = ModalClosed }, cmd, EmptyNotice )
+    ( { model | modal = ModalClosed }, cmd, Nothing )
 
 
 modifyNotice :
     String
     -> Notice.Class
-    -> ( Model, Cmd Msg, Notice )
-    -> ( Model, Cmd Msg, Notice )
+    -> ( Model, Cmd Msg, Maybe Notice )
+    -> ( Model, Cmd Msg, Maybe Notice )
 modifyNotice newNotice noticeClass ( model, msg, _ ) =
-    ( model, msg, Notice newNotice noticeClass )
+    ( model, msg, Just (Notice newNotice noticeClass) )
 
 
 findPlantById : Int -> List Plant.Plant -> Maybe Plant.Plant

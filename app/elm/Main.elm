@@ -53,7 +53,7 @@ type alias Model =
     , timeZone : Time.Zone
     , session : Session.Session
     , menu : Menu
-    , noticeQueue : NoticeQueue.NoticeQueue
+    , noticeQueue : NoticeQueue
     }
 
 
@@ -134,6 +134,7 @@ type Msg
     | ReceivedTimeZone Time.Zone
     | ReceivedSessionStatus (Result Http.Error User)
     | MenuMsg Menu.Msg
+    | NoticeTimeoutFinished
 
 
 type Page
@@ -150,6 +151,11 @@ type Page
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model.page ) of
+        ( NoticeTimeoutFinished, _ ) ->
+            ( { model | noticeQueue = NoticeQueue.pop model.noticeQueue }
+            , Cmd.none
+            )
+
         ( LinkClicked urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
@@ -184,24 +190,22 @@ update msg model =
 
                 updatedSession =
                     { session | currentUser = None }
-            in
-            ( { model
-                | session = updatedSession
 
-                -- , notice = Notice "Signed out succesfully" Notice.NoticeSuccess
-              }
+                newNotice =
+                    Notice "Signed out succesfully" Notice.NoticeSuccess
+            in
+            ( { model | session = updatedSession }
             , Nav.pushUrl model.key Routes.signInPath
             )
+                |> updateNoticeQueue (Just newNotice)
 
         ( ReceivedUserSignOutResponse (Err _), _ ) ->
-            -- ( { model
-            -- | notice =
-            -- Notice "Something went wrong. Try again later."
-            -- Notice.NoticeError
-            -- }
-            -- , Cmd.none
-            -- )
+            let
+                newNotice =
+                    Notice "Something went wrong. Try again later." Notice.NoticeError
+            in
             ( model, Cmd.none )
+                |> updateNoticeQueue (Just newNotice)
 
         ( ReceivedCurrentUserResponse route (Ok user), _ ) ->
             let
@@ -265,23 +269,23 @@ update msg model =
 
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let
-                ( newPageModel, newCmd, newNotice ) =
+                ( newPageModel, newCmd, maybeNotice ) =
                     PlantList.update subMsg pageModel
             in
-            -- ( { model | page = PlantListPage newPageModel, notice = newNotice }
             ( { model | page = PlantListPage newPageModel }
             , Cmd.map PlantListMsg newCmd
             )
+                |> updateNoticeQueue maybeNotice
 
         ( PlantFormMsg subMsg, PlantFormPage pageModel ) ->
             let
-                ( newPageModel, newCmd, newNotice ) =
+                ( newPageModel, newCmd, maybeNotice ) =
                     PlantForm.update subMsg pageModel model.key
             in
-            -- ( { model | page = PlantFormPage newPageModel, notice = newNotice }
             ( { model | page = PlantFormPage newPageModel }
             , Cmd.map PlantFormMsg newCmd
             )
+                |> updateNoticeQueue maybeNotice
 
         ( UserFormMsg subMsg, UserPage pageModel ) ->
             let
@@ -303,11 +307,14 @@ update msg model =
                                 user.ownedGardens
                                 user.sharedGardens
                             , updatedSession
-                            , Notice "Welcome to Plantiful!" Notice.NoticeSuccess
+                            , Just
+                                (Notice "Welcome to Plantiful!"
+                                    Notice.NoticeSuccess
+                                )
                             )
 
                         Nothing ->
-                            ( MenuNone, session, EmptyNotice )
+                            ( MenuNone, session, Nothing )
             in
             ( { model
                 | page = UserPage newPageModel
@@ -334,11 +341,11 @@ update msg model =
                                 model.key
                                 user.ownedGardens
                                 user.sharedGardens
-                            , Notice noticeMessage Notice.NoticeSuccess
+                            , Just (Notice noticeMessage Notice.NoticeSuccess)
                             )
 
                         Nothing ->
-                            ( None, MenuNone, EmptyNotice )
+                            ( None, MenuNone, Nothing )
 
                 session =
                     model.session
@@ -357,16 +364,13 @@ update msg model =
 
         ( PlantDetailsMsg subMsg, PlantDetailsPage pageModel ) ->
             let
-                ( newPageModel, newCmd, newNotice ) =
+                ( newPageModel, newCmd, maybeNotice ) =
                     PlantDetails.update subMsg pageModel
             in
-            ( { model
-                | page = PlantDetailsPage newPageModel
-
-                -- , notice = newNotice
-              }
+            ( { model | page = PlantDetailsPage newPageModel }
             , Cmd.map PlantDetailsMsg newCmd
             )
+                |> updateNoticeQueue maybeNotice
 
         ( MenuMsg subMsg, _ ) ->
             case model.menu of
@@ -523,16 +527,28 @@ loadCurrentPage ( model, cmd ) =
     ( { model | page = page }, Cmd.batch [ cmd, newCmd ] )
 
 
-updateNoticeQueue :
-    Notice.Notice
-    -> ( Model, Cmd Msg )
-    -> ( Model, Cmd Msg )
-updateNoticeQueue notice ( model, msg ) =
-    let
-        updatedQueue =
-            NoticeQueue.append notice model.noticeQueue
-    in
-    ( { model | noticeQueue = updatedQueue }, msg )
+startNoticeTimeout : Cmd Msg
+startNoticeTimeout =
+    NoticeQueue.noticeTimeout NoticeTimeoutFinished
+
+
+updateNoticeQueue : Maybe Notice -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+updateNoticeQueue maybeNotice ( model, msg ) =
+    case maybeNotice of
+        Just notice ->
+            let
+                updatedQueue =
+                    NoticeQueue.append notice model.noticeQueue
+            in
+            ( { model | noticeQueue = updatedQueue }
+            , Cmd.batch
+                [ msg
+                , startNoticeTimeout
+                ]
+            )
+
+        Nothing ->
+            ( model, msg )
 
 
 

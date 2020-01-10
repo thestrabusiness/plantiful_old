@@ -1,6 +1,15 @@
-module NoticeQueue exposing (NoticeQueue(..), append, currentNotice, empty)
+module NoticeQueue exposing
+    ( NoticeQueue(..)
+    , append
+    , currentNotice
+    , empty
+    , noticeTimeout
+    , pop
+    )
 
 import Notice exposing (Notice)
+import Process
+import Task
 
 
 type NoticeQueue
@@ -9,12 +18,7 @@ type NoticeQueue
 
 append : Notice -> NoticeQueue -> NoticeQueue
 append notice (NoticeQueue queue) =
-    case notice of
-        Notice.Notice _ _ ->
-            NoticeQueue (queue ++ [ notice ])
-
-        Notice.EmptyNotice ->
-            NoticeQueue queue
+    NoticeQueue (queue ++ [ notice ])
 
 
 currentNotice : NoticeQueue -> Maybe Notice
@@ -33,3 +37,24 @@ currentNotice (NoticeQueue queue) =
 empty : NoticeQueue
 empty =
     NoticeQueue []
+
+
+noticeDuration : Float
+noticeDuration =
+    2000
+
+
+noticeTimeout : a -> Cmd a
+noticeTimeout msg =
+    Process.sleep noticeDuration
+        |> Task.perform (always msg)
+
+
+pop : NoticeQueue -> NoticeQueue
+pop (NoticeQueue queue) =
+    case queue of
+        _ :: tail ->
+            NoticeQueue tail
+
+        _ ->
+            NoticeQueue []

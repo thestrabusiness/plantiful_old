@@ -78,11 +78,11 @@ photoToBase64 photo =
     Task.perform PhotoConvertedToBase64 (File.toUrl photo)
 
 
-update : Msg -> Model -> ( Model, Cmd Msg, Notice )
+update : Msg -> Model -> ( Model, Cmd Msg, Maybe Notice )
 update msg model =
     case msg of
         ReceivedGetPlantResponse (Ok plant) ->
-            ( { model | plant = Just plant }, Cmd.none, EmptyNotice )
+            ( { model | plant = Just plant }, Cmd.none, Nothing )
 
         ReceivedGetPlantResponse (Err error) ->
             let
@@ -94,13 +94,13 @@ update msg model =
             in
             ( model
             , Nav.pushUrl model.key Routes.gardensPath
-            , Notice noticeMessge Notice.NoticeError
+            , Just (Notice noticeMessge Notice.NoticeError)
             )
 
         UserSelectedUploadNewPhoto ->
             ( model
             , Select.file [ "image/*" ] NewImageSelected
-            , EmptyNotice
+            , Nothing
             )
 
         NewImageSelected photo ->
@@ -108,17 +108,17 @@ update msg model =
                 Just plant ->
                     ( { model | modal = Modal.Modal <| cropperModal model }
                     , photoToBase64 photo
-                    , EmptyNotice
+                    , Nothing
                     )
 
                 Nothing ->
-                    ( model, Cmd.none, EmptyNotice )
+                    ( model, Cmd.none, Nothing )
 
         PhotoConvertedToBase64 base64Url ->
-            ( model, initJsCropper base64Url, EmptyNotice )
+            ( model, initJsCropper base64Url, Nothing )
 
         UserCroppedPhoto ->
-            ( { model | modal = ModalClosed }, Cmd.none, EmptyNotice )
+            ( { model | modal = ModalClosed }, Cmd.none, Nothing )
 
         GotCroppedPhoto photo ->
             case model.plant of
@@ -129,16 +129,16 @@ update msg model =
                     in
                     ( { model | upload = Uploading 0 }
                     , uploadPhoto model.session photo plant
-                    , EmptyNotice
+                    , Nothing
                     )
 
                 Nothing ->
-                    ( model, Cmd.none, EmptyNotice )
+                    ( model, Cmd.none, Nothing )
 
         ReceivedUploadPhotoResponse (Ok plant) ->
             ( { model | upload = Done, plant = Just plant }
             , Cmd.none
-            , Notice "Photo updated!" Notice.NoticeSuccess
+            , Just (Notice "Photo updated!" Notice.NoticeSuccess)
             )
 
         ReceivedUploadPhotoResponse (Err error) ->
@@ -148,7 +148,10 @@ update msg model =
             in
             ( model
             , Cmd.none
-            , Notice "Something went wrong. Try again later." Notice.NoticeError
+            , Just
+                (Notice "Something went wrong. Try again later."
+                    Notice.NoticeError
+                )
             )
 
         GotUploadProgress progress ->
@@ -160,16 +163,16 @@ update msg model =
                     in
                     ( { model | upload = Uploading fractionSent }
                     , Cmd.none
-                    , EmptyNotice
+                    , Nothing
                     )
 
                 Http.Receiving _ ->
-                    ( model, Cmd.none, EmptyNotice )
+                    ( model, Cmd.none, Nothing )
 
         UserClickedDeletePlant plantId ->
             ( model
             , deletePlant model.session plantId
-            , EmptyNotice
+            , Nothing
             )
 
         ReceivedDeletePlantResponse (Ok _) ->
@@ -181,26 +184,29 @@ update msg model =
                     in
                     ( model
                     , Nav.pushUrl model.key (Routes.gardenPath plant.gardenId)
-                    , Notice noticeMessge Notice.NoticeSuccess
+                    , Just (Notice noticeMessge Notice.NoticeSuccess)
                     )
 
                 ( Nothing, Success user ) ->
                     ( model
                     , Nav.pushUrl model.key (Routes.gardenPath user.defaultGardenId)
-                    , EmptyNotice
+                    , Nothing
                     )
 
                 ( _, _ ) ->
-                    ( model, Cmd.none, EmptyNotice )
+                    ( model, Cmd.none, Nothing )
 
         ReceivedDeletePlantResponse (Err _) ->
             ( model
             , Cmd.none
-            , Notice "Something went wrong. Try again later." Notice.NoticeError
+            , Just
+                (Notice "Something went wrong. Try again later."
+                    Notice.NoticeError
+                )
             )
 
         UserClickedEditPlant plantId ->
-            ( model, Cmd.none, EmptyNotice )
+            ( model, Cmd.none, Nothing )
 
 
 subscriptions : Sub Msg

@@ -2,8 +2,7 @@ module Notice exposing (Class(..), Notice(..), noticeClassToString)
 
 
 type Notice
-    = EmptyNotice
-    | Notice String Class
+    = Notice String Class
 
 
 type Class
