@@ -8,7 +8,7 @@ import Html.Attributes exposing (class, id, name, selected, type_, value)
 import Html.Events exposing (onClick, onInput)
 import Http
 import Loadable exposing (Loadable(..))
-import Notice exposing (Notice(..))
+import Notice exposing (Notice)
 import Plant
 import Routes
 import Session exposing (Session)
@@ -146,7 +146,7 @@ update msg model key =
                     in
                     ( model
                     , goBackToPlantsList key gardenId
-                    , Just (Notice noticeMessage Notice.NoticeSuccess)
+                    , Just (Notice.success noticeMessage)
                     )
 
                 ( Nothing, Success user ) ->
@@ -180,7 +180,7 @@ update msg model key =
             in
             ( model
             , goBackToPlantDetails key plant.id
-            , Just (Notice noticeMessage Notice.NoticeSuccess)
+            , Just (Notice.success noticeMessage)
             )
 
         ReceivedUpdatePlantResponse (Err error) ->
@@ -199,7 +199,7 @@ handleErrorResponse model error key =
                     in
                     ( model
                     , Nav.pushUrl key Routes.signInPath
-                    , Just (Notice noticeMessage Notice.NoticeError)
+                    , Just (Notice.error noticeMessage)
                     )
 
                 _ ->

@@ -176,7 +176,7 @@ update msg model =
                         |> updatePlantWateredAt plant checkIn.createdAt
                         |> updateForm initialCheckInForm
                         |> closeModal
-                        |> modifyNotice noticeMessage Notice.NoticeSuccess
+                        |> modifyNotice (Notice.success noticeMessage)
 
                 Nothing ->
                     ( model, Cmd.none )
@@ -185,10 +185,7 @@ update msg model =
         ReceivedPlantCheckInResponse (Err error) ->
             ( model
             , Cmd.none
-            , Just
-                (Notice "Something went wrong. Try again later"
-                    Notice.NoticeError
-                )
+            , Just (Notice.error "Something went wrong. Try again later")
             )
 
         PhotoConvertedToBase64 base64Photo ->
@@ -260,12 +257,11 @@ closeModal ( model, cmd ) =
 
 
 modifyNotice :
-    String
-    -> Notice.Class
+    Notice
     -> ( Model, Cmd Msg, Maybe Notice )
     -> ( Model, Cmd Msg, Maybe Notice )
-modifyNotice newNotice noticeClass ( model, msg, _ ) =
-    ( model, msg, Just (Notice newNotice noticeClass) )
+modifyNotice newNotice ( model, msg, _ ) =
+    ( model, msg, Just newNotice )
 
 
 findPlantById : Int -> List Plant.Plant -> Maybe Plant.Plant

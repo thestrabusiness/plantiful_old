@@ -5,8 +5,11 @@ module NoticeQueue exposing
     , empty
     , noticeTimeout
     , pop
+    , viewCurrentNotice
     )
 
+import Html exposing (Html, div, text)
+import Html.Attributes exposing (class)
 import Notice exposing (Notice)
 import Process
 import Task
@@ -55,3 +58,27 @@ pop (NoticeQueue queue) =
 
         _ ->
             NoticeQueue []
+
+
+viewCurrentNotice : NoticeQueue -> Html a
+viewCurrentNotice queue =
+    let
+        maybeNotice =
+            currentNotice queue
+    in
+    case maybeNotice of
+        Just notice ->
+            let
+                noticeClassString =
+                    Notice.noticeToClass notice
+
+                classString =
+                    "notice " ++ noticeClassString
+
+                message =
+                    Notice.noticeToMessage notice
+            in
+            div [ class classString ] [ text message ]
+
+        _ ->
+            text ""

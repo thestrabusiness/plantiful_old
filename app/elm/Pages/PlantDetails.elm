@@ -19,7 +19,7 @@ import Http
 import Json.Encode
 import Loadable exposing (Loadable(..))
 import Modal exposing (..)
-import Notice exposing (Notice(..))
+import Notice exposing (Notice)
 import Octicons exposing (defaultOptions)
 import Plant
 import Routes
@@ -94,7 +94,7 @@ update msg model =
             in
             ( model
             , Nav.pushUrl model.key Routes.gardensPath
-            , Just (Notice noticeMessge Notice.NoticeError)
+            , Just (Notice.error noticeMessge)
             )
 
         UserSelectedUploadNewPhoto ->
@@ -138,7 +138,7 @@ update msg model =
         ReceivedUploadPhotoResponse (Ok plant) ->
             ( { model | upload = Done, plant = Just plant }
             , Cmd.none
-            , Just (Notice "Photo updated!" Notice.NoticeSuccess)
+            , Just (Notice.success "Photo updated!")
             )
 
         ReceivedUploadPhotoResponse (Err error) ->
@@ -148,10 +148,7 @@ update msg model =
             in
             ( model
             , Cmd.none
-            , Just
-                (Notice "Something went wrong. Try again later."
-                    Notice.NoticeError
-                )
+            , Just (Notice.error "Something went wrong. Try again later.")
             )
 
         GotUploadProgress progress ->
@@ -184,7 +181,7 @@ update msg model =
                     in
                     ( model
                     , Nav.pushUrl model.key (Routes.gardenPath plant.gardenId)
-                    , Just (Notice noticeMessge Notice.NoticeSuccess)
+                    , Just (Notice.success noticeMessge)
                     )
 
                 ( Nothing, Success user ) ->
@@ -199,10 +196,7 @@ update msg model =
         ReceivedDeletePlantResponse (Err _) ->
             ( model
             , Cmd.none
-            , Just
-                (Notice "Something went wrong. Try again later."
-                    Notice.NoticeError
-                )
+            , Just (Notice.error "Something went wrong. Try again later.")
             )
 
         UserClickedEditPlant plantId ->

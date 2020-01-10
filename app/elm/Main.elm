@@ -25,7 +25,7 @@ import Json.Decode exposing (Decoder, string, succeed)
 import Json.Decode.Pipeline exposing (required)
 import Loadable exposing (Loadable(..))
 import Menu
-import Notice exposing (Notice(..))
+import Notice exposing (Notice)
 import NoticeQueue exposing (NoticeQueue(..))
 import Pages.NotAuthorized as NotAuthorized
 import Pages.PlantDetails as PlantDetails
@@ -192,7 +192,7 @@ update msg model =
                     { session | currentUser = None }
 
                 newNotice =
-                    Notice "Signed out succesfully" Notice.NoticeSuccess
+                    Notice.success "Signed out succesfully"
             in
             ( { model | session = updatedSession }
             , Nav.pushUrl model.key Routes.signInPath
@@ -202,7 +202,7 @@ update msg model =
         ( ReceivedUserSignOutResponse (Err _), _ ) ->
             let
                 newNotice =
-                    Notice "Something went wrong. Try again later." Notice.NoticeError
+                    Notice.error "Something went wrong. Try again later."
             in
             ( model, Cmd.none )
                 |> updateNoticeQueue (Just newNotice)
@@ -307,10 +307,7 @@ update msg model =
                                 user.ownedGardens
                                 user.sharedGardens
                             , updatedSession
-                            , Just
-                                (Notice "Welcome to Plantiful!"
-                                    Notice.NoticeSuccess
-                                )
+                            , Just (Notice.success "Welcome to Plantiful!")
                             )
 
                         Nothing ->
@@ -341,7 +338,7 @@ update msg model =
                                 model.key
                                 user.ownedGardens
                                 user.sharedGardens
-                            , Just (Notice noticeMessage Notice.NoticeSuccess)
+                            , Just (Notice.success noticeMessage)
                             )
 
                         Nothing ->
@@ -617,25 +614,9 @@ nav model =
         ]
 
 
-viewNotice : NoticeQueue -> Html Msg
+viewNotice : NoticeQueue -> Html a
 viewNotice queue =
-    let
-        currentNotice =
-            NoticeQueue.currentNotice queue
-    in
-    case currentNotice of
-        Just (Notice message noticeClass) ->
-            let
-                noticeClassString =
-                    Notice.noticeClassToString noticeClass
-
-                classString =
-                    "notice " ++ noticeClassString
-            in
-            div [ class classString ] [ text message ]
-
-        _ ->
-            text ""
+    NoticeQueue.viewCurrentNotice queue
 
 
 viewMenu : Menu -> Html Msg

@@ -1,15 +1,20 @@
-module Notice exposing (Class(..), Notice(..), empty, noticeClassToString)
+module Notice exposing
+    ( Notice(..)
+    , alert
+    , empty
+    , error
+    , info
+    , noticeToClass
+    , noticeToMessage
+    , success
+    )
 
 
 type Notice
-    = Notice String Class
-
-
-type Class
-    = NoticeAlert
-    | NoticeError
-    | NoticeInfo
-    | NoticeSuccess
+    = Alert String
+    | Error String
+    | Info String
+    | Success String
 
 
 empty : Maybe a
@@ -17,17 +22,53 @@ empty =
     Nothing
 
 
-noticeClassToString : Class -> String
-noticeClassToString class =
-    case class of
-        NoticeAlert ->
+alert : String -> Notice
+alert message =
+    Alert message
+
+
+error : String -> Notice
+error message =
+    Error message
+
+
+info : String -> Notice
+info message =
+    Info message
+
+
+success : String -> Notice
+success message =
+    Success message
+
+
+noticeToClass : Notice -> String
+noticeToClass notice =
+    case notice of
+        Alert _ ->
             "notice-alert"
 
-        NoticeError ->
+        Error _ ->
             "notice-error"
 
-        NoticeInfo ->
+        Info _ ->
             "notice-info"
 
-        NoticeSuccess ->
+        Success _ ->
             "notice-success"
+
+
+noticeToMessage : Notice -> String
+noticeToMessage notice =
+    case notice of
+        Alert message ->
+            message
+
+        Error message ->
+            message
+
+        Info message ->
+            message
+
+        Success message ->
+            message
