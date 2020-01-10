@@ -30,8 +30,8 @@ currentNotice (NoticeQueue queue) =
         [] ->
             Nothing
 
-        x :: _ ->
-            Just x
+        firstNotice :: _ ->
+            Just firstNotice
 
 
 empty : NoticeQueue
