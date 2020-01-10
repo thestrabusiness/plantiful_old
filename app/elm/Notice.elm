@@ -7,6 +7,8 @@ module Notice exposing
     , noticeToClass
     , noticeToMessage
     , success
+    , withNotice
+    , withoutNotice
     )
 
 
@@ -72,3 +74,13 @@ noticeToMessage notice =
 
         Success message ->
             message
+
+
+withoutNotice : ( a, b ) -> ( a, b, Maybe Notice )
+withoutNotice ( a, b ) =
+    ( a, b, empty )
+
+
+withNotice : Notice -> ( a, b ) -> ( a, b, Maybe Notice )
+withNotice notice ( a, b ) =
+    ( a, b, Just notice )

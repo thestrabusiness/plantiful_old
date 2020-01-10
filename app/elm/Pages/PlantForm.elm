@@ -85,7 +85,8 @@ update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Maybe Notice )
 update msg model key =
     case msg of
         UserEditedField field value ->
-            ( setField field value model, Cmd.none, Notice.empty )
+            ( setField field value model, Cmd.none )
+                |> Notice.withoutNotice
 
         UserSubmittedForm ->
             let
@@ -100,13 +101,12 @@ update msg model key =
                     in
                     case model.gardenId of
                         Just gardenId ->
-                            ( model
-                            , createNewPlant model.session gardenId validPlant
-                            , Notice.empty
-                            )
+                            ( model, createNewPlant model.session gardenId validPlant )
+                                |> Notice.withoutNotice
 
                         Nothing ->
-                            ( model, Cmd.none, Notice.empty )
+                            ( model, Cmd.none )
+                                |> Notice.withoutNotice
 
                 ( Ok validatedForm, Form.Update ) ->
                     let
@@ -115,27 +115,30 @@ update msg model key =
                     in
                     case model.plantId of
                         Just plantId ->
-                            ( model
-                            , updatePlant model.session plantId validPlant
-                            , Notice.empty
-                            )
+                            ( model, updatePlant model.session plantId validPlant )
+                                |> Notice.withoutNotice
 
                         Nothing ->
-                            ( model, Cmd.none, Notice.empty )
+                            ( model, Cmd.none )
+                                |> Notice.withoutNotice
 
                 ( Err errorList, _ ) ->
-                    ( { model | errors = errorList }, Cmd.none, Notice.empty )
+                    ( { model | errors = errorList }, Cmd.none )
+                        |> Notice.withoutNotice
 
         UserCancelledForm ->
             case ( model.formAction, model.plantId, model.gardenId ) of
                 ( Form.Create, _, Just gardenId ) ->
-                    ( model, goBackToPlantsList key gardenId, Notice.empty )
+                    ( model, goBackToPlantsList key gardenId )
+                        |> Notice.withoutNotice
 
                 ( Form.Update, Just plantId, Just gardenId ) ->
-                    ( model, goBackToPlantDetails key plantId, Notice.empty )
+                    ( model, goBackToPlantDetails key plantId )
+                        |> Notice.withoutNotice
 
                 ( _, _, _ ) ->
-                    ( model, Cmd.none, Notice.empty )
+                    ( model, Cmd.none )
+                        |> Notice.withoutNotice
 
         ReceivedCreatePlantResponse (Ok plant) ->
             case ( model.gardenId, model.session.currentUser ) of
@@ -144,31 +147,25 @@ update msg model key =
                         noticeMessage =
                             "New plant added: " ++ plant.name
                     in
-                    ( model
-                    , goBackToPlantsList key gardenId
-                    , Just (Notice.success noticeMessage)
-                    )
+                    ( model, goBackToPlantsList key gardenId )
+                        |> Notice.withNotice (Notice.success noticeMessage)
 
                 ( Nothing, Success user ) ->
-                    ( model
-                    , goBackToPlantsList key user.defaultGardenId
-                    , Notice.empty
-                    )
+                    ( model, goBackToPlantsList key user.defaultGardenId )
+                        |> Notice.withoutNotice
 
                 ( _, _ ) ->
-                    ( model, Cmd.none, Notice.empty )
+                    ( model, Cmd.none )
+                        |> Notice.withoutNotice
 
         ReceivedCreatePlantResponse (Err error) ->
             handleErrorResponse model error key
 
         ReceivedGetPlantResponse (Ok plant) ->
-            ( { model
-                | plant = plantToForm plant
-                , gardenId = Just plant.gardenId
-              }
+            ( { model | plant = plantToForm plant, gardenId = Just plant.gardenId }
             , Cmd.none
-            , Notice.empty
             )
+                |> Notice.withoutNotice
 
         ReceivedGetPlantResponse (Err error) ->
             handleErrorResponse model error key
@@ -178,10 +175,8 @@ update msg model key =
                 noticeMessage =
                     "Updated plant: " ++ plant.name
             in
-            ( model
-            , goBackToPlantDetails key plant.id
-            , Just (Notice.success noticeMessage)
-            )
+            ( model, goBackToPlantDetails key plant.id )
+                |> Notice.withNotice (Notice.success noticeMessage)
 
         ReceivedUpdatePlantResponse (Err error) ->
             handleErrorResponse model error key
@@ -197,25 +192,20 @@ handleErrorResponse model error key =
                         noticeMessage =
                             "You have to be signed in to do that"
                     in
-                    ( model
-                    , Nav.pushUrl key Routes.signInPath
-                    , Just (Notice.error noticeMessage)
-                    )
+                    ( model, Nav.pushUrl key Routes.signInPath )
+                        |> Notice.withNotice (Notice.error noticeMessage)
 
                 _ ->
-                    ( { model | apiError = somethingWentWrongError }
-                    , Cmd.none
-                    , Notice.empty
-                    )
+                    ( { model | apiError = somethingWentWrongError }, Cmd.none )
+                        |> Notice.withoutNotice
 
         Http.NetworkError ->
-            ( { model | apiError = networkError }, Cmd.none, Notice.empty )
+            ( { model | apiError = networkError }, Cmd.none )
+                |> Notice.withoutNotice
 
         _ ->
-            ( { model | apiError = somethingWentWrongError }
-            , Cmd.none
-            , Notice.empty
-            )
+            ( { model | apiError = somethingWentWrongError }, Cmd.none )
+                |> Notice.withoutNotice
 
 
 goBackToPlantsList : Nav.Key -> Int -> Cmd Msg

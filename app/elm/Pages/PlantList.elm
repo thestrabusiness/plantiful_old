@@ -102,17 +102,16 @@ update : Msg -> Model -> ( Model, Cmd Msg, Maybe Notice )
 update msg model =
     case msg of
         NewPlants (Ok newPlants) ->
-            ( { model | plants = newPlants, loading = Success }
-            , Cmd.none
-            , Notice.empty
-            )
+            ( { model | plants = newPlants, loading = Success }, Cmd.none )
+                |> Notice.withoutNotice
 
         NewPlants (Err error) ->
             let
                 _ =
                     Debug.log "Whoops!" error
             in
-            ( { model | loading = Failed }, Cmd.none, Notice.empty )
+            ( { model | loading = Failed }, Cmd.none )
+                |> Notice.withoutNotice
 
         UserOpenedCheckInModal plant ->
             let
@@ -125,6 +124,7 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm newCheckInForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
 
         CheckboxSelected eventType ->
             let
@@ -134,6 +134,7 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm newCheckInForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
 
         UserClickedFileSelect ->
             ( model, Select.file [ "image/*" ] NewImageSelected, Notice.empty )
@@ -152,11 +153,13 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm newCheckInForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
 
         UserClosedModal ->
             ( model, Cmd.none )
                 |> updateForm initialCheckInForm
                 |> closeModal
+                |> Notice.withoutNotice
 
         UserSubmittedCheckIn ->
             ( model, submitCheckIn model.session model.checkInForm, Notice.empty )
@@ -176,11 +179,12 @@ update msg model =
                         |> updatePlantWateredAt plant checkIn.createdAt
                         |> updateForm initialCheckInForm
                         |> closeModal
-                        |> modifyNotice (Notice.success noticeMessage)
+                        |> Notice.withNotice (Notice.success noticeMessage)
 
                 Nothing ->
                     ( model, Cmd.none )
                         |> closeModal
+                        |> Notice.withoutNotice
 
         ReceivedPlantCheckInResponse (Err error) ->
             ( model
@@ -199,6 +203,7 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm updatedForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
 
         UserRemovedImageFromModal index ->
             let
@@ -214,6 +219,7 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm updatedForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
 
 
 photoToBase64 : File.File -> Cmd Msg
@@ -246,22 +252,14 @@ updateForm form ( model, cmd ) =
 updateModal :
     (CheckInForm -> Html Msg)
     -> ( Model, Cmd Msg )
-    -> ( Model, Cmd Msg, Maybe Notice )
+    -> ( Model, Cmd Msg )
 updateModal modal ( model, cmd ) =
-    ( { model | modal = Modal <| modal model.checkInForm }, cmd, Notice.empty )
+    ( { model | modal = Modal <| modal model.checkInForm }, cmd )
 
 
-closeModal : ( Model, Cmd Msg ) -> ( Model, Cmd Msg, Maybe Notice )
+closeModal : ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 closeModal ( model, cmd ) =
-    ( { model | modal = ModalClosed }, cmd, Notice.empty )
-
-
-modifyNotice :
-    Notice
-    -> ( Model, Cmd Msg, Maybe Notice )
-    -> ( Model, Cmd Msg, Maybe Notice )
-modifyNotice newNotice ( model, msg, _ ) =
-    ( model, msg, Just newNotice )
+    ( { model | modal = ModalClosed }, cmd )
 
 
 findPlantById : Int -> List Plant.Plant -> Maybe Plant.Plant

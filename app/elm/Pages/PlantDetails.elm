@@ -82,7 +82,8 @@ update : Msg -> Model -> ( Model, Cmd Msg, Maybe Notice )
 update msg model =
     case msg of
         ReceivedGetPlantResponse (Ok plant) ->
-            ( { model | plant = Just plant }, Cmd.none, Notice.empty )
+            ( { model | plant = Just plant }, Cmd.none )
+                |> Notice.withoutNotice
 
         ReceivedGetPlantResponse (Err error) ->
             let
@@ -92,33 +93,32 @@ update msg model =
                 noticeMessge =
                     "Something went wrong. Does that plant still exist?"
             in
-            ( model
-            , Nav.pushUrl model.key Routes.gardensPath
-            , Just (Notice.error noticeMessge)
-            )
+            ( model, Nav.pushUrl model.key Routes.gardensPath )
+                |> Notice.withNotice (Notice.error noticeMessge)
 
         UserSelectedUploadNewPhoto ->
-            ( model
-            , Select.file [ "image/*" ] NewImageSelected
-            , Notice.empty
-            )
+            ( model, Select.file [ "image/*" ] NewImageSelected )
+                |> Notice.withoutNotice
 
         NewImageSelected photo ->
             case model.plant of
                 Just plant ->
                     ( { model | modal = Modal.Modal <| cropperModal model }
                     , photoToBase64 photo
-                    , Notice.empty
                     )
+                        |> Notice.withoutNotice
 
                 Nothing ->
-                    ( model, Cmd.none, Notice.empty )
+                    ( model, Cmd.none )
+                        |> Notice.withoutNotice
 
         PhotoConvertedToBase64 base64Url ->
-            ( model, initJsCropper base64Url, Notice.empty )
+            ( model, initJsCropper base64Url )
+                |> Notice.withoutNotice
 
         UserCroppedPhoto ->
-            ( { model | modal = ModalClosed }, Cmd.none, Notice.empty )
+            ( { model | modal = ModalClosed }, Cmd.none )
+                |> Notice.withoutNotice
 
         GotCroppedPhoto photo ->
             case model.plant of
@@ -127,29 +127,24 @@ update msg model =
                         updatedPlant =
                             { plant | avatarUrl = photo }
                     in
-                    ( { model | upload = Uploading 0 }
-                    , uploadPhoto model.session photo plant
-                    , Notice.empty
-                    )
+                    ( { model | upload = Uploading 0 }, uploadPhoto model.session photo plant )
+                        |> Notice.withoutNotice
 
                 Nothing ->
-                    ( model, Cmd.none, Notice.empty )
+                    ( model, Cmd.none )
+                        |> Notice.withoutNotice
 
         ReceivedUploadPhotoResponse (Ok plant) ->
-            ( { model | upload = Done, plant = Just plant }
-            , Cmd.none
-            , Just (Notice.success "Photo updated!")
-            )
+            ( { model | upload = Done, plant = Just plant }, Cmd.none )
+                |> Notice.withNotice (Notice.success "Photo Updated!")
 
         ReceivedUploadPhotoResponse (Err error) ->
             let
                 _ =
                     Debug.log "Error" error
             in
-            ( model
-            , Cmd.none
-            , Just (Notice.error "Something went wrong. Try again later.")
-            )
+            ( model, Cmd.none )
+                |> Notice.withNotice (Notice.error "Something went wrong. Try again later.")
 
         GotUploadProgress progress ->
             case progress of
@@ -158,19 +153,16 @@ update msg model =
                         fractionSent =
                             Http.fractionSent p
                     in
-                    ( { model | upload = Uploading fractionSent }
-                    , Cmd.none
-                    , Notice.empty
-                    )
+                    ( { model | upload = Uploading fractionSent }, Cmd.none )
+                        |> Notice.withoutNotice
 
                 Http.Receiving _ ->
-                    ( model, Cmd.none, Notice.empty )
+                    ( model, Cmd.none )
+                        |> Notice.withoutNotice
 
         UserClickedDeletePlant plantId ->
-            ( model
-            , deletePlant model.session plantId
-            , Notice.empty
-            )
+            ( model, deletePlant model.session plantId )
+                |> Notice.withoutNotice
 
         ReceivedDeletePlantResponse (Ok _) ->
             case ( model.plant, model.session.currentUser ) of
@@ -179,28 +171,24 @@ update msg model =
                         noticeMessge =
                             "Deleted plant: " ++ plant.name
                     in
-                    ( model
-                    , Nav.pushUrl model.key (Routes.gardenPath plant.gardenId)
-                    , Just (Notice.success noticeMessge)
-                    )
+                    ( model, Nav.pushUrl model.key (Routes.gardenPath plant.gardenId) )
+                        |> Notice.withNotice (Notice.success noticeMessge)
 
                 ( Nothing, Success user ) ->
-                    ( model
-                    , Nav.pushUrl model.key (Routes.gardenPath user.defaultGardenId)
-                    , Notice.empty
-                    )
+                    ( model, Nav.pushUrl model.key (Routes.gardenPath user.defaultGardenId) )
+                        |> Notice.withoutNotice
 
                 ( _, _ ) ->
-                    ( model, Cmd.none, Notice.empty )
+                    ( model, Cmd.none )
+                        |> Notice.withoutNotice
 
         ReceivedDeletePlantResponse (Err _) ->
-            ( model
-            , Cmd.none
-            , Just (Notice.error "Something went wrong. Try again later.")
-            )
+            ( model, Cmd.none )
+                |> Notice.withNotice (Notice.error "Something went wrong. Try again later.")
 
         UserClickedEditPlant plantId ->
-            ( model, Cmd.none, Notice.empty )
+            ( model, Cmd.none )
+                |> Notice.withoutNotice
 
 
 subscriptions : Sub Msg
