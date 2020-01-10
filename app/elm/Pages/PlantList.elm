@@ -20,6 +20,7 @@ import Http
 import Json.Decode exposing (Decoder, succeed)
 import List.Extra exposing (removeAt)
 import Modal exposing (..)
+import Notice exposing (Notice(..))
 import Octicons exposing (defaultOptions)
 import Plant
 import Process
@@ -97,11 +98,12 @@ initialCheckInForm =
     CheckInForm False False "" [] 0 ""
 
 
-update : Msg -> Model -> ( Model, Cmd Msg )
+update : Msg -> Model -> ( Model, Cmd Msg, Maybe Notice )
 update msg model =
     case msg of
         NewPlants (Ok newPlants) ->
             ( { model | plants = newPlants, loading = Success }, Cmd.none )
+                |> Notice.withoutNotice
 
         NewPlants (Err error) ->
             let
@@ -109,6 +111,7 @@ update msg model =
                     Debug.log "Whoops!" error
             in
             ( { model | loading = Failed }, Cmd.none )
+                |> Notice.withoutNotice
 
         UserOpenedCheckInModal plant ->
             let
@@ -121,6 +124,7 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm newCheckInForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
 
         CheckboxSelected eventType ->
             let
@@ -130,12 +134,13 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm newCheckInForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
 
         UserClickedFileSelect ->
-            ( model, Select.file [ "image/*" ] NewImageSelected )
+            ( model, Select.file [ "image/*" ] NewImageSelected, Notice.empty )
 
         NewImageSelected file ->
-            ( model, photoToBase64 file )
+            ( model, photoToBase64 file, Notice.empty )
 
         UserTypedCheckInNotes notes ->
             let
@@ -148,38 +153,24 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm newCheckInForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
 
         UserClosedModal ->
             ( model, Cmd.none )
                 |> updateForm initialCheckInForm
                 |> closeModal
+                |> Notice.withoutNotice
 
         UserSubmittedCheckIn ->
-            ( model, submitCheckIn model.session model.checkInForm )
+            ( model, submitCheckIn model.session model.checkInForm, Notice.empty )
 
         ReceivedPlantCheckInResponse (Ok checkIn) ->
-            case checkIn.watered of
-                True ->
-                    let
-                        updatedPlant =
-                            findPlantById checkIn.plantId model.plants
-                    in
-                    case updatedPlant of
-                        Just plant ->
-                            ( model, Cmd.none )
-                                |> updatePlantWateredAt plant checkIn.createdAt
-                                |> updateForm initialCheckInForm
-                                |> closeModal
-
-                        Nothing ->
-                            ( model, Cmd.none )
-
-                False ->
-                    ( model, Cmd.none )
-                        |> closeModal
+            ( model, Cmd.none )
+                |> processOkCheckInResponse checkIn
 
         ReceivedPlantCheckInResponse (Err error) ->
             ( model, Cmd.none )
+                |> Notice.withNotice (Notice.error "Something went wrong. Try again later")
 
         PhotoConvertedToBase64 base64Photo ->
             let
@@ -192,6 +183,7 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm updatedForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
 
         UserRemovedImageFromModal index ->
             let
@@ -207,6 +199,34 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm updatedForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
+
+
+processOkCheckInResponse :
+    CheckIn.CheckIn
+    -> ( Model, Cmd Msg )
+    -> ( Model, Cmd Msg, Maybe Notice )
+processOkCheckInResponse checkIn ( model, msg ) =
+    let
+        updatedPlant =
+            findPlantById checkIn.plantId model.plants
+    in
+    case updatedPlant of
+        Just plant ->
+            let
+                noticeMessage =
+                    "Added check-in: " ++ plant.name
+            in
+            ( model, msg )
+                |> updatePlantWateredAt plant checkIn.createdAt
+                |> updateForm initialCheckInForm
+                |> closeModal
+                |> Notice.withNotice (Notice.success noticeMessage)
+
+        Nothing ->
+            ( model, msg )
+                |> closeModal
+                |> Notice.withoutNotice
 
 
 photoToBase64 : File.File -> Cmd Msg
@@ -236,7 +256,10 @@ updateForm form ( model, cmd ) =
     ( { model | checkInForm = form }, cmd )
 
 
-updateModal : (CheckInForm -> Html Msg) -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+updateModal :
+    (CheckInForm -> Html Msg)
+    -> ( Model, Cmd Msg )
+    -> ( Model, Cmd Msg )
 updateModal modal ( model, cmd ) =
     ( { model | modal = Modal <| modal model.checkInForm }, cmd )
 

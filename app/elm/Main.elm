@@ -25,6 +25,8 @@ import Json.Decode exposing (Decoder, string, succeed)
 import Json.Decode.Pipeline exposing (required)
 import Loadable exposing (Loadable(..))
 import Menu
+import Notice exposing (Notice)
+import NoticeQueue exposing (NoticeQueue(..))
 import Pages.NotAuthorized as NotAuthorized
 import Pages.PlantDetails as PlantDetails
 import Pages.PlantForm as PlantForm
@@ -51,6 +53,7 @@ type alias Model =
     , timeZone : Time.Zone
     , session : Session.Session
     , menu : Menu
+    , noticeQueue : NoticeQueue
     }
 
 
@@ -74,6 +77,7 @@ init flags url key =
             , timeZone = Time.utc
             , session = Session.Session flags.csrfToken Loading
             , menu = MenuNone
+            , noticeQueue = NoticeQueue.empty
             }
 
         initCmds =
@@ -130,6 +134,7 @@ type Msg
     | ReceivedTimeZone Time.Zone
     | ReceivedSessionStatus (Result Http.Error User)
     | MenuMsg Menu.Msg
+    | NoticeTimeoutFinished
 
 
 type Page
@@ -146,6 +151,11 @@ type Page
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case ( msg, model.page ) of
+        ( NoticeTimeoutFinished, _ ) ->
+            ( { model | noticeQueue = NoticeQueue.pop model.noticeQueue }
+            , Cmd.none
+            )
+
         ( LinkClicked urlRequest, _ ) ->
             case urlRequest of
                 Browser.Internal url ->
@@ -180,11 +190,22 @@ update msg model =
 
                 updatedSession =
                     { session | currentUser = None }
+
+                newNotice =
+                    Notice.success "Signed out succesfully"
             in
-            ( { model | session = updatedSession }, Nav.pushUrl model.key Routes.signInPath )
+            ( { model | session = updatedSession }
+            , Nav.pushUrl model.key Routes.signInPath
+            )
+                |> updateNoticeQueue (Just newNotice)
 
         ( ReceivedUserSignOutResponse (Err _), _ ) ->
+            let
+                newNotice =
+                    Notice.error "Something went wrong. Try again later."
+            in
             ( model, Cmd.none )
+                |> updateNoticeQueue (Just newNotice)
 
         ( ReceivedCurrentUserResponse route (Ok user), _ ) ->
             let
@@ -248,21 +269,23 @@ update msg model =
 
         ( PlantListMsg subMsg, PlantListPage pageModel ) ->
             let
-                ( newPageModel, newCmd ) =
+                ( newPageModel, newCmd, maybeNotice ) =
                     PlantList.update subMsg pageModel
             in
             ( { model | page = PlantListPage newPageModel }
             , Cmd.map PlantListMsg newCmd
             )
+                |> updateNoticeQueue maybeNotice
 
         ( PlantFormMsg subMsg, PlantFormPage pageModel ) ->
             let
-                ( newPageModel, newCmd ) =
+                ( newPageModel, newCmd, maybeNotice ) =
                     PlantForm.update subMsg pageModel model.key
             in
             ( { model | page = PlantFormPage newPageModel }
             , Cmd.map PlantFormMsg newCmd
             )
+                |> updateNoticeQueue maybeNotice
 
         ( UserFormMsg subMsg, UserPage pageModel ) ->
             let
@@ -272,26 +295,27 @@ update msg model =
                 ( newPageModel, newCmd, currentUser ) =
                     UserForm.update subMsg pageModel model.key
 
-                ( newMenu, updatedSession ) =
+                ( newMenu, newSession, newNotice ) =
                     case currentUser of
                         Just user ->
                             let
-                                newSession =
+                                updatedSession =
                                     { session | currentUser = Success user }
                             in
-                            ( initMenu newSession
+                            ( initMenu updatedSession
                                 model.key
                                 user.ownedGardens
                                 user.sharedGardens
-                            , newSession
+                            , updatedSession
+                            , Just (Notice.success "Welcome to Plantiful!")
                             )
 
                         Nothing ->
-                            ( MenuNone, session )
+                            ( MenuNone, session, Notice.empty )
             in
             ( { model
                 | page = UserPage newPageModel
-                , session = updatedSession
+                , session = newSession
                 , menu = newMenu
               }
             , Cmd.map UserFormMsg newCmd
@@ -302,18 +326,23 @@ update msg model =
                 ( newPageModel, newCmd, currentUser ) =
                     SignIn.update subMsg pageModel model.key
 
-                ( loadableUser, newMenu ) =
+                ( loadableUser, newMenu, newNotice ) =
                     case currentUser of
                         Just user ->
+                            let
+                                noticeMessage =
+                                    "Welcome back, " ++ user.firstName
+                            in
                             ( Success user
                             , initMenu model.session
                                 model.key
                                 user.ownedGardens
                                 user.sharedGardens
+                            , Just (Notice.success noticeMessage)
                             )
 
                         Nothing ->
-                            ( None, MenuNone )
+                            ( None, MenuNone, Notice.empty )
 
                 session =
                     model.session
@@ -328,17 +357,17 @@ update msg model =
               }
             , Cmd.map SignInMsg newCmd
             )
+                |> updateNoticeQueue newNotice
 
         ( PlantDetailsMsg subMsg, PlantDetailsPage pageModel ) ->
             let
-                ( newPageModel, newCmd ) =
+                ( newPageModel, newCmd, maybeNotice ) =
                     PlantDetails.update subMsg pageModel
             in
-            ( { model
-                | page = PlantDetailsPage newPageModel
-              }
+            ( { model | page = PlantDetailsPage newPageModel }
             , Cmd.map PlantDetailsMsg newCmd
             )
+                |> updateNoticeQueue maybeNotice
 
         ( MenuMsg subMsg, _ ) ->
             case model.menu of
@@ -495,6 +524,30 @@ loadCurrentPage ( model, cmd ) =
     ( { model | page = page }, Cmd.batch [ cmd, newCmd ] )
 
 
+startNoticeTimeout : Cmd Msg
+startNoticeTimeout =
+    NoticeQueue.noticeTimeout NoticeTimeoutFinished
+
+
+updateNoticeQueue : Maybe Notice -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+updateNoticeQueue maybeNotice ( model, msg ) =
+    case maybeNotice of
+        Just notice ->
+            let
+                updatedQueue =
+                    NoticeQueue.append notice model.noticeQueue
+            in
+            ( { model | noticeQueue = updatedQueue }
+            , Cmd.batch
+                [ msg
+                , startNoticeTimeout
+                ]
+            )
+
+        Nothing ->
+            ( model, msg )
+
+
 
 -- VIEW
 
@@ -544,6 +597,7 @@ currentPage model =
     in
     div []
         [ nav model
+        , viewNotice model.noticeQueue
         , div [ class "main" ] [ page ]
         ]
 
@@ -558,6 +612,11 @@ nav model =
             ]
         , headerLink model
         ]
+
+
+viewNotice : NoticeQueue -> Html a
+viewNotice queue =
+    NoticeQueue.viewCurrentNotice queue
 
 
 viewMenu : Menu -> Html Msg
