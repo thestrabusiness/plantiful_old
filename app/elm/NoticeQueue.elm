@@ -27,9 +27,6 @@ currentNotice (NoticeQueue queue) =
         [] ->
             Nothing
 
-        [ x ] ->
-            Just x
-
         x :: _ ->
             Just x
 

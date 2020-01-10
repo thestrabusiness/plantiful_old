@@ -1,4 +1,4 @@
-module Notice exposing (Class(..), Notice(..), noticeClassToString)
+module Notice exposing (Class(..), Notice(..), empty, noticeClassToString)
 
 
 type Notice
@@ -10,6 +10,11 @@ type Class
     | NoticeError
     | NoticeInfo
     | NoticeSuccess
+
+
+empty : Maybe a
+empty =
+    Nothing
 
 
 noticeClassToString : Class -> String

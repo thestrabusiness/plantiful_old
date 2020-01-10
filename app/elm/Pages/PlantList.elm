@@ -104,7 +104,7 @@ update msg model =
         NewPlants (Ok newPlants) ->
             ( { model | plants = newPlants, loading = Success }
             , Cmd.none
-            , Nothing
+            , Notice.empty
             )
 
         NewPlants (Err error) ->
@@ -112,7 +112,7 @@ update msg model =
                 _ =
                     Debug.log "Whoops!" error
             in
-            ( { model | loading = Failed }, Cmd.none, Nothing )
+            ( { model | loading = Failed }, Cmd.none, Notice.empty )
 
         UserOpenedCheckInModal plant ->
             let
@@ -136,10 +136,10 @@ update msg model =
                 |> updateModal checkInModal
 
         UserClickedFileSelect ->
-            ( model, Select.file [ "image/*" ] NewImageSelected, Nothing )
+            ( model, Select.file [ "image/*" ] NewImageSelected, Notice.empty )
 
         NewImageSelected file ->
-            ( model, photoToBase64 file, Nothing )
+            ( model, photoToBase64 file, Notice.empty )
 
         UserTypedCheckInNotes notes ->
             let
@@ -159,7 +159,7 @@ update msg model =
                 |> closeModal
 
         UserSubmittedCheckIn ->
-            ( model, submitCheckIn model.session model.checkInForm, Nothing )
+            ( model, submitCheckIn model.session model.checkInForm, Notice.empty )
 
         ReceivedPlantCheckInResponse (Ok checkIn) ->
             let
@@ -251,12 +251,12 @@ updateModal :
     -> ( Model, Cmd Msg )
     -> ( Model, Cmd Msg, Maybe Notice )
 updateModal modal ( model, cmd ) =
-    ( { model | modal = Modal <| modal model.checkInForm }, cmd, Nothing )
+    ( { model | modal = Modal <| modal model.checkInForm }, cmd, Notice.empty )
 
 
 closeModal : ( Model, Cmd Msg ) -> ( Model, Cmd Msg, Maybe Notice )
 closeModal ( model, cmd ) =
-    ( { model | modal = ModalClosed }, cmd, Nothing )
+    ( { model | modal = ModalClosed }, cmd, Notice.empty )
 
 
 modifyNotice :

@@ -85,7 +85,7 @@ update : Msg -> Model -> Nav.Key -> ( Model, Cmd Msg, Maybe Notice )
 update msg model key =
     case msg of
         UserEditedField field value ->
-            ( setField field value model, Cmd.none, Nothing )
+            ( setField field value model, Cmd.none, Notice.empty )
 
         UserSubmittedForm ->
             let
@@ -102,11 +102,11 @@ update msg model key =
                         Just gardenId ->
                             ( model
                             , createNewPlant model.session gardenId validPlant
-                            , Nothing
+                            , Notice.empty
                             )
 
                         Nothing ->
-                            ( model, Cmd.none, Nothing )
+                            ( model, Cmd.none, Notice.empty )
 
                 ( Ok validatedForm, Form.Update ) ->
                     let
@@ -117,25 +117,25 @@ update msg model key =
                         Just plantId ->
                             ( model
                             , updatePlant model.session plantId validPlant
-                            , Nothing
+                            , Notice.empty
                             )
 
                         Nothing ->
-                            ( model, Cmd.none, Nothing )
+                            ( model, Cmd.none, Notice.empty )
 
                 ( Err errorList, _ ) ->
-                    ( { model | errors = errorList }, Cmd.none, Nothing )
+                    ( { model | errors = errorList }, Cmd.none, Notice.empty )
 
         UserCancelledForm ->
             case ( model.formAction, model.plantId, model.gardenId ) of
                 ( Form.Create, _, Just gardenId ) ->
-                    ( model, goBackToPlantsList key gardenId, Nothing )
+                    ( model, goBackToPlantsList key gardenId, Notice.empty )
 
                 ( Form.Update, Just plantId, Just gardenId ) ->
-                    ( model, goBackToPlantDetails key plantId, Nothing )
+                    ( model, goBackToPlantDetails key plantId, Notice.empty )
 
                 ( _, _, _ ) ->
-                    ( model, Cmd.none, Nothing )
+                    ( model, Cmd.none, Notice.empty )
 
         ReceivedCreatePlantResponse (Ok plant) ->
             case ( model.gardenId, model.session.currentUser ) of
@@ -152,11 +152,11 @@ update msg model key =
                 ( Nothing, Success user ) ->
                     ( model
                     , goBackToPlantsList key user.defaultGardenId
-                    , Nothing
+                    , Notice.empty
                     )
 
                 ( _, _ ) ->
-                    ( model, Cmd.none, Nothing )
+                    ( model, Cmd.none, Notice.empty )
 
         ReceivedCreatePlantResponse (Err error) ->
             handleErrorResponse model error key
@@ -167,7 +167,7 @@ update msg model key =
                 , gardenId = Just plant.gardenId
               }
             , Cmd.none
-            , Nothing
+            , Notice.empty
             )
 
         ReceivedGetPlantResponse (Err error) ->
@@ -205,16 +205,16 @@ handleErrorResponse model error key =
                 _ ->
                     ( { model | apiError = somethingWentWrongError }
                     , Cmd.none
-                    , Nothing
+                    , Notice.empty
                     )
 
         Http.NetworkError ->
-            ( { model | apiError = networkError }, Cmd.none, Nothing )
+            ( { model | apiError = networkError }, Cmd.none, Notice.empty )
 
         _ ->
             ( { model | apiError = somethingWentWrongError }
             , Cmd.none
-            , Nothing
+            , Notice.empty
             )
 
 

@@ -82,7 +82,7 @@ update : Msg -> Model -> ( Model, Cmd Msg, Maybe Notice )
 update msg model =
     case msg of
         ReceivedGetPlantResponse (Ok plant) ->
-            ( { model | plant = Just plant }, Cmd.none, Nothing )
+            ( { model | plant = Just plant }, Cmd.none, Notice.empty )
 
         ReceivedGetPlantResponse (Err error) ->
             let
@@ -100,7 +100,7 @@ update msg model =
         UserSelectedUploadNewPhoto ->
             ( model
             , Select.file [ "image/*" ] NewImageSelected
-            , Nothing
+            , Notice.empty
             )
 
         NewImageSelected photo ->
@@ -108,17 +108,17 @@ update msg model =
                 Just plant ->
                     ( { model | modal = Modal.Modal <| cropperModal model }
                     , photoToBase64 photo
-                    , Nothing
+                    , Notice.empty
                     )
 
                 Nothing ->
-                    ( model, Cmd.none, Nothing )
+                    ( model, Cmd.none, Notice.empty )
 
         PhotoConvertedToBase64 base64Url ->
-            ( model, initJsCropper base64Url, Nothing )
+            ( model, initJsCropper base64Url, Notice.empty )
 
         UserCroppedPhoto ->
-            ( { model | modal = ModalClosed }, Cmd.none, Nothing )
+            ( { model | modal = ModalClosed }, Cmd.none, Notice.empty )
 
         GotCroppedPhoto photo ->
             case model.plant of
@@ -129,11 +129,11 @@ update msg model =
                     in
                     ( { model | upload = Uploading 0 }
                     , uploadPhoto model.session photo plant
-                    , Nothing
+                    , Notice.empty
                     )
 
                 Nothing ->
-                    ( model, Cmd.none, Nothing )
+                    ( model, Cmd.none, Notice.empty )
 
         ReceivedUploadPhotoResponse (Ok plant) ->
             ( { model | upload = Done, plant = Just plant }
@@ -163,16 +163,16 @@ update msg model =
                     in
                     ( { model | upload = Uploading fractionSent }
                     , Cmd.none
-                    , Nothing
+                    , Notice.empty
                     )
 
                 Http.Receiving _ ->
-                    ( model, Cmd.none, Nothing )
+                    ( model, Cmd.none, Notice.empty )
 
         UserClickedDeletePlant plantId ->
             ( model
             , deletePlant model.session plantId
-            , Nothing
+            , Notice.empty
             )
 
         ReceivedDeletePlantResponse (Ok _) ->
@@ -190,11 +190,11 @@ update msg model =
                 ( Nothing, Success user ) ->
                     ( model
                     , Nav.pushUrl model.key (Routes.gardenPath user.defaultGardenId)
-                    , Nothing
+                    , Notice.empty
                     )
 
                 ( _, _ ) ->
-                    ( model, Cmd.none, Nothing )
+                    ( model, Cmd.none, Notice.empty )
 
         ReceivedDeletePlantResponse (Err _) ->
             ( model
@@ -206,7 +206,7 @@ update msg model =
             )
 
         UserClickedEditPlant plantId ->
-            ( model, Cmd.none, Nothing )
+            ( model, Cmd.none, Notice.empty )
 
 
 subscriptions : Sub Msg

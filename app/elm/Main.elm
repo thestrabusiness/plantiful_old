@@ -314,7 +314,7 @@ update msg model =
                             )
 
                         Nothing ->
-                            ( MenuNone, session, Nothing )
+                            ( MenuNone, session, Notice.empty )
             in
             ( { model
                 | page = UserPage newPageModel
@@ -345,7 +345,7 @@ update msg model =
                             )
 
                         Nothing ->
-                            ( None, MenuNone, Nothing )
+                            ( None, MenuNone, Notice.empty )
 
                 session =
                     model.session
