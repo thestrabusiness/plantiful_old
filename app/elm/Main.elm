@@ -26,6 +26,7 @@ import Json.Decode.Pipeline exposing (required)
 import Loadable exposing (Loadable(..))
 import Menu
 import Notice exposing (Notice(..))
+import NoticeQueue exposing (NoticeQueue(..))
 import Pages.NotAuthorized as NotAuthorized
 import Pages.PlantDetails as PlantDetails
 import Pages.PlantForm as PlantForm
@@ -52,7 +53,7 @@ type alias Model =
     , timeZone : Time.Zone
     , session : Session.Session
     , menu : Menu
-    , notice : Notice.Notice
+    , noticeQueue : NoticeQueue.NoticeQueue
     }
 
 
@@ -76,7 +77,7 @@ init flags url key =
             , timeZone = Time.utc
             , session = Session.Session flags.csrfToken Loading
             , menu = MenuNone
-            , notice = EmptyNotice
+            , noticeQueue = NoticeQueue.empty
             }
 
         initCmds =
@@ -186,19 +187,21 @@ update msg model =
             in
             ( { model
                 | session = updatedSession
-                , notice = Notice "Signed out succesfully" Notice.NoticeSuccess
+
+                -- , notice = Notice "Signed out succesfully" Notice.NoticeSuccess
               }
             , Nav.pushUrl model.key Routes.signInPath
             )
 
         ( ReceivedUserSignOutResponse (Err _), _ ) ->
-            ( { model
-                | notice =
-                    Notice "Something went wrong. Try again later."
-                        Notice.NoticeError
-              }
-            , Cmd.none
-            )
+            -- ( { model
+            -- | notice =
+            -- Notice "Something went wrong. Try again later."
+            -- Notice.NoticeError
+            -- }
+            -- , Cmd.none
+            -- )
+            ( model, Cmd.none )
 
         ( ReceivedCurrentUserResponse route (Ok user), _ ) ->
             let
@@ -265,7 +268,8 @@ update msg model =
                 ( newPageModel, newCmd, newNotice ) =
                     PlantList.update subMsg pageModel
             in
-            ( { model | page = PlantListPage newPageModel, notice = newNotice }
+            -- ( { model | page = PlantListPage newPageModel, notice = newNotice }
+            ( { model | page = PlantListPage newPageModel }
             , Cmd.map PlantListMsg newCmd
             )
 
@@ -274,7 +278,8 @@ update msg model =
                 ( newPageModel, newCmd, newNotice ) =
                     PlantForm.update subMsg pageModel model.key
             in
-            ( { model | page = PlantFormPage newPageModel, notice = newNotice }
+            -- ( { model | page = PlantFormPage newPageModel, notice = newNotice }
+            ( { model | page = PlantFormPage newPageModel }
             , Cmd.map PlantFormMsg newCmd
             )
 
@@ -308,7 +313,6 @@ update msg model =
                 | page = UserPage newPageModel
                 , session = newSession
                 , menu = newMenu
-                , notice = newNotice
               }
             , Cmd.map UserFormMsg newCmd
             )
@@ -346,10 +350,10 @@ update msg model =
                 | page = SignInPage newPageModel
                 , session = updatedSession
                 , menu = newMenu
-                , notice = newNotice
               }
             , Cmd.map SignInMsg newCmd
             )
+                |> updateNoticeQueue newNotice
 
         ( PlantDetailsMsg subMsg, PlantDetailsPage pageModel ) ->
             let
@@ -358,7 +362,8 @@ update msg model =
             in
             ( { model
                 | page = PlantDetailsPage newPageModel
-                , notice = newNotice
+
+                -- , notice = newNotice
               }
             , Cmd.map PlantDetailsMsg newCmd
             )
@@ -518,6 +523,18 @@ loadCurrentPage ( model, cmd ) =
     ( { model | page = page }, Cmd.batch [ cmd, newCmd ] )
 
 
+updateNoticeQueue :
+    Notice.Notice
+    -> ( Model, Cmd Msg )
+    -> ( Model, Cmd Msg )
+updateNoticeQueue notice ( model, msg ) =
+    let
+        updatedQueue =
+            NoticeQueue.append notice model.noticeQueue
+    in
+    ( { model | noticeQueue = updatedQueue }, msg )
+
+
 
 -- VIEW
 
@@ -567,7 +584,7 @@ currentPage model =
     in
     div []
         [ nav model
-        , viewNotice model.notice
+        , viewNotice model.noticeQueue
         , div [ class "main" ] [ page ]
         ]
 
@@ -584,13 +601,14 @@ nav model =
         ]
 
 
-viewNotice : Notice -> Html Msg
-viewNotice notice =
-    case notice of
-        EmptyNotice ->
-            text ""
-
-        Notice message noticeClass ->
+viewNotice : NoticeQueue -> Html Msg
+viewNotice queue =
+    let
+        currentNotice =
+            NoticeQueue.currentNotice queue
+    in
+    case currentNotice of
+        Just (Notice message noticeClass) ->
             let
                 noticeClassString =
                     Notice.noticeClassToString noticeClass
@@ -599,6 +617,9 @@ viewNotice notice =
                     "notice " ++ noticeClassString
             in
             div [ class classString ] [ text message ]
+
+        _ ->
+            text ""
 
 
 viewMenu : Menu -> Html Msg
