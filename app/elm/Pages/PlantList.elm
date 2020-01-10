@@ -165,32 +165,12 @@ update msg model =
             ( model, submitCheckIn model.session model.checkInForm, Notice.empty )
 
         ReceivedPlantCheckInResponse (Ok checkIn) ->
-            let
-                updatedPlant =
-                    findPlantById checkIn.plantId model.plants
-            in
-            case updatedPlant of
-                Just plant ->
-                    let
-                        noticeMessage =
-                            "Added check-in: " ++ plant.name
-                    in
-                    ( model, Cmd.none )
-                        |> updatePlantWateredAt plant checkIn.createdAt
-                        |> updateForm initialCheckInForm
-                        |> closeModal
-                        |> Notice.withNotice (Notice.success noticeMessage)
-
-                Nothing ->
-                    ( model, Cmd.none )
-                        |> closeModal
-                        |> Notice.withoutNotice
+            ( model, Cmd.none )
+                |> processOkCheckInResponse checkIn
 
         ReceivedPlantCheckInResponse (Err error) ->
-            ( model
-            , Cmd.none
-            , Just (Notice.error "Something went wrong. Try again later")
-            )
+            ( model, Cmd.none )
+                |> Notice.withNotice (Notice.error "Something went wrong. Try again later")
 
         PhotoConvertedToBase64 base64Photo ->
             let
@@ -219,6 +199,33 @@ update msg model =
             ( model, Cmd.none )
                 |> updateForm updatedForm
                 |> updateModal checkInModal
+                |> Notice.withoutNotice
+
+
+processOkCheckInResponse :
+    CheckIn.CheckIn
+    -> ( Model, Cmd Msg )
+    -> ( Model, Cmd Msg, Maybe Notice )
+processOkCheckInResponse checkIn ( model, msg ) =
+    let
+        updatedPlant =
+            findPlantById checkIn.plantId model.plants
+    in
+    case updatedPlant of
+        Just plant ->
+            let
+                noticeMessage =
+                    "Added check-in: " ++ plant.name
+            in
+            ( model, msg )
+                |> updatePlantWateredAt plant checkIn.createdAt
+                |> updateForm initialCheckInForm
+                |> closeModal
+                |> Notice.withNotice (Notice.success noticeMessage)
+
+        Nothing ->
+            ( model, msg )
+                |> closeModal
                 |> Notice.withoutNotice
 
 
