@@ -4,7 +4,7 @@ Plantiful is an application that will let you track your plants health and water
 
 # Dependencies
 
-* Ruby 2.6.3
+* Ruby 2.6.5
 * Rails 5.2.3
 * Elm 0.19
 * Postgres
