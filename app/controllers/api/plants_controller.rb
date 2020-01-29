@@ -13,12 +13,10 @@ module Api
 
     def create
       garden = Garden.find(params[:garden_id])
-
-      create_params = plant_params.except(:avatar).merge(added_by: current_user)
       plant = garden.plants.create(create_params)
 
       if plant_params[:avatar]
-        plant.avatar.attach(data: plant_params[:avatar])
+        plant.attach_avatar(plant_params[:avatar])
       end
 
       if plant.errors.empty?
@@ -57,8 +55,13 @@ module Api
 
     def update
       plant = current_user.plants.find(params[:id])
+      plant.update(update_params)
 
-      if plant.update(plant_params)
+      if plant_params[:avatar]
+        plant.attach_avatar(plant_params[:avatar])
+      end
+
+      if plant.valid?
         render json: plant, status: :ok
       else
         render json: plant.errors, status: :unprocessable_entity
@@ -66,6 +69,14 @@ module Api
     end
 
     private
+
+    def create_params
+      plant_params.except(:avatar).merge(added_by: current_user)
+    end
+
+    def update_params
+      plant_params.except(:avatar)
+    end
 
     def plant_params
       params.require(:plant).permit(

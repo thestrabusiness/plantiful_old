@@ -54,6 +54,10 @@ class Plant < ApplicationRecord
     [time_from_check_in, Time.current].max
   end
 
+  def attach_avatar(base64_data)
+    avatar.attach(data: base64_data)
+  end
+
   private
 
   def recent_check_in
