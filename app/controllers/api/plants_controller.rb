@@ -13,7 +13,13 @@ module Api
 
     def create
       garden = Garden.find(params[:garden_id])
-      plant = garden.plants.create(plant_params.merge(added_by: current_user))
+
+      create_params = plant_params.except(:avatar).merge(added_by: current_user)
+      plant = garden.plants.create(create_params)
+
+      if plant_params[:avatar]
+        plant.avatar.attach(data: plant_params[:avatar])
+      end
 
       if plant.errors.empty?
         render json: plant, status: :created
